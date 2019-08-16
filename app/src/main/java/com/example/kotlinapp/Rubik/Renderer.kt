@@ -19,7 +19,8 @@ class Renderer : GLSurfaceView.Renderer {
     val mViewMatrix = FloatArray(16)
     val mMVPMatrix = FloatArray(16)
     val mMatrix = FloatArray(16)
-    val mCubeModelMatrix = FloatArray(16)
+    var mCubeModelMatrix = FloatArray(16)
+    val mRotationMatrix = FloatArray(16)
 
     lateinit var mWorld: World
     private var mAngle: Float = 0.0f
@@ -27,7 +28,11 @@ class Renderer : GLSurfaceView.Renderer {
     var mAngleX: Float = 0.0f
     var mAngleY: Float = 0.0f
 
-    val uMatrixLocation: Int = 0
+    var uMatrixLocation: Int = 0
+
+    companion object {
+        var intValue = 0;
+    }
 
     constructor(context : Context, cube : Cube){
         this.context = context
@@ -45,6 +50,7 @@ class Renderer : GLSurfaceView.Renderer {
         glUseProgram(programId)
 
         Matrix.setIdentityM(mCubeModelMatrix, 0)
+        Matrix.setIdentityM(mRotationMatrix, 0)
 
         CreateViewMatrix()
     }
@@ -58,22 +64,48 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        glClearColor(0.5f, 0.5f, 0.5f, 1f)
-        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        rotateCube()
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrix, 0)
-        glUniformMatrix4fv(uMatrixLocation, 1, false, mMVPMatrix, 0)
-        mCube.draw(mMVPMatrix, programId)
+        GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1f)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
+
+        /*for (worldCubie in mCube.cubies) {
+            glClearColor(0.5f, 0.5f, 0.5f, 1f)
+            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+
+            var layer = mCube.layers.getOrNull(intValue)
+            if (layer != null) {
+                for (cubie in layer.cubies) {
+                    if (cubie.centerPoint.IsEqual(cubie.centerPoint, worldCubie.centerPoint)) {
+                        //mCubeModelMatrix = worldCubie.animateTransform()
+                        worldCubie.animateTransform(x, y, z)
+                    }
+                }
+            }
+            Matrix.multiplyMM(mMatrix, 0, mViewMatrix, 0, worldCubie.mAnimationMatrix, 0)//mCubeModelMatrix, 0)
+
+            Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrix, 0)
+            glUniformMatrix4fv(uMatrixLocation, 1, false, mMVPMatrix, 0)
+            worldCubie.draw(mMVPMatrix, programId)
+        }*/
+
+        mCube.resetLayerCubies()
+
+        for(cubie in mCube.cubies){
+            cubie.draw(mProjectionMatrix, mViewMatrix, programId)
+        }
     }
 
-    fun rotateCube() {
-        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mCubeModelMatrix, 0)
-    }
+    /*fun rotateCube() {
+        mCubeModelMatrix = mCube.layers.get(0).rotate()
+       // Matrix.rotateM(mRotationMatrix, 0, mAngleX, 90.0f, 0.0f, 0.0f)
+       // Matrix.transposeM(mCubeModelMatrix, 0, mRotationMatrix, 0)
+        //mAngleX += 2.0f
+        Matrix.multiplyMM(mMatrix, 0, mViewMatrix, 0, mCubeModelMatrix, 0)
+    }*/
 
     fun CreateViewMatrix(){
-        val eyeX = -5.0f
+        val eyeX = -6.0f
         val eyeY = 4f
-        val eyeZ = 5f
+        val eyeZ = 7f
 
         // точка направления камеры
         val centerX = 0f

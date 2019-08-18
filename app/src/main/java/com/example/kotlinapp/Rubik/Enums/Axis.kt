@@ -1,6 +1,6 @@
 package com.example.kotlinapp.Rubik.Enums
 
-enum class Axis(x : Float, y : Float, z : Float) {
+enum class Axis(val x : Float, val y : Float, val z : Float) {
     xAxis(1f, 0f, 0f),
     xMinusAxis(-1f, 0f, 0f),
     yAxis(0f, 1f, 0f),
@@ -37,6 +37,28 @@ enum class Axis(x : Float, y : Float, z : Float) {
                 ax[2] = -1f
             }
             return ax
+        }
+
+        fun getAxis(x : Float, y : Float, z : Float) : Axis{
+            if(x == 1f && y == 0f && z == 0f){
+                return xAxis
+            }
+            else if(x == -1f && y == 0f && z == 0f){
+                return xMinusAxis
+            }
+            else if(x == 0f && y == 1f && z == 0f){
+                return yAxis
+            }
+            else if(x == 0f && y == -1f && z == 0f){
+                return yMinusAxis
+            }
+            else if(x == 0f && y == 0f && z == 1f){
+                return zAxis
+            }
+            else if(x == 0f && y == 0f && z == -1f){
+                return zMinusAxis
+            }
+            return zAxis
         }
     }
 }

@@ -1,8 +1,12 @@
 package com.example.kotlinapp.Rubik
 
+import com.example.kotlinapp.Rubik.Enums.Axis
 import com.example.kotlinapp.Rubik.Enums.Color
 import com.example.kotlinapp.Rubik.Enums.Direction
 import com.example.kotlinapp.Rubik.Enums.LayerEnum
+import java.time.Year
+import kotlin.concurrent.thread
+import kotlin.math.roundToInt
 
 class Cube() {
     val spaceBetweenCubies: Float = 0.3f;
@@ -14,6 +18,7 @@ class Cube() {
 
     val cubies = arrayListOf<Cubie>()
     val layers = arrayListOf<Layer>()
+    val directions = arrayListOf<Direction>()
 
     val world: World = World()
 
@@ -57,6 +62,7 @@ class Cube() {
             leftY += sideLength
             leftY += spaceBetweenCubies
         }
+        CreateDirections()
         CreateLayers()
         for (cubie in cubies) {
             for (tile in cubie.tiles) {
@@ -69,53 +75,35 @@ class Cube() {
     }
 
     fun CreateLayers() {
-        /*var axis = 0
-        for (i in 0 until 3) {
-            var rotationAxis = RotationAxis.getRotationAxisByIndex(axis)
-            for (cubie in cubies) {
-                var coord = cubie.centerPoint.getCoordinateByAxis(rotationAxis)
-                if (!layers.any { x -> x.layerName.rotationAxis == rotationAxis && x.centerPoint == coord }) {
-                    var layerName =
-                        LayerEnum.getLayerNameByCenterPoint(RotationAxis.getRotationAxisByIndex(axis), coord)
-                    if (layerName != null) {
-                        var layer = Layer(coord, layerName, layerName.direction, this)
-                        for (cubie1 in cubies) {
-                            if (cubie1.centerPoint.getCoordinateByAxis(rotationAxis) == coord) {
-                                layer.addCubie(cubie1)
-                            }
-                        }
-                        if (layer.layerName.direction != Direction.NON) {
-                            layer.verifyTiles()
-                        }
-                        layers.add(layer)
-                    }
-                }
-            }
-            axis++
-        }*/
-
-        addLayer(LayerEnum.LEFT)
-        addLayer(LayerEnum.MIDDLE)
-        addLayer(LayerEnum.RIGHT)
-        addLayer(LayerEnum.BACK)
-        addLayer(LayerEnum.STANDING)
-        addLayer(LayerEnum.FRONT)
-        addLayer(LayerEnum.DOWN)
-        addLayer(LayerEnum.EQUATOR)
-        addLayer(LayerEnum.UP)
+        addLayer(LayerEnum.LEFT, directions.filter { x -> x.charName == 'L' }.single())
+        addLayer(LayerEnum.MIDDLE, directions.filter { x -> x.charName == 'N' }.single())
+        addLayer(LayerEnum.RIGHT, directions.filter { x -> x.charName == 'R' }.single())
+        addLayer(LayerEnum.BACK, directions.filter { x -> x.charName == 'B' }.single())
+        addLayer(LayerEnum.STANDING, directions.filter { x -> x.charName == 'N' }.single())
+        addLayer(LayerEnum.FRONT, directions.filter { x -> x.charName == 'F' }.single())
+        addLayer(LayerEnum.DOWN, directions.filter { x -> x.charName == 'D' }.single())
+        addLayer(LayerEnum.EQUATOR, directions.filter { x -> x.charName == 'N' }.single())
+        addLayer(LayerEnum.UP, directions.filter { x -> x.charName == 'U' }.single())
     }
 
-    fun addLayer(layerName : LayerEnum) {
-        var layer = Layer(layerName.centerPoint, layerName, layerName.direction, this)
+    fun CreateDirections() {
+        directions.add(Direction('L', Color.ORANGE))
+        directions.add(Direction('R', Color.RED))
+        directions.add(Direction('U', Color.WHITE))
+        directions.add(Direction('D', Color.YELLOW))
+        directions.add(Direction('B', Color.BLUE))
+        directions.add(Direction('F', Color.GREEN))
+        directions.add(Direction('N', Color.BLACK))
+    }
+
+    fun addLayer(layerName: LayerEnum, direction: Direction) {
+        var layer = Layer(layerName.centerPoint, layerName, direction, this)
         for (cubie1 in cubies) {
-            if (cubie1.centerPoint.getCoordinateByAxis(layerName.rotationAxis) == layerName.centerPoint) {
+            if (cubie1.centerPoint.getCoordinateByAxis(layer.layerName.rotationAxis) == layer.centerPoint) {
                 layer.addCubie(cubie1)
             }
         }
-        if (layer.layerName.direction != Direction.NON) {
-            layer.verifyTiles()
-        }
-        if (layer.layerName.direction != Direction.NON) {
+        if (layer.direction != directions.filter { x -> x.charName == 'N' }.single()) {
             layer.verifyTiles()
         }
         layers.add(layer)
@@ -128,13 +116,34 @@ class Cube() {
                 layer.cubies.clear()
                 layer.cubiesIds.clear()
                 for (cubie in cubies) {
-                    if (cubie.centerPoint.getCoordinateByAxis(layer.layerName.rotationAxis) == layer.centerPoint) {
+                    if (cubie.centerPoint.getCoordinateByAxis(LayerEnum.getRotationAxisByLayerName(layer.layerName)) == layer.centerPoint) {
                         layer.addCubie(cubie)
                         cubie.isRotated = false
                     }
                 }
             }
             permutationAllowed = true
+            Thread.sleep(200)
+        }
+        //cube rotated 180 degrees
+        else if (count == 27) {
+            //LayerEnum.recalculateRotationAxises(Axis.zAxis)
+
+           // Direction.changeColorsAfterRotation(Axis.zAxis)
+            for (layer in layers) {
+                //layer.direction = LayerEnum.recalculateLayerDirection(layer.layerName)
+                //layer.rotateLayer(180f, Axis.zAxis)
+                layer.cubies.clear()
+                layer.cubiesIds.clear()
+                for (cubie in cubies) {
+                    if (cubie.centerPoint.getCoordinateByAxis(LayerEnum.getRotationAxisByLayerName(layer.layerName)) == layer.centerPoint) {
+                        layer.addCubie(cubie)
+                        cubie.isRotated = false
+                    }
+                }
+            }
+            permutationAllowed = true
+            Thread.sleep(200)
         }
     }
 
@@ -166,36 +175,351 @@ class Cube() {
         return scramble
     }
 
+    //make white cross on the up layer
     fun makeWhiteCross() : String {
         var moves = String()
 
-        while (numWhiteEdgesOriented() !== 0) { //Turn sunflower into cross until no white edges remain in the U layer
-            for (qb in cubies) {
-                //take up face
-                if (qb.isEdge && qb.centerPoint.y == 2.1f) {
-                    if (qb.tiles.any() { x -> x.color == Color.WHITE }) {
-                        for (k in 0..1) {
-                            //Check for when the white edge is matched up with the respective face and turn it down
-                            if (qb.tiles[k].color === Color.RED && qb.tiles[k].direction === Direction.LEFT ||
-                                qb.tiles[k].color === Color.GREEN && qb.tiles[k].direction === Direction.FRONT ||
-                                qb.tiles[k].color === Color.ORANGE && qb.tiles[k].direction === Direction.RIGHT ||
-                                qb.tiles[k].color === Color.BLUE && qb.tiles[k].direction === Direction.BACK
-                            ) {
-                                moves += performMoves(qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y) + "2 ")
+        for (qb in cubies) {
+            //find center white point and add it to the up layer
+            if (!qb.isEdge && !qb.isCorner) {
+                if (qb.tiles.any() { x -> x.color == Color.WHITE }) {
+                    for (tile in qb.tiles) {
+                        if (tile.color == Color.WHITE && tile.isActive) {
+                            if (tile.direction == 'L') {
+                                moves += performMoves("S")
+                            } else if (tile.direction == 'R') {
+                                moves += performMoves("S'")
+                            } else if (tile.direction == 'D') {
+                                moves += performMoves("M")
+                                moves += performMoves("M")
+                            } else if (tile.direction == 'B') {
+                                moves += performMoves("M")
+                            } else if (tile.direction == 'F') {
+                                moves += performMoves("M'")
                             }
                         }
                     }
                 }
             }
-            //Turn U to try lining up edges that have not been turned down yet
-            moves += performMoves("U ")
+        }
+
+        while (numWhiteEdgesOriented() < 4) {
+            var tempCubies = cubies.filter { x -> x.isEdge && x.tiles.any() { t -> t.color == Color.WHITE } }
+            for (qb in tempCubies) {
+                //do while cubie is not on the right place
+                while (!qb.isCubieRightOriented()) {
+                    if(permutationAllowed) {
+                        //find all edges with white tiles
+                        var tempTiles = qb.tiles.filter { x -> x.isActive }
+                        var whiteTile = tempTiles.filter { x -> x.color == Color.WHITE }.single()
+                        var anotherTile = tempTiles.filter { x -> x.color != Color.WHITE }.single()
+
+                        if (whiteTile.direction != 'D' && anotherTile.direction == 'D') {
+                            //if cubie is on the right layer
+                            if (anotherTile.color.charNotation
+                                == getColorByDirection(whiteTile.direction).charNotation
+                            ) {
+                                if (whiteTile.direction == 'R') {
+                                    moves += performMoves("D S D' S'")
+                                } else if (whiteTile.direction == 'L') {
+                                    moves += performMoves("D S' D' S")
+                                } else if (whiteTile.direction == 'F') {
+                                    moves += performMoves("D M D' M'")
+                                } else if (whiteTile.direction == 'B') {
+                                    moves += performMoves("D M' D' M")
+                                }
+                            } else {
+                                //rotate down to check layout on the another iteration
+                                moves += performMoves("D")
+                            }
+                        } else if (whiteTile.direction == 'D') {
+                            //check if cubie on the right layer
+                            if (getColorByDirection(anotherTile.direction) != anotherTile.color) {
+                                moves += performMoves("D")
+                            } else {
+                                moves += performMoves(qb.getDirOfColor(anotherTile.color.charNotation).toString())
+                                moves += performMoves(qb.getDirOfColor(anotherTile.color.charNotation).toString())
+                            }
+                        }
+                        else if(anotherTile.direction == 'U'){
+                            moves += performMoves(qb.getDirOfColor(whiteTile.color.charNotation).toString())
+                            moves += performMoves(qb.getDirOfColor(whiteTile.color.charNotation).toString())
+                        }
+                        else {
+                            moves += performMoves(whiteTile.direction + "'")//qb.getDirOfColor(anotherTile.color.charNotation) + "'")
+                        }
+                    }
+                    Thread.sleep(50)
+                }
+            }
         }
         return optimizeMoves(moves)
     }
 
+    //complete white side of the cube
+    fun finishWhiteLayer(): String {
+        var moves = String()
+
+        //calculate white corners layout
+        while(numWhiteCornersOriented() < 4){
+            var tempCubies = cubies.filter { x -> x.isCorner && x.tiles.any() { t -> t.color == Color.WHITE } }
+            for (qb in tempCubies) {
+                while (!isCornerRightOriented(qb)) {
+                    if(permutationAllowed) {
+                        //find all edges with white tiles
+                        var tempTiles = qb.tiles.filter { x -> x.isActive }
+                        var whiteTile = tempTiles.filter { x -> x.color == Color.WHITE }.single()
+                        var firstTile = tempTiles.filter { x -> x.color != Color.WHITE }[0]
+                        var secondTile = tempTiles.filter { x -> x.color != Color.WHITE }[1]
+
+                        //first case wrong layout on the UP layer
+                        if(whiteTile.direction == 'U'){
+                            var c = qb.getDirOfColor(firstTile.color.charNotation)
+                            if(qb.getNormalVectorAfterRotation(secondTile, 90f) == 'D'
+                                || qb.getNormalVectorAfterRotation(firstTile, 90f) == 'D'){
+                                moves += performMoves(c.toString())
+                                moves += performMoves("D")
+                                moves += performMoves(c + "'")
+                            }
+                            else{
+                                moves += performMoves(c + "'")
+                                moves += performMoves("D'")
+                                moves += performMoves(c.toString())
+                            }
+                        }
+
+                        //second case White color directs down
+                        else if(whiteTile.direction == 'D'){
+                            if(firstTile.color == getColorByDirection(secondTile.direction) || secondTile.color == getColorByDirection(firstTile.direction)) {
+                                var c = qb.getDirOfColor(secondTile.color.charNotation)
+                                if (qb.getNormalVectorAfterRotation(firstTile, -90f)
+                                    == 'D'
+                                ) {
+                                    moves += performMoves(c + "'")
+                                    var whiteC = whiteTile.direction
+                                    if (qb.getNormalVectorAfterRotation(secondTile, -90f)
+                                        == 'D') {
+                                        moves += performMoves(whiteC + "'")
+                                        moves += performMoves("D D")
+                                        moves += performMoves(whiteC.toString())
+                                        moves += performMoves(c.toString())
+                                    } else {
+                                        moves += performMoves(whiteC.toString())
+                                        moves += performMoves("D' D'")
+                                        moves += performMoves(whiteC + "'")
+                                        moves += performMoves(c.toString())
+                                    }
+                                } else {
+                                    moves += performMoves(c.toString())
+                                    var whiteC1 = whiteTile.direction
+                                    if (qb.getNormalVectorAfterRotation(secondTile, 90f)
+                                        == 'D')
+                                    {
+                                        moves += performMoves(whiteC1.toString())
+                                        moves += performMoves("D D")
+                                        moves += performMoves(whiteC1 + "'")
+                                        moves += performMoves(c + "'")
+                                    } else {
+                                        moves += performMoves(whiteC1 + "'")
+                                        moves += performMoves("D' D'")
+                                        moves += performMoves(whiteC1.toString())
+                                        moves += performMoves(c + "'")
+                                    }
+                                }
+                            }
+                            else if(secondTile.color == getColorByDirection(firstTile.direction)){
+                                var c = qb.getDirOfColor(firstTile.color.charNotation)
+                                if(qb.getNormalVectorAfterRotation(secondTile, 90f) == 'D'){
+                                    moves += performMoves(c + "' D D " + c + " D " + c + "' D' " + c)
+                                }
+                                else{
+                                    moves += performMoves(c + " D' " + c + "' D' " + c + " D " + c + "'")
+                                }
+                            }
+                            else{
+                                moves += performMoves("D")
+                            }
+
+                        }
+
+                        //third case one of tiles is on UP layer
+                        else if(firstTile.direction == 'U' || secondTile.direction == 'U'){
+                            var c = qb.getDirOfColor(whiteTile.color.charNotation).toString()
+                            if(qb.getNormalVectorAfterRotation(firstTile, -90f) == 'D' ||
+                                    qb.getNormalVectorAfterRotation(secondTile, -90f) == 'D') {
+                                moves += performMoves(c + "'")
+                                moves += performMoves("D")
+                                moves += performMoves(c)
+                            }
+                            else{
+                                moves += performMoves(c)
+                                moves += performMoves("D")
+                                moves += performMoves(c + "'")
+                            }
+                        }
+
+                        //one of tiles has DOWN direction
+                        else{
+                            if(getColorByDirection(firstTile.direction) == firstTile.color && getColorByDirection(whiteTile.direction) == secondTile.color){
+                                var c = getDirectionByColor(firstTile.color)
+                                moves += performMoves("D'")
+                                moves += performMoves(c + "'")
+                                moves += performMoves("D")
+                                moves += performMoves(c.toString())
+                            }
+                            else if (getColorByDirection(secondTile.direction) == secondTile.color && getColorByDirection(whiteTile.direction) == firstTile.color) {
+
+                                if(qb.getNormalVectorAfterRotation(secondTile, -90f)
+                                    == getDirectionByColor(firstTile.color)){
+                                    moves += performMoves("D'")
+                                    moves += performMoves(getDirectionByColor(secondTile.color) + "'")
+                                    moves += performMoves("D")
+                                    moves += performMoves(getDirectionByColor(secondTile.color).toString())
+                                }
+                                else{
+                                    moves += performMoves("D")
+                                    moves += performMoves(getDirectionByColor(secondTile.color).toString())
+                                    moves += performMoves("D'")
+                                    moves += performMoves(getDirectionByColor(secondTile.color) + "'")
+                                }
+                            }
+                            else {
+                                moves += performMoves("D")
+                            }
+                        }
+                    }
+                    Thread.sleep(50)
+                }
+            }
+        }
+
+        return optimizeMoves(moves)
+    }
+
+    fun finishTwoLayers() : String{
+        var moves = String()
+
+        // rotate the whole cube
+        rotateCube(180f, Axis.zAxis)
+
+        //calculate white corners layout
+        while(numEdgesOriented() < 4) {
+            var tempCubies = cubies.filter { x -> x.isEdge && x.tiles.all{t -> t.color != Color.WHITE && t.color != Color.YELLOW}}//.any() { t -> t.color == Color.WHITE } }
+            for (qb in tempCubies) {
+                while (!isEdgeRightOriented(qb)) {
+                    if (permutationAllowed) {
+                        var tempTiles = qb.tiles.filter { x -> x.isActive }
+                        var firstTile = tempTiles[0]
+                        var secondTile = tempTiles[1]
+
+                        var trueFaceTile = qb.tiles.filter { x -> x.color == getColorByDirection(x.direction) }.singleOrNull()
+
+                        //cubie should be rotated
+                        if(firstTile.color == getColorByDirection(secondTile.direction)
+                            && secondTile.color == getColorByDirection(firstTile.direction))
+                        {
+                            var c1 = qb.getDirOfColor(secondTile.color.charNotation)
+                            var c2 = qb.getDirOfColor(firstTile.color.charNotation)
+                            if(qb.getNormalVectorAfterRotation(firstTile, 90f) == 'U'){
+                                moves += performMoves("U")
+                                moves += performMoves(c1.toString())
+                                moves += performMoves("U'")
+                                moves += performMoves(c1 + "'")
+                                moves += performMoves("U'")
+                                moves += performMoves(c2 + "'")
+                                moves += performMoves("U")
+                                moves += performMoves(c2.toString())
+                                moves += performMoves("U2")
+                                moves += performMoves("U")
+                                moves += performMoves(c1.toString())
+                                moves += performMoves("U'")
+                                moves += performMoves(c1 + "'")
+                                moves += performMoves("U'")
+                                moves += performMoves(c2 + "'")
+                                moves += performMoves("U")
+                                moves += performMoves(c2.toString())
+                            }
+                            else{
+                                moves += performMoves("U'")
+                                moves += performMoves(c1 + "'")
+                                moves += performMoves("U")
+                                moves += performMoves(c1.toString())
+                                moves += performMoves("U")
+                                moves += performMoves(c2.toString())
+                                moves += performMoves("U'")
+                                moves += performMoves(c2 + "'")
+                                moves += performMoves("U2")
+                                moves += performMoves("U'")
+                                moves += performMoves(c1 + "'")
+                                moves += performMoves("U")
+                                moves += performMoves(c1.toString())
+                                moves += performMoves("U")
+                                moves += performMoves(c2.toString())
+                                moves += performMoves("U'")
+                                moves += performMoves(c2 + "'")
+                            }
+                        }
+
+                        //first case one tile is on the right side
+                        //second tile should be moved to the left side
+                        else if(trueFaceTile != null){
+                            var notTrueFaceTile = tempTiles.filter { x -> x.color != trueFaceTile.color }.single()
+
+                            if(qb.getNormalVectorAfterRotation(trueFaceTile, 90f)
+                                == getDirectionByColor(notTrueFaceTile.color)){
+                                moves += performMoves("U'")
+                                moves += performMoves(getDirectionByColor(notTrueFaceTile.color) + "'")
+                                moves += performMoves("U")
+                                moves += performMoves(getDirectionByColor(notTrueFaceTile.color).toString())
+                                moves += performMoves("U")
+                                moves += performMoves(getDirectionByColor(trueFaceTile.color).toString())
+                                moves += performMoves("U'")
+                                moves += performMoves(getDirectionByColor(trueFaceTile.color) + "'")
+                            }
+                            else{
+                                moves += performMoves("U")
+                                moves += performMoves(getDirectionByColor(notTrueFaceTile.color).toString())
+                                moves += performMoves("U'")
+                                moves += performMoves(getDirectionByColor(notTrueFaceTile.color) + "'")
+                                moves += performMoves("U'")
+                                moves += performMoves(getDirectionByColor(trueFaceTile.color) + "'")
+                                moves += performMoves("U")
+                                moves += performMoves(getDirectionByColor(trueFaceTile.color).toString())
+                            }
+                        }
+                        else {
+                            moves += performMoves("U")
+                        }
+                    }
+                }
+            }
+        }
+        return moves
+    }
+
+    //check if cubie on the right corner place
+    fun isCornerRightOriented(cubie : Cubie) : Boolean {
+        var tempTiles = cubie.tiles.filter { x -> x.isActive }
+        if (tempTiles.any(){x -> x.color == Color.WHITE && x.direction == 'U'}) {
+            if(tempTiles.any(){x -> x.color == getColorByDirection(x.direction) && x.color != Color.WHITE}){
+                return true
+            }
+        }
+        return false
+    }
+
+    fun isEdgeRightOriented(cubie : Cubie) : Boolean{
+        var tempTiles = cubie.tiles.filter { x -> x.isActive }
+        if(tempTiles[0].direction == getDirectionByColor(tempTiles[0].color)
+            && tempTiles[1].direction == getDirectionByColor(tempTiles[1].color)){
+            return true
+        }
+        return false
+    }
+
     fun scramble(scramble: String) {
         //Rotate the cube to get white on top, then return cube to original position at end of scramble
-        performMoves("z2 $scramble z2")
+        performMoves(scramble)
     }
 
     fun performMoves(moves: String): String {
@@ -224,7 +548,7 @@ class Cube() {
                 }
                 i++
             } else {
-                Thread.sleep(10)
+                Thread.sleep(100)
             }
         }
         return moves
@@ -240,116 +564,121 @@ class Cube() {
                 preChange = charArrayOf('B', 'U', 'R', 'D', 'L')
                 postChange = charArrayOf('B', 'L', 'U', 'R', 'D')
                 //Rotate the matrix
-                layers.filter { x -> x.direction == Direction.BACK }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.BACK }.single().rotate(90f)
             }
 
             "B'" -> {
                 preChange = charArrayOf('B', 'U', 'R', 'D', 'L')
                 postChange = charArrayOf('B', 'R', 'D', 'L', 'U')
-                layers.filter { x -> x.direction == Direction.BACK }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.BACK }.single().rotate(-90f)
             }
 
             "D" -> {
                 preChange = charArrayOf('D', 'L', 'B', 'R', 'F')
                 postChange = charArrayOf('D', 'F', 'L', 'B', 'R')
-                layers.filter { x -> x.direction == Direction.DOWN }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.DOWN }.single().rotate(90f)
             }
 
             "D'" -> {
                 preChange = charArrayOf('D', 'F', 'L', 'B', 'R')
                 postChange = charArrayOf('D', 'L', 'B', 'R', 'F')
-                layers.filter { x -> x.direction == Direction.DOWN }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.DOWN }.single().rotate(-90f)
             }
 
             "E" -> {
                 preChange = charArrayOf('L', 'B', 'R', 'F')
                 postChange = charArrayOf('F', 'L', 'B', 'R')
+                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(90f)
 
             }
 
             "E'" -> {
                 preChange = charArrayOf('F', 'L', 'B', 'R')
                 postChange = charArrayOf('L', 'B', 'R', 'F')
+                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(-90f)
 
             }
 
             "F" -> {
                 preChange = charArrayOf('F', 'U', 'R', 'D', 'L')
                 postChange = charArrayOf('F', 'R', 'D', 'L', 'U')
-                layers.filter { x -> x.direction == Direction.FRONT }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.FRONT }.single().rotate(90f)
 
             }
 
             "F'" -> {
                 preChange = charArrayOf('F', 'U', 'R', 'D', 'L')
                 postChange = charArrayOf('F', 'L', 'U', 'R', 'D')
-                layers.filter { x -> x.direction == Direction.FRONT }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.FRONT }.single().rotate(-90f)
 
             }
 
             "L" -> {
                 preChange = charArrayOf('L', 'B', 'D', 'F', 'U')
                 postChange = charArrayOf('L', 'U', 'B', 'D', 'F')
-                layers.filter { x -> x.direction == Direction.LEFT }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.LEFT }.single().rotate(90f)
 
             }
 
             "L'" -> {
                 preChange = charArrayOf('L', 'U', 'B', 'D', 'F')
                 postChange = charArrayOf('L', 'B', 'D', 'F', 'U')
-                layers.filter { x -> x.direction == Direction.LEFT }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.LEFT }.single().rotate(-90f)
 
             }
 
             "M" -> {
                 preChange = charArrayOf('B', 'D', 'F', 'U')
                 postChange = charArrayOf('U', 'B', 'D', 'F')
+                layers.filter { x -> x.layerName == LayerEnum.MIDDLE }.single().rotate(90f)
 
             }
 
             "M'" -> {
                 preChange = charArrayOf('U', 'B', 'D', 'F')
                 postChange = charArrayOf('B', 'D', 'F', 'U')
-
+                layers.filter { x -> x.layerName == LayerEnum.MIDDLE }.single().rotate(-90f)
             }
 
             "R" -> {
                 preChange = charArrayOf('R', 'U', 'B', 'D', 'F')
                 postChange = charArrayOf('R', 'B', 'D', 'F', 'U')
-                layers.filter { x -> x.direction == Direction.RIGHT }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.RIGHT }.single().rotate(90f)
 
             }
 
             "R'" -> {
                 preChange = charArrayOf('R', 'B', 'D', 'F', 'U')
                 postChange = charArrayOf('R', 'U', 'B', 'D', 'F')
-                layers.filter { x -> x.direction == Direction.RIGHT }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.RIGHT }.single().rotate(-90f)
 
             }
 
             "S" -> {
                 preChange = charArrayOf('U', 'R', 'D', 'L')
                 postChange = charArrayOf('R', 'D', 'L', 'U')
+                layers.filter { x -> x.layerName == LayerEnum.STANDING }.single().rotate(90f)
 
             }
 
             "S'" -> {
                 preChange = charArrayOf('U', 'R', 'D', 'L')
                 postChange = charArrayOf('L', 'U', 'R', 'D')
+                layers.filter { x -> x.layerName == LayerEnum.STANDING }.single().rotate(-90f)
 
             }
 
             "U" -> {
                 preChange = charArrayOf('U', 'F', 'L', 'B', 'R')
                 postChange = charArrayOf('U', 'L', 'B', 'R', 'F')
-                layers.filter { x -> x.direction == Direction.UP }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.UP }.single().rotate(90f)
 
             }
 
             "U'" -> {
                 preChange = charArrayOf('U', 'L', 'B', 'R', 'F')
                 postChange = charArrayOf('U', 'F', 'L', 'B', 'R')
-                layers.filter { x -> x.direction == Direction.BACK }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.UP }.single().rotate(-90f)
 
             }
 
@@ -377,6 +706,58 @@ class Cube() {
             }
         }
         return numOriented
+    }
+
+    fun numWhiteCornersOriented() : Int{
+        var num = 0
+        for(qb in cubies){
+            if(qb.isCorner && qb.getDirOfColor('W') == 'U'){
+                var tempTiles = qb.tiles.filter { x -> x.color != Color.WHITE }
+                for(tile in tempTiles){
+                    if(tile.color == getColorByDirection(tile.direction)){
+                        num++
+                        break
+                    }
+                }
+            }
+        }
+        return num
+    }
+
+    fun getDirectionByColor(color: Color) : Char{
+        for(direction in directions){
+            if(direction.color == color){
+                return direction.charName
+            }
+        }
+        return 'N'
+    }
+
+    fun getColorByDirection(charName : Char) : Color{
+        for(direction in directions){
+            if(charName == direction.charName){
+                return direction.color
+            }
+        }
+        return Color.BLACK
+    }
+
+    //how many cubies are right oriented for two layers
+    fun numEdgesOriented() : Int{
+        var num = 0
+        for(qb in cubies) {
+            if (qb.isEdge) {
+                if (qb.tiles.all { x -> x.color != Color.WHITE && x.color == Color.YELLOW }) {
+                    if (qb.tiles[0].direction == getDirectionByColor(qb.tiles[0].color)
+                        && qb.tiles[1].direction == getDirectionByColor(qb.tiles[1].color))
+                    {
+                        num++
+                        break
+                    }
+                }
+            }
+        }
+        return num
     }
 
     fun prepareSlot(id: Int, color: Char): String {
@@ -411,7 +792,7 @@ class Cube() {
                     if (qb.getDirOfColor('W') === 'D') {
                         moves += prepareSlot(qb.id, 'W')
                         //Get the vertical plane in which the cubie lies
-                        val turnToMake = qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y)
+                        val turnToMake = qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y, qb.centerPoint.z)
                         moves += performMoves("" + turnToMake + "2 ")
                     }
                 }
@@ -423,7 +804,7 @@ class Cube() {
             for (qb in cubies) {
                 if (qb.isEdge) {
                     if (qb.getDirOfColor('W') !== 'A' && qb.getDirOfColor('W') !== 'D') {
-                        val vert = qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y)
+                        val vert = qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y, qb.centerPoint.z)
                         moves += prepareSlot(qb.id, 'W')
                         if (vert == 'F') {
                             moves += performMoves("F' U' R ")
@@ -451,25 +832,25 @@ class Cube() {
                             /* Depending on the position of the edge, one of the vertical planes it lies
 								 * in must be cleared of white edges before bringing it up */
                             if (qb.centerPoint.x == -2.1f && qb.centerPoint.y == -2.1f) {
-                                if (tempColors[k].direction.charName === 'L') {
+                                if (tempColors[k].direction === 'L') {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("F ")
                                 } else {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("L' ")
                                 }
                             } else if (qb.centerPoint.x == 2.1f && qb.centerPoint.y == -2.1f) {
-                                if (tempColors[k].direction.charName === 'F') {
+                                if (tempColors[k].direction === 'F') {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("R ")
                                 } else {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("F' ")
                                 }
                             } else if (qb.centerPoint.x == 2.1f && qb.centerPoint.y == 2.1f) {
-                                if (tempColors[k].direction.charName === 'B') {
+                                if (tempColors[k].direction === 'B') {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("R' ")
                                 } else {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("B ")
                                 }
                             } else {
-                                if (tempColors[k].direction.charName === 'B') {
+                                if (tempColors[k].direction === 'B') {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("L ")
                                 } else {
                                     moves += prepareSlot(qb.id, 'W') + performMoves("B' ")
@@ -487,7 +868,7 @@ class Cube() {
             for (qb in cubies) {
                 if (qb.isEdge) {
                     if (qb.getDirOfColor('W') !== 'A' && qb.getDirOfColor('W') !== 'U') {
-                        val vert = qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y)
+                        val vert = qb.verticalFace(qb.centerPoint.x, qb.centerPoint.y, qb.centerPoint.z)
                         if (vert == 'F') {
                             moves += performMoves("F U' R ")
                         } else if (vert == 'R') {
@@ -600,5 +981,16 @@ class Cube() {
             i++
         }
         return moves
+    }
+
+    fun rotateCube(angle : Float, axis: Axis) {
+        for (layer in layers) {
+            if (Math.abs(layer.layerName.rotationAxis.x) == Math.abs(axis.x)
+                && Math.abs(layer.layerName.rotationAxis.y) == Math.abs(axis.y)
+                && Math.abs(layer.layerName.rotationAxis.z) == Math.abs(axis.z)
+            ) {
+                layer.rotate(angle)
+            }
+        }
     }
 }

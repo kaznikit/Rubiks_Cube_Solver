@@ -25,6 +25,7 @@ class TouchSurface : GLSurfaceView {
         mRenderer = com.example.kotlinapp.Rubik.Renderer(context, cube)
         solver = Solver(cube)
         setEGLContextClientVersion(2)
+
         setRenderer(mRenderer)
     }
 

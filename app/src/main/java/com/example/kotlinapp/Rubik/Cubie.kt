@@ -5,6 +5,7 @@ import android.opengl.Matrix
 import com.example.kotlinapp.Rubik.Enums.Axis
 import com.example.kotlinapp.Rubik.Enums.Color
 import com.example.kotlinapp.Rubik.Enums.Direction
+import com.example.kotlinapp.Rubik.Enums.LayerEnum
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -70,7 +71,8 @@ class Cubie {
             Tile(
                 arrayOf(leftBottomBack, leftBottomFront, rightBottomBack, rightBottomFront),
                 Color.YELLOW,
-                Direction.DOWN
+                'D',
+                Axis.yMinusAxis
             )
         )
         // front
@@ -78,7 +80,8 @@ class Cubie {
             Tile(
                 arrayOf(leftBottomFront, leftTopFront, rightBottomFront, rightTopFront),
                 Color.GREEN,
-                Direction.FRONT
+                'F',
+                Axis.zAxis
             )
         )
         // left
@@ -86,7 +89,8 @@ class Cubie {
             Tile(
                 arrayOf(leftBottomBack, leftTopBack, leftBottomFront, leftTopFront),
                 Color.ORANGE,
-                Direction.LEFT
+                'L',
+                Axis.xMinusAxis
             )
         )
         // right
@@ -94,7 +98,8 @@ class Cubie {
             Tile(
                 arrayOf(rightBottomBack, rightBottomFront, rightTopBack, rightTopFront),
                 Color.RED,
-                Direction.RIGHT
+                'R',
+                Axis.xAxis
             )
         )
         // back
@@ -102,7 +107,8 @@ class Cubie {
             Tile(
                 arrayOf(leftBottomBack, rightBottomBack, leftTopBack, rightTopBack),
                 Color.BLUE,
-                Direction.BACK
+                'B',
+                Axis.zMinusAxis
             )
         )
         // top
@@ -110,7 +116,8 @@ class Cubie {
             Tile(
                 arrayOf(leftTopBack, rightTopBack, leftTopFront, rightTopFront),
                 Color.WHITE,
-                Direction.UP
+                'U',
+                Axis.yAxis
             )
         )
 
@@ -137,24 +144,36 @@ class Cubie {
     fun getDirOfColor(color: Char): Char {
         for (tile in tiles) {
             if (tile.color.charNotation == color)
-                return tile.direction.charName
+                return tile.direction
         }
         return 'A'
+    }
+
+    //check if cubie is on the right place on top layer
+    fun isCubieRightOriented() : Boolean{
+        for(tile in tiles){
+            if(tile.isActive){
+                if(tile.color == Color.WHITE && tile.direction == 'U'){
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     fun getColors() : ArrayList<Tile>{
         return tiles
     }
 
-    fun verticalFace(x: Float, y: Float): Char {
+    fun verticalFace(x: Float, y: Float, z : Float): Char {
         return if (isEdge) {
             if (x == -2.1f)
                 'L'
             else if (x == 0f) {
-                if (y == -2.1f) {
-                    'F'
-                } else
+                if (z == -2.1f) {
                     'B'
+                } else
+                    'F'
             } else
                 'R'
         } else 'A'
@@ -182,17 +201,30 @@ class Cubie {
 
         for(tile in tiles){
             if(tile.isActive){
-                var normalVec = Direction.getVectorByDirection(tile.direction)
+                var normalVec = Axis.getRotationVector(tile.normalAxis)
                 Matrix.multiplyMV(normalVec, 0, mat, 0, normalVec, 0)
                 normalVec[0] = Vertex.RoundFloat(normalVec[0])
                 normalVec[1] = Vertex.RoundFloat(normalVec[1])
                 normalVec[2] = Vertex.RoundFloat(normalVec[2])
 
-                tile.direction = Direction.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
+                tile.direction = LayerEnum.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
             }
         }
-
         isRotated = true
+    }
+
+    fun getNormalVectorAfterRotation(tile : Tile, rotationAngle : Float) : Char {
+        var mat = FloatArray(16)
+        Matrix.setIdentityM(mat, 0)
+
+        var rotateVec = Axis.getRotationVector(tile.normalAxis)
+        Matrix.rotateM(mat, 0, rotationAngle, -rotateVec[0], -rotateVec[1], -rotateVec[2])
+        var normalVec = LayerEnum.getVectorByDirection(tile.direction)
+        Matrix.multiplyMV(normalVec, 0, mat, 0, normalVec, 0)
+        normalVec[0] = Vertex.RoundFloat(normalVec[0])
+        normalVec[1] = Vertex.RoundFloat(normalVec[1])
+        normalVec[2] = Vertex.RoundFloat(normalVec[2])
+        return LayerEnum.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
     }
 
     fun rotate(angle: Float, rotationAxis: Axis){
@@ -215,12 +247,12 @@ class Cubie {
                 currentRotation = 0.0f
             } else {
                 if(rotationAngle < 0){
-                    currentRotation -= 5.0f
-                    Matrix.rotateM(mAnimationMatrix, 0, -5.0f, rotationX, rotationY, rotationZ)
+                    currentRotation -= 10.0f
+                    Matrix.rotateM(mAnimationMatrix, 0, -10.0f, rotationX, rotationY, rotationZ)
                 }
                 else{
-                    currentRotation += 5.0f
-                    Matrix.rotateM(mAnimationMatrix, 0, 5.0f, rotationX, rotationY, rotationZ)
+                    currentRotation += 10.0f
+                    Matrix.rotateM(mAnimationMatrix, 0, 10.0f, rotationX, rotationY, rotationZ)
                 }
                 Matrix.transposeM(mTransformMatrix, 0, mAnimationMatrix, 0)
             }
@@ -229,7 +261,7 @@ class Cubie {
 
     fun deactiveTiles(direction: Direction){
         for(tile in tiles){
-            if(!tile.isActive && tile.direction == direction){
+            if(!tile.isActive && tile.direction == direction.charName){
                 tile.isActive = true
             }
         }
@@ -244,7 +276,6 @@ class Cubie {
             }
         }
     }
-
 
     fun draw(projectionMatrix: FloatArray, viewMatrix: FloatArray, programId: Int) {
         animateTransform()

@@ -617,6 +617,40 @@ class Cube() {
         return moves
     }
 
+    //rotate cube to get right cubie in front of user
+    fun findRightOrientedYellowCubie() {
+        var tempCubies = cubies.filter { x -> x.isCorner && x.tiles.any{ y -> y.color == Color.YELLOW} }
+        for(qb in tempCubies){
+            var tempTiles = qb.tiles.filter { x -> x.isActive }
+            var yellowTile = tempTiles.filter { x -> x.color == Color.YELLOW }.single()
+            var firstTile = tempTiles.filter { x ->x.color != Color.YELLOW }[0]
+            var secondTile = tempTiles.filter { x ->x.color != Color.YELLOW }[1]
+
+            if(yellowTile.direction == 'U'){
+                if(getDirectionByColor(firstTile.color) == secondTile.direction
+                    || getDirectionByColor(firstTile.color) == firstTile.direction
+                    || getDirectionByColor(firstTile.color) == getDirectionByColor(secondTile.color)){
+                    if(firstTile.direction != 'F' || secondTile.direction != 'F'){
+                        if(qb.getNormalVectorAfterRotation(firstTile, 180f, 'U') == 'F'
+                            || qb.getNormalVectorAfterRotation(secondTile, 180f, 'U') == 'F'){
+                            rotationAxis = Axis.yAxis
+                            rotateCube(180f, Axis.yAxis)
+                        }
+                        /*else if(qb.getNormalVectorAfterRotation(firstTile, 180f, 'U') == 'F'){
+
+                        }*/
+                    }
+                }
+            }
+            else{
+                if(yellowTile.direction == getDirectionByColor(firstTile.color)
+                    || yellowTile.direction == getDirectionByColor(secondTile.color)){
+
+                }
+            }
+        }
+    }
+
     //check if cubie on the right corner place
     fun isCornerRightOriented(cubie : Cubie) : Boolean {
         var tempTiles = cubie.tiles.filter { x -> x.isActive }

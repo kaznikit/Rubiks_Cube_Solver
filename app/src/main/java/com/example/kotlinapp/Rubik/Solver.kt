@@ -31,5 +31,7 @@ class Solver(var cube: Cube) {
 
         var sssss = cube.swapYellowEdgesTopLayer()
         System.out.print(sssss)
+
+        cube.findRightOrientedYellowCubie()
     }
 }

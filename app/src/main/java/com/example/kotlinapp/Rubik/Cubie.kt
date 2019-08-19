@@ -141,14 +141,6 @@ class Cubie {
         mVertexBuffer = byteBuf.asFloatBuffer()
     }
 
-    fun getDirOfColor(color: Char): Char {
-        for (tile in tiles) {
-            if (tile.color.charNotation == color)
-                return tile.direction
-        }
-        return 'A'
-    }
-
     //check if cubie is on the right place on top layer
     fun isCubieRightOriented() : Boolean{
         for(tile in tiles){
@@ -207,17 +199,18 @@ class Cubie {
                 normalVec[1] = Vertex.RoundFloat(normalVec[1])
                 normalVec[2] = Vertex.RoundFloat(normalVec[2])
 
+                tile.normalAxis = Axis.getAxis(normalVec[0], normalVec[1], normalVec[2])
                 tile.direction = LayerEnum.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
             }
         }
         isRotated = true
     }
 
-    fun getNormalVectorAfterRotation(tile : Tile, rotationAngle : Float) : Char {
+    fun getNormalVectorAfterRotation(tile : Tile, rotationAngle : Float, direction: Char) : Char {
         var mat = FloatArray(16)
         Matrix.setIdentityM(mat, 0)
 
-        var rotateVec = Axis.getRotationVector(tile.normalAxis)
+        var rotateVec = LayerEnum.getVectorByDirection(direction)//Axis.getRotationVector(tile.normalAxis)
         Matrix.rotateM(mat, 0, rotationAngle, -rotateVec[0], -rotateVec[1], -rotateVec[2])
         var normalVec = LayerEnum.getVectorByDirection(tile.direction)
         Matrix.multiplyMV(normalVec, 0, mat, 0, normalVec, 0)

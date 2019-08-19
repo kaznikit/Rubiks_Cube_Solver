@@ -26,5 +26,10 @@ class Solver(var cube: Cube) {
         var sss = cube.finishTwoLayers()
         System.out.print(sss)
 
+        var ssss = cube.makeYellowCross()
+        System.out.print(ssss)
+
+        var sssss = cube.swapYellowEdgesTopLayer()
+        System.out.print(sssss)
     }
 }

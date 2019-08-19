@@ -12,6 +12,14 @@ class Direction {
         this.color = faceColor
     }
 
+    fun changeColor(color: Color){
+        this.color = color
+    }
+
+    fun changeCharName(charName: Char){
+        this.charName = charName
+    }
+
     fun getDirectionByColor(color: Color): Char {
         return charName
     }

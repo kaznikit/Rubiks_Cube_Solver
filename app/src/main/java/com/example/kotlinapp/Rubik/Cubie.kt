@@ -12,8 +12,6 @@ import java.nio.FloatBuffer
 import kotlin.random.Random
 
 class Cubie {
-    var world : World
-
     private lateinit var mVertexBuffer: FloatBuffer
 
     internal var aPositionLocation = 0
@@ -47,8 +45,7 @@ class Cubie {
     var isCorner = false
     var isEdge = false
 
-    constructor(minX : Float, minY : Float, minZ : Float, sideLength : Float, world : World, id :Int, isCorner:Boolean, isEdge:Boolean) {
-        this.world = world
+    constructor(minX : Float, minY : Float, minZ : Float, sideLength : Float, id :Int, isCorner:Boolean, isEdge:Boolean) {
         this.id = id
 
         this.isCorner = isCorner
@@ -57,14 +54,14 @@ class Cubie {
         Matrix.setIdentityM(mTransformMatrix, 0)
         Matrix.setIdentityM(mAnimationMatrix, 0)
 
-        val leftBottomBack = world.addVertex(Vertex(minX, minY, minZ))
-        val rightBottomBack = world.addVertex(Vertex(minX + sideLength, minY, minZ))
-        val leftTopBack = world.addVertex(Vertex(minX, minY + sideLength, minZ))
-        val rightTopBack = world.addVertex(Vertex(minX + sideLength, minY + sideLength, minZ))
-        val leftBottomFront = world.addVertex(Vertex(minX, minY, minZ + sideLength))
-        val rightBottomFront = world.addVertex(Vertex(minX + sideLength, minY, minZ + sideLength))
-        val leftTopFront = world.addVertex(Vertex(minX, minY + sideLength, minZ + sideLength))
-        val rightTopFront = world.addVertex(Vertex(minX + sideLength, minY + sideLength, minZ + sideLength))
+        val leftBottomBack = Vertex(minX, minY, minZ)
+        val rightBottomBack = Vertex(minX + sideLength, minY, minZ)
+        val leftTopBack = Vertex(minX, minY + sideLength, minZ)
+        val rightTopBack = Vertex(minX + sideLength, minY + sideLength, minZ)
+        val leftBottomFront = Vertex(minX, minY, minZ + sideLength)
+        val rightBottomFront = Vertex(minX + sideLength, minY, minZ + sideLength)
+        val leftTopFront = Vertex(minX, minY + sideLength, minZ + sideLength)
+        val rightTopFront = Vertex(minX + sideLength, minY + sideLength, minZ + sideLength)
 
         // down tile
         tiles.add(
@@ -153,25 +150,6 @@ class Cubie {
         return false
     }
 
-    fun getColors() : ArrayList<Tile>{
-        return tiles
-    }
-
-    fun verticalFace(x: Float, y: Float, z : Float): Char {
-        return if (isEdge) {
-            if (x == -2.1f)
-                'L'
-            else if (x == 0f) {
-                if (z == -2.1f) {
-                    'B'
-                } else
-                    'F'
-            } else
-                'R'
-        } else 'A'
-
-    }
-
     fun endAnimation() {
         //stop the rotation
         isRotating = false
@@ -252,7 +230,7 @@ class Cubie {
         }
     }
 
-    fun deactiveTiles(direction: Direction){
+    fun deactivateTiles(direction: Direction){
         for(tile in tiles){
             if(!tile.isActive && tile.direction == direction.charName){
                 tile.isActive = true

@@ -1,8 +1,5 @@
 package com.example.kotlinapp.Rubik.Enums
 
-import com.example.kotlinapp.Rubik.Vertex
-import java.util.*
-
 //describe each layer location on the cube
 enum class LayerEnum(val charName : Char, var rotationAxis: Axis, val centerPoint : Float) {
 
@@ -17,39 +14,6 @@ enum class LayerEnum(val charName : Char, var rotationAxis: Axis, val centerPoin
     UP('U', Axis.yAxis, 2.1f);
 
     companion object {
-        fun getLayerNameByCenterPoint(rotationAxis: Axis, centerPoint: Float): LayerEnum? {
-            when(rotationAxis) {
-                Axis.xMinusAxis -> {
-                    return LEFT
-                }
-                Axis.xAxis -> {
-                    if(centerPoint == 0f) {
-                        return MIDDLE
-                    }
-                    return RIGHT
-                }
-                Axis.yAxis -> {
-                    if(centerPoint == 0f){
-                        return EQUATOR
-                    }
-                    return UP
-                }
-                Axis.yMinusAxis -> {
-                    return DOWN
-                }
-                Axis.zAxis -> {
-                    if (centerPoint == 0f) {
-                        return STANDING
-                    }
-                    return FRONT
-                }
-                Axis.zMinusAxis -> {
-                    return BACK
-                }
-            }
-            return null
-        }
-
         fun getRotationAxisByLayerName(layerEnum: LayerEnum) : Axis {
             when (layerEnum) {
                 LEFT -> {

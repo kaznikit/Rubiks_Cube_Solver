@@ -20,19 +20,10 @@ class Renderer : GLSurfaceView.Renderer {
     val mMVPMatrix = FloatArray(16)
     val mMatrix = FloatArray(16)
     var mCubeModelMatrix = FloatArray(16)
-    val mRotationMatrix = FloatArray(16)
 
-    lateinit var mWorld: World
-    private var mAngle: Float = 0.0f
     private lateinit var mCube: Cube
-    var mAngleX: Float = 0.0f
-    var mAngleY: Float = 0.0f
 
     var uMatrixLocation: Int = 0
-
-    companion object {
-        var intValue = 0;
-    }
 
     constructor(context : Context, cube : Cube){
         this.context = context
@@ -50,13 +41,12 @@ class Renderer : GLSurfaceView.Renderer {
         glUseProgram(programId)
 
         Matrix.setIdentityM(mCubeModelMatrix, 0)
-        Matrix.setIdentityM(mRotationMatrix, 0)
 
         CreateViewMatrix()
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        GLES20.glViewport(0, 0, width, height)
+        glViewport(0, 0, width, height)
         CreateProjectionMatrix(width, height)
         Matrix.multiplyMM(mMatrix, 0, mViewMatrix, 0, mCubeModelMatrix, 0)
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrix, 0)
@@ -64,8 +54,8 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1f)
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
+        glClearColor(0.5f, 0.5f, 0.5f, 1f)
+        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
         mCube.resetLayerCubies()
 
         for(cubie in mCube.cubies){

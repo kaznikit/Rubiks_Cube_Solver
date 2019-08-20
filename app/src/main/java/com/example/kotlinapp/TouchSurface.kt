@@ -30,62 +30,15 @@ class TouchSurface : GLSurfaceView {
     }
 
     override fun onTrackballEvent(e: MotionEvent): Boolean {
-        /*mRenderer.mAngleX += e.x * TRACKBALL_SCALE_FACTOR
-        mRenderer.mAngleY += e.y * TRACKBALL_SCALE_FACTOR
-        requestRender()*/
         return true
     }
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
-        /*val x = e.x
-        val y = e.y
-        when (e.action) {
-            MotionEvent.ACTION_MOVE -> {
-                val dx = x - mPreviousX
-                val dy = y - mPreviousY
-                mRenderer.mAngleX += dx * TOUCH_SCALE_FACTOR
-                mRenderer.mAngleY += dy * TOUCH_SCALE_FACTOR
-                requestRender()
-            }
-        }
-        mPreviousX = x
-        mPreviousY = y*/
-
-        /*for(layer in cube.layers) {
-            layer.rotate(90.0f, 1.0f, 0.0f, 0.0f)
-        }*/
-        //cube.layers.get(0).rotate(90.0f, 1.0f, 0f, 0.0f)
         when (e.action) {
             MotionEvent.ACTION_DOWN -> {
-
                 //cube.randScramble()
                 solver.makeCube()
 
-                /*if (k == 0) {
-                    cube.layers.get(0).rotate(90.0f)
-                    k++
-                } else if (k == 1) {
-                    cube.layers.get(3).rotate(90.0f)
-                    k++
-                } else if (k == 2) {
-                    cube.layers.get(6).rotate(90.0f)
-                    k++
-                } else if (k == 3) {
-                    cube.layers.get(8).rotate(90.0f)
-                    k++
-                } else if (k == 4) {
-                    cube.layers.get(8).rotate(-90.0f)
-                    k++
-                } else if (k == 5) {
-                    cube.layers.get(5).rotate(-90.0f)
-                    k++
-                } else if (k == 6) {
-                    cube.layers.get(2).rotate(-90.0f)
-                    k++
-                } else if (k == 7) {
-                    cube.layers.get(1).rotate(-90.0f)
-                    k++
-                }*/
             }
         }
         return true

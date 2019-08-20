@@ -532,7 +532,6 @@ class Cube() {
 
         //calculate white corners layout
         while (numYellowEdgesOriented() < 4) {
-            if (permutationAllowed) {
                 var tempCubies =
                     cubies.filter { x -> x.isEdge && x.tiles.any { t -> t.color == Color.YELLOW } }
                 var needToRotate180 = false
@@ -540,7 +539,8 @@ class Cube() {
                 var tilesForRotationLF = 0
 
                 for (qb in tempCubies) {
-                    for (tile in qb.tiles) {
+                    if (permutationAllowed) {
+                        for (tile in qb.tiles) {
                         var tempTiles = qb.tiles.filter { x -> x.isActive }
 
                         if ((tempTiles[0].direction == 'U' && tempTiles[1].direction == 'L'
@@ -574,14 +574,18 @@ class Cube() {
         var moves = String()
 
         while (numYellowEdgeCubieOriented() < 4) {
-            if (permutationAllowed) {
                 var tempCubies = cubies.filter { x -> x.isEdge && x.tiles.any { y -> y.color == Color.YELLOW } }
-
                 for (qb in tempCubies) {
-                    while (!isYellowEdgeRightOriented(qb)) {
-                        var tempTiles = qb.tiles.filter { x -> x.isActive }
+                        while (!isYellowEdgeRightOriented(qb)) {
+                            if (permutationAllowed) {
+                                var tempTiles = qb.tiles.filter { x -> x.isActive }
                         var yellowTile = tempTiles.filter { x -> x.color == Color.YELLOW }.single()
                         var anotherTile = tempTiles.filter { x -> x.color != Color.YELLOW }.single()
+
+                        if(anotherTile.direction == getDirectionByColor(anotherTile.color)){
+                            continue
+                        }
+
                         if(qb.getNormalVectorAfterRotation(anotherTile, 90f, 'U')
                             == getDirectionByColor(anotherTile.color)){
                             //rotate layer opposite to desire

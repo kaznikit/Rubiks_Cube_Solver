@@ -1,15 +1,25 @@
 package com.example.kotlinapp.Rubik
 
+import android.app.Activity
 import android.content.Context
 import android.opengl.GLES10.glRotatef
 import android.opengl.GLES20
 import android.opengl.GLES20.*
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
+import android.util.DisplayMetrics
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
+import com.example.kotlinapp.CurrentState
+import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.R
 import com.example.kotlinapp.Util.ShaderUtils
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import com.example.kotlinapp.MainActivity
+import org.opencv.core.Point
+
 
 class Renderer : GLSurfaceView.Renderer {
     val context: Context
@@ -25,17 +35,34 @@ class Renderer : GLSurfaceView.Renderer {
 
     var uMatrixLocation: Int = 0
 
-    constructor(context : Context, cube : Cube){
+    lateinit var view: View
+    lateinit var state: CurrentState
+
+    val displayMetrics = DisplayMetrics()
+
+    private val SWIPE_MIN_DISTANCE = 120
+    private val SWIPE_MAX_OFF_PATH = 250
+    private val SWIPE_THRESHOLD_VELOCITY = 200
+    var density: Float = 0.toFloat()
+
+    constructor(view: View, context: Context, state: CurrentState) {
+        this.view = view
         this.context = context
-        mCube = cube
+        this.state = state
+        mCube = Cube()
+        val main = context as Activity
+        main.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics)
+        density = displayMetrics.density;
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         glEnable(GLES20.GL_CULL_FACE)
         glClearColor(0f, 0f, 0f, 0f)
         glEnable(GL_DEPTH_TEST)
-        val vertexShaderId = ShaderUtils.createShader(context, GL_VERTEX_SHADER, R.raw.vertex_shader)
-        val fragmentShaderId = ShaderUtils.createShader(context, GL_FRAGMENT_SHADER, R.raw.fragment_shader)
+        val vertexShaderId =
+            ShaderUtils.createShader(context, GL_VERTEX_SHADER, R.raw.vertex_shader)
+        val fragmentShaderId =
+            ShaderUtils.createShader(context, GL_FRAGMENT_SHADER, R.raw.fragment_shader)
         programId = ShaderUtils.createProgram(vertexShaderId, fragmentShaderId)
         glLinkProgram(programId)
         glUseProgram(programId)
@@ -54,16 +81,15 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        glClearColor(0.5f, 0.5f, 0.5f, 1f)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
         mCube.resetLayerCubies()
 
-        for(cubie in mCube.cubies){
+        for (cubie in mCube.cubies) {
             cubie.draw(mProjectionMatrix, mViewMatrix, programId)
         }
     }
 
-    fun CreateViewMatrix(){
+    fun CreateViewMatrix() {
         val eyeX = -6.0f
         val eyeY = 5f
         val eyeZ = 5f
@@ -78,10 +104,22 @@ class Renderer : GLSurfaceView.Renderer {
         val upY = 1f
         val upZ = 0f
 
-        Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ)
+        Matrix.setLookAtM(
+            mViewMatrix,
+            0,
+            eyeX,
+            eyeY,
+            eyeZ,
+            centerX,
+            centerY,
+            centerZ,
+            upX,
+            upY,
+            upZ
+        )
     }
 
-    fun CreateProjectionMatrix(width : Int, height : Int){
+    fun CreateProjectionMatrix(width: Int, height: Int) {
         var ratio = 1f
         var left = -1f
         var right = 1f
@@ -101,4 +139,67 @@ class Renderer : GLSurfaceView.Renderer {
 
         Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far)
     }
+
+    var mOnGesture: GestureDetector.OnGestureListener =
+        object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(motionEvent: MotionEvent): Boolean {
+                /*if (MainActivity.IsCalibrationMode) {
+                    MainActivity.currentState.cameraCalibration!!.getColorByCoordinates(
+                        Point(motionEvent.getX().toDouble(), motionEvent.getY().toDouble())
+                    )
+                } else {
+                }*/
+                return false
+            }
+
+            override fun onScroll(
+                motionEvent: MotionEvent,
+                motionEvent1: MotionEvent,
+                v: Float,
+                v1: Float
+            ): Boolean {
+                return true
+            }
+
+            override fun onLongPress(motionEvent: MotionEvent) {}
+
+            override fun onFling(
+                e1: MotionEvent,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                /*try {
+                    // right to left swipe
+                    if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        Axis.xAxis = 0
+                        yAxis = 1
+                        zAxis = 0
+                        angleValue += 90
+                    } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        xAxis = 0
+                        yAxis = -1
+                        zAxis = 0
+                        angleValue += 90
+                    }// left to right swipe
+                    //down to up
+                    if (e1.getY() - e2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        xAxis = 0
+                        yAxis = 0
+                        zAxis = 1
+                        angleValue += 90
+                    } else if (e2.getY() - e1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        xAxis = 0
+                        yAxis = 0
+                        zAxis = -1
+                        angleValue += 90
+                    }//up to down
+                    isCubeRotation = true
+                } catch (e: Exception) {
+
+                }*/
+
+                return false
+            }
+        }
 }

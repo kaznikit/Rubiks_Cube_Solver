@@ -1,8 +1,8 @@
 package com.example.kotlinapp.Rubik
 
-import com.example.kotlinapp.Rubik.Enums.Axis
-import com.example.kotlinapp.Rubik.Enums.Color
-import com.example.kotlinapp.Rubik.Enums.Direction
+import com.example.kotlinapp.Enums.Axis
+import com.example.kotlinapp.Enums.Color
+import com.example.kotlinapp.Enums.Direction
 
 class DirectionsControl() {
     val directions = arrayListOf<Direction>()

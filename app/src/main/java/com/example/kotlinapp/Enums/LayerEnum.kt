@@ -1,4 +1,4 @@
-package com.example.kotlinapp.Rubik.Enums
+package com.example.kotlinapp.Enums
 
 //describe each layer location on the cube
 enum class LayerEnum(val charName : Char, var rotationAxis: Axis, val centerPoint : Float) {

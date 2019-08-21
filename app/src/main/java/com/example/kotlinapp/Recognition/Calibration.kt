@@ -1,19 +1,21 @@
 package com.example.kotlinapp.Recognition
 
+import android.os.Build
+import android.support.annotation.RequiresApi
 import com.example.kotlinapp.MainActivity
 import com.example.kotlinapp.Util.Constants
 import org.opencv.core.Core
 import org.opencv.core.Mat
-import org.opencv.core.Point
 import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
-import com.example.kotlinapp.Rubik.Enums.Color
+import com.example.kotlinapp.Enums.Color
+import org.opencv.core.Point
 
 class Calibration {
     internal lateinit var image: Mat
-    internal lateinit var mainActivity: MainActivity
+    internal var mainActivity: MainActivity
 
-    fun Calibration(mainActivity: MainActivity){
+    constructor(mainActivity: MainActivity){
         this.mainActivity = mainActivity
     }
 
@@ -90,6 +92,7 @@ class Calibration {
         return null
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun getColorByCoordinates(tileCenter: Point) {
         var measuredColorArray = DoubleArray(4)
         val mat = image.submat(
@@ -102,54 +105,54 @@ class Calibration {
         //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2BGR);
         measuredColorArray = Core.mean(mat).`val`
         val color =
-            Color.rgb(measuredColorArray[0].toFloat(), measuredColorArray[1].toFloat(), measuredColorArray[2].toFloat())
+            android.graphics.Color.rgb(measuredColorArray[0].toFloat(), measuredColorArray[1].toFloat(), measuredColorArray[2].toFloat())
         when (colorNumber) {
             0 -> {
-                Constants.ColorTileEnum.RED.hsvCalibrateValue =
+                Color.RED.hsvCalibrateValue =
                     Scalar(measuredColorArray[0], measuredColorArray[1], measuredColorArray[2], measuredColorArray[3])
-                mainActivity.calibrateColorButton.setBackgroundColor(color)
-                mainActivity.SaveSharedPreferences("Red", Constants.ColorTileEnum.RED.hsvCalibrateValue)
-                colorNumber++
+                    mainActivity.calibrateColorButton.setBackgroundColor(color)
+                    mainActivity.SaveSharedPreferences("Red", Color.RED.hsvCalibrateValue!!)
+                    colorNumber++
             }
             1 -> {
-                Constants.ColorTileEnum.GREEN.hsvCalibrateValue =
+                Color.GREEN.hsvCalibrateValue =
                     Scalar(measuredColorArray[0], measuredColorArray[1], measuredColorArray[2], measuredColorArray[3])
                 mainActivity.calibrateColorButton.setBackgroundColor(color)
-                mainActivity.SaveSharedPreferences("Green", Constants.ColorTileEnum.GREEN.hsvCalibrateValue)
+                mainActivity.SaveSharedPreferences("Green", Color.GREEN.hsvCalibrateValue!!)
                 colorNumber++
             }
             2 -> {
-                Constants.ColorTileEnum.ORANGE.hsvCalibrateValue =
+                Color.ORANGE.hsvCalibrateValue =
                     Scalar(measuredColorArray[0], measuredColorArray[1], measuredColorArray[2], measuredColorArray[3])
                 mainActivity.calibrateColorButton.setBackgroundColor(color)
-                mainActivity.SaveSharedPreferences("Orange", Constants.ColorTileEnum.ORANGE.hsvCalibrateValue)
+                mainActivity.SaveSharedPreferences("Orange", Color.ORANGE.hsvCalibrateValue!!)
                 colorNumber++
             }
             3 -> {
-                Constants.ColorTileEnum.YELLOW.hsvCalibrateValue =
+                Color.YELLOW.hsvCalibrateValue =
                     Scalar(measuredColorArray[0], measuredColorArray[1], measuredColorArray[2], measuredColorArray[3])
                 mainActivity.calibrateColorButton.setBackgroundColor(color)
-                mainActivity.SaveSharedPreferences("Yellow", Constants.ColorTileEnum.YELLOW.hsvCalibrateValue)
+                mainActivity.SaveSharedPreferences("Yellow", Color.YELLOW.hsvCalibrateValue!!)
                 colorNumber++
             }
             4 -> {
-                Constants.ColorTileEnum.WHITE.hsvCalibrateValue =
+                Color.WHITE.hsvCalibrateValue =
                     Scalar(measuredColorArray[0], measuredColorArray[1], measuredColorArray[2], measuredColorArray[3])
                 mainActivity.calibrateColorButton.setBackgroundColor(color)
-                mainActivity.SaveSharedPreferences("White", Constants.ColorTileEnum.WHITE.hsvCalibrateValue)
+                mainActivity.SaveSharedPreferences("White", Color.WHITE.hsvCalibrateValue!!)
                 colorNumber++
             }
             5 -> {
-                Constants.ColorTileEnum.BLUE.hsvCalibrateValue =
+                Color.BLUE.hsvCalibrateValue =
                     Scalar(measuredColorArray[0], measuredColorArray[1], measuredColorArray[2], measuredColorArray[3])
                 mainActivity.calibrateColorButton.setBackgroundColor(color)
-                mainActivity.SaveSharedPreferences("Blue", Constants.ColorTileEnum.BLUE.hsvCalibrateValue)
+                mainActivity.SaveSharedPreferences("Blue", Color.BLUE.hsvCalibrateValue!!)
                 colorNumber++
             }
             else -> {
                 MainActivity.IsCalibrationMode = false
                 colorNumber = 0
-                mainActivity.ResetFaces()
+                //mainActivity.ResetFaces()
             }
         }
     }

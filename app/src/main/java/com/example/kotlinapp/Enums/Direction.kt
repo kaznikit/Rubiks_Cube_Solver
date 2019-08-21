@@ -1,4 +1,4 @@
-package com.example.kotlinapp.Rubik.Enums
+package com.example.kotlinapp.Enums
 
 class Direction {
 

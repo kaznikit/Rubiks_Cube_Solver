@@ -1,4 +1,4 @@
-package com.example.kotlinapp.Rubik.Enums
+package com.example.kotlinapp.Enums
 
 enum class Axis(val x : Float, val y : Float, val z : Float) {
     xAxis(1f, 0f, 0f),

@@ -3,6 +3,7 @@ package com.example.kotlinapp
 import android.opengl.Matrix
 import android.os.Environment
 import android.util.Log
+import com.example.kotlinapp.Recognition.RubikFace
 import org.opencv.core.Scalar
 import org.opencv.core.Size
 import java.io.*
@@ -10,28 +11,24 @@ import java.util.HashMap
 
 class CurrentState {
     // Rubik Face of latest processed frame: may or may not be any of the six state objects.
-    var activeRubikFace: RubikFace? = null
-    var frontFace: RubikFace? = null
+    //var lateinit activeRubikFace: RubikFace
+   // var lateinit frontFace: RubikFace
 
     /*
      * This is "Rubik Cube State" or "Rubik Cube Model" in model-view-controller vernacular.
      * Map of above rubik face objects index by FaceNameEnum
      */
-    var nameRubikFaceMap = HashMap<Constants.FaceNameEnum, RubikFace>(6)
+    //var nameRubikFaceMap = HashMap<Constants.FaceNameEnum, RubikFace>(6)
 
     /*
      * This is a hash map of OpenCV colors that are initialized to those specified by field
      * rubikColor of ColorTileEnum.   Function reevauateSelectTileColors() adjusts these
      * colors according to a Mean-Shift algorithm to correct for lumonosity.
      */
-    var mutableTileColors = HashMap<Constants.ColorTileEnum, Scalar>(6)
+    //var mutableTileColors = HashMap<Constants.ColorTileEnum, Scalar>(6)
 
-    // Application State; see AppStateEnum.
-    var appState = Constants.AppStateEnum.START
 
     var isCubeSolved = false
-    // Stable Face Recognizer State
-    var gestureRecogniztionState = Constants.GestureRecogniztionStateEnum.UNKNOWN
 
     // Result when Two Phase algorithm is ask to evaluate if cube in valid.  If valid, code is zero.
     var verificationResults: Int = 0
@@ -55,7 +52,7 @@ class CurrentState {
     var renderPilotCube = true
 
     // Intrinsic Camera Calibration Parameters from hardware.
-    var cameraCalibration: Calibration? = null
+    //var cameraCalibration: Calibration? = null
 
     var IsCubeScannedAndReset = false
 
@@ -70,7 +67,7 @@ class CurrentState {
     @Transient
     var openGLSize: Size? = null
 
-    var ColorDetector: ColorDetector? = null
+    //var ColorDetector: ColorDetector? = null
 
     // =+= DO
     // Objects Kalman filter and Cube Reconstructor should be member data of Image Recognizer
@@ -79,7 +76,7 @@ class CurrentState {
     /**
      * Default State Model Constructor
      */
-    fun CurrentState(): ??? {
+    constructor(){
         //reset();
     }
 
@@ -93,7 +90,7 @@ class CurrentState {
      * rotated version of the observed tile array so that the face orientations
      * match the convention of a cut-out rubik cube layout.
      */
-    fun adopt(rubikFace: RubikFace) {
+    /*fun adopt(rubikFace: RubikFace) {
         when (adoptFaceCount) {
             1 -> {
                 MainActivity.glRenderer.fillFaceColors(rubikFace.faceNameEnum, rubikFace.transformedTileArray)
@@ -382,5 +379,5 @@ class CurrentState {
 
         // Set additional GL cube rotation to Identity Rotation Matrix
         Matrix.setIdentityM(additionalGLCubeRotation, 0)
-    }
+    }*/
 }

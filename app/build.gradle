@@ -8,16 +8,24 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.example.kotlinapp"
-        minSdkVersion 24
         targetSdkVersion 28
+        minSdkVersion(23)
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        sourceSets.main {
+            jniLibs.srcDirs = ['libs']
+        }
     }
     buildTypes {
+        debug{}
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        staging {
+            matchingFallbacks = ['debug', 'release']
         }
     }
 }
@@ -30,5 +38,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation project(':openCVLibrary343')
+    implementation project(path: ':openCVLibrary343')
 }

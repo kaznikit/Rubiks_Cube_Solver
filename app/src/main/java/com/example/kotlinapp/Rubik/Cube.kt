@@ -1,13 +1,9 @@
 package com.example.kotlinapp.Rubik
 
-import android.text.style.TtsSpan
-import com.example.kotlinapp.Rubik.Enums.Axis
-import com.example.kotlinapp.Rubik.Enums.Color
-import com.example.kotlinapp.Rubik.Enums.Direction
-import com.example.kotlinapp.Rubik.Enums.LayerEnum
-import java.time.Year
-import kotlin.concurrent.thread
-import kotlin.math.roundToInt
+import com.example.kotlinapp.Enums.Axis
+import com.example.kotlinapp.Enums.Color
+import com.example.kotlinapp.Enums.Direction
+import com.example.kotlinapp.Enums.LayerEnum
 
 class Cube() {
     val spaceBetweenCubies: Float = 0.3f;

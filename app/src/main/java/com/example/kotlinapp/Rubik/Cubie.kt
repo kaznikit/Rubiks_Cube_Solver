@@ -2,14 +2,13 @@ package com.example.kotlinapp.Rubik
 
 import android.opengl.GLES20
 import android.opengl.Matrix
-import com.example.kotlinapp.Rubik.Enums.Axis
-import com.example.kotlinapp.Rubik.Enums.Color
-import com.example.kotlinapp.Rubik.Enums.Direction
-import com.example.kotlinapp.Rubik.Enums.LayerEnum
+import com.example.kotlinapp.Enums.Axis
+import com.example.kotlinapp.Enums.Color
+import com.example.kotlinapp.Enums.Direction
+import com.example.kotlinapp.Enums.LayerEnum
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
-import kotlin.random.Random
 
 class Cubie {
     private lateinit var mVertexBuffer: FloatBuffer

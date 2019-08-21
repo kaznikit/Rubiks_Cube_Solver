@@ -1,6 +1,7 @@
 package com.example.kotlinapp
 
 import android.Manifest
+import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
@@ -11,8 +12,9 @@ import android.graphics.PixelFormat
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.opengl.GLSurfaceView
-import android.support.v7.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
+import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
@@ -21,9 +23,13 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.example.kotlinapp.Recognition.Calibration
 import com.example.kotlinapp.Recognition.ColorDetector
 import com.example.kotlinapp.Recognition.ImageRecognizer
+import com.example.kotlinapp.Recognition.RubikFace
 import com.example.kotlinapp.Rubik.Cube
+import com.example.kotlinapp.Enums.Axis
+import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.Rubik.Renderer
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
@@ -33,17 +39,22 @@ import java.util.*
 
 class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
-    private var mOpenCvCameraView: CameraBridgeViewBase? = null
+    private lateinit var mOpenCvCameraView: CameraBridgeViewBase
     private val REQUEST_CODE = 1
-    var calibrateColorButton: ImageButton
-    var currentState: CurrentState
-    var imageRecognizer: ImageRecognizer
-    var glRenderer: Renderer
-    var mCube: Cube
+    lateinit var calibrateColorButton: ImageButton
+    lateinit var imageRecognizer: ImageRecognizer
+    lateinit var glRenderer: Renderer
+    lateinit var mCube: Cube
 
-    internal var menu: SettingsMenu
-    var IsCalibrationMode = false
-    internal var glSurfaceView: GLSurfaceView
+    internal lateinit var menu: SettingsMenu
+
+    companion object {
+        var IsCalibrationMode = false
+        lateinit var currentState: CurrentState
+    }
+
+    internal lateinit var glSurfaceView: GLSurfaceView
+
     //Get user movements
     private var mGesture: GestureDetector? = null
     private val mLoaderCallback = object : BaseLoaderCallback(this) {
@@ -63,13 +74,6 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val glSurfaceView = TouchSurface(this)
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        setContentView(glSurfaceView)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -84,14 +88,14 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
         //mOpenCvCameraView.CAMERA_ID_FRONT
         // currentState.cameraCalibration = new Calibration(mOpenCvCameraView);
-        currentState.ColorDetector = ColorDetector()
-        currentState.cameraCalibration = Calibration(this)
+       // currentState.ColorDetector = ColorDetector()
+      //  currentState.cameraCalibration = Calibration(this)
         glSurfaceView = GLSurfaceView(this)
 
-        glRenderer = OpenGLRenderer(glSurfaceView, this, currentState)
-        mCube = Cube(currentState)
+        glRenderer = Renderer(glSurfaceView, this, currentState)
+        mCube = Cube()//(currentState)
 
-        addNewFace(Constants.FaceNameEnum.DOWN, Constants.FaceNameEnum.FRONT)
+        //addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
 
         mGesture = GestureDetector(this, glRenderer.mOnGesture)
 
@@ -108,10 +112,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         mOpenCvCameraView.setCameraIndex(1)
         mOpenCvCameraView.setCvCameraViewListener(this)
 
-        addContentView(
-            mOpenCvCameraView,
-            WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
-        )
+        addContentView(mOpenCvCameraView, WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT))
 
         val b = ImageButton(this)
         val buttonParams = RelativeLayout.LayoutParams(400, 400)
@@ -145,13 +146,13 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     }
 
-    fun addNewFace(activeFaceName: Constants.FaceNameEnum, frontFace: Constants.FaceNameEnum) {
+   /* fun addNewFace(activeFaceName: LayerEnum, frontFace: LayerEnum) {
         //create first face in front of user
         val activeFace = RubikFace()
         activeFace.faceNameEnum = activeFaceName
         //active face is down face
         // activeFace.faceNameEnum.axis = Constants.RotationAxis.yMinusAxis;
-        activeFace.rotationAxis = Constants.RotationAxis.yMinusAxis
+        activeFace.rotationAxis = Axis.yMinusAxis
         currentState.activeRubikFace = activeFace
 
         //face shown to user
@@ -160,7 +161,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
             activeFrontFace.faceNameEnum = frontFace
             activeFrontFace.createObservedTilesArray()
             //activeFrontFace.faceNameEnum.axis = Constants.RotationAxis.zAxis;
-            activeFrontFace.rotationAxis = Constants.RotationAxis.zAxis
+            activeFrontFace.rotationAxis = Axis.zAxis
             currentState.frontFace = activeFrontFace
         } else {
             val index = Arrays.asList(mCube.rubikFaces).lastIndexOf(frontFace)
@@ -179,9 +180,9 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 mCube.rubikFaces[i] = null
             }
         }
-        addNewFace(Constants.FaceNameEnum.DOWN, Constants.FaceNameEnum.FRONT)
+        addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
     }
-
+*/
     fun TurnOnCalibration() {
         IsCalibrationMode = true
         AddTextInfo()
@@ -224,12 +225,12 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         val sharedPref = getPreferences(Context.MODE_PRIVATE)
         for (j in 0..5) {
             when (j) {
-                0 -> Constants.ColorTileEnum.RED.hsvCalibrateValue = GetScalarSharedValue("Red", sharedPref)
-                1 -> Constants.ColorTileEnum.GREEN.hsvCalibrateValue = GetScalarSharedValue("Green", sharedPref)
-                2 -> Constants.ColorTileEnum.ORANGE.hsvCalibrateValue = GetScalarSharedValue("Orange", sharedPref)
-                3 -> Constants.ColorTileEnum.YELLOW.hsvCalibrateValue = GetScalarSharedValue("Yellow", sharedPref)
-                4 -> Constants.ColorTileEnum.WHITE.hsvCalibrateValue = GetScalarSharedValue("White", sharedPref)
-                5 -> Constants.ColorTileEnum.BLUE.hsvCalibrateValue = GetScalarSharedValue("Blue", sharedPref)
+                0 -> com.example.kotlinapp.Enums.Color.RED.hsvCalibrateValue = GetScalarSharedValue("Red", sharedPref)
+                1 -> com.example.kotlinapp.Enums.Color.GREEN.hsvCalibrateValue = GetScalarSharedValue("Green", sharedPref)
+                2 -> com.example.kotlinapp.Enums.Color.ORANGE.hsvCalibrateValue = GetScalarSharedValue("Orange", sharedPref)
+                3 -> com.example.kotlinapp.Enums.Color.YELLOW.hsvCalibrateValue = GetScalarSharedValue("Yellow", sharedPref)
+                4 -> com.example.kotlinapp.Enums.Color.WHITE.hsvCalibrateValue = GetScalarSharedValue("White", sharedPref)
+                5 -> com.example.kotlinapp.Enums.Color.BLUE.hsvCalibrateValue = GetScalarSharedValue("Blue", sharedPref)
             }
         }
     }
@@ -247,7 +248,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         super.dispatchTouchEvent(ev)
-        return mGesture.onTouchEvent(ev)
+        return mGesture!!.onTouchEvent(ev)
     }
 
     override fun onCameraViewStarted(width: Int, height: Int) {

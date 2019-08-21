@@ -5,7 +5,7 @@ import org.opencv.core.CvException
 import org.opencv.core.Mat
 
 class ColorDetector {
-    internal var tempTiles: Array<Array<Tile>>
+    /*internal var tempTiles: Array<Array<Tile>>
 
     fun ColorDetector(): ??? {
         tempTiles = Array<Array<Tile>>(3) { arrayOfNulls<Tile>(3) }
@@ -141,5 +141,5 @@ class ColorDetector {
             rubikFace.ColorDetectionCount++
         }
         return tempTiles
-    }
+    }*/
 }

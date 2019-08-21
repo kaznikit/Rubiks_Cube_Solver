@@ -1,9 +1,7 @@
 package com.example.kotlinapp.Rubik
 
-import android.opengl.Matrix
-import com.example.kotlinapp.Rubik.Enums.Axis
-import com.example.kotlinapp.Rubik.Enums.Direction
-import com.example.kotlinapp.Rubik.Enums.LayerEnum
+import com.example.kotlinapp.Enums.Direction
+import com.example.kotlinapp.Enums.LayerEnum
 
 class Layer {
     var mCube: Cube

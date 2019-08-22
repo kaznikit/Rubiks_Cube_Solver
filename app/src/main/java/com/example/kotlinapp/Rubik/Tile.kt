@@ -2,6 +2,7 @@ package com.example.kotlinapp.Rubik
 
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
+import com.example.kotlinapp.Recognition.Rectangle
 
 class Tile {
     var isActive : Boolean = false

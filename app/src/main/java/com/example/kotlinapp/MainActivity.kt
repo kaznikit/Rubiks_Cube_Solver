@@ -1,7 +1,6 @@
 package com.example.kotlinapp
 
 import android.Manifest
-import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
@@ -9,12 +8,8 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PixelFormat
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraManager
 import android.opengl.GLSurfaceView
-import android.os.Build
 import android.os.Bundle
-import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
@@ -23,35 +18,30 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.example.kotlinapp.Recognition.Calibration
-import com.example.kotlinapp.Recognition.ColorDetector
 import com.example.kotlinapp.Recognition.ImageRecognizer
-import com.example.kotlinapp.Recognition.RubikFace
 import com.example.kotlinapp.Rubik.Cube
-import com.example.kotlinapp.Enums.Axis
-import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.Rubik.Renderer
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
 import org.opencv.core.Mat
 import org.opencv.core.Scalar
-import java.util.*
 
 class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
-
     private lateinit var mOpenCvCameraView: CameraBridgeViewBase
     private val REQUEST_CODE = 1
     lateinit var calibrateColorButton: ImageButton
-    lateinit var imageRecognizer: ImageRecognizer
     lateinit var glRenderer: Renderer
-    lateinit var mCube: Cube
+
+    var processedMat : Mat? = null
+    var isMatProcessed = false
 
     internal lateinit var menu: SettingsMenu
 
     companion object {
         var IsCalibrationMode = false
-        lateinit var currentState: CurrentState
     }
+
+    lateinit var currentState: CurrentState
 
     internal lateinit var glSurfaceView: GLSurfaceView
 
@@ -63,7 +53,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i("camera", "OpenCV loaded successfully")
                     mOpenCvCameraView.enableView()
-                    imageRecognizer = ImageRecognizer(currentState)
+                    //imageRecognizer = ImageRecognizer(currentState)
                 }
                 else -> {
                     super.onManagerConnected(status)
@@ -71,6 +61,8 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
             }
         }
     }
+
+    var start = System.currentTimeMillis()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,18 +76,11 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         //ask permissions for camera
         verifyPermissions()
 
-        currentState = CurrentState()
-
-        //mOpenCvCameraView.CAMERA_ID_FRONT
-        // currentState.cameraCalibration = new Calibration(mOpenCvCameraView);
-       // currentState.ColorDetector = ColorDetector()
-      //  currentState.cameraCalibration = Calibration(this)
         glSurfaceView = GLSurfaceView(this)
 
-        glRenderer = Renderer(glSurfaceView, this, currentState)
-        mCube = Cube()//(currentState)
+        currentState = CurrentState(this)
 
-        //addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
+        glRenderer = Renderer(glSurfaceView, this, currentState)
 
         mGesture = GestureDetector(this, glRenderer.mOnGesture)
 
@@ -130,59 +115,9 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         menu = SettingsMenu(this, glSurfaceView, this)
 
         ReadSharedPreferences()
-
-        val manager = this.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        try {
-            val camList = manager.cameraIdList
-            for (cameraID in camList) {
-
-                val characteristics = manager.getCameraCharacteristics(cameraID)
-                //currentState.cameraCalibration = new Calibration(characteristics);
-            }
-
-        } catch (e: CameraAccessException) {
-            e.printStackTrace()
-        }
-
+        start = System.currentTimeMillis()
     }
 
-   /* fun addNewFace(activeFaceName: LayerEnum, frontFace: LayerEnum) {
-        //create first face in front of user
-        val activeFace = RubikFace()
-        activeFace.faceNameEnum = activeFaceName
-        //active face is down face
-        // activeFace.faceNameEnum.axis = Constants.RotationAxis.yMinusAxis;
-        activeFace.rotationAxis = Axis.yMinusAxis
-        currentState.activeRubikFace = activeFace
-
-        //face shown to user
-        if (!Arrays.asList(mCube.rubikFaces).contains(frontFace)) {
-            val activeFrontFace = RubikFace()
-            activeFrontFace.faceNameEnum = frontFace
-            activeFrontFace.createObservedTilesArray()
-            //activeFrontFace.faceNameEnum.axis = Constants.RotationAxis.zAxis;
-            activeFrontFace.rotationAxis = Axis.zAxis
-            currentState.frontFace = activeFrontFace
-        } else {
-            val index = Arrays.asList(mCube.rubikFaces).lastIndexOf(frontFace)
-            currentState.frontFace = mCube.rubikFaces[index]
-        }
-
-        activeFace.createObservedTilesArray()
-        mCube.rubikFaces[currentState.adoptFaceCount] = activeFace
-        glRenderer.CalculateRotationAxis()
-    }
-
-    fun ResetFaces() {
-        currentState.adoptFaceCount = 0
-        if (mCube.rubikFaces.length !== 0) {
-            for (i in 0 until mCube.rubikFaces.length) {
-                mCube.rubikFaces[i] = null
-            }
-        }
-        addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
-    }
-*/
     fun TurnOnCalibration() {
         IsCalibrationMode = true
         AddTextInfo()
@@ -261,8 +196,6 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     public override fun onResume() {
         super.onResume()
-        /*if(gLSurfaceView != null)
-            gLSurfaceView.onResume();*/
         if (!OpenCVLoader.initDebug()) {
             Log.d("opencv", "Internal OpenCV library not found. Using OpenCV Manager for initialization")
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback)
@@ -273,8 +206,22 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     }
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
-        // return imageRecognizer.testColorRecognition(inputFrame.rgba());
-        return imageRecognizer.threesholdTestImage(inputFrame.rgba())//imageRecognizer.testProcess(inputFrame.rgba());//imageRecognizer.processFrame(inputFrame.rgba());//inputFrame.rgba();
+        //make processing 1 time per second
+        if(System.currentTimeMillis() - start >= 300) {
+            start = System.currentTimeMillis()
+            ImageRecognizer(this).execute(inputFrame.rgba())//imageRecognizer.threesholdTestImage(inputFrame.rgba())//imageRecognizer.testProcess(inputFrame.rgba());//imageRecognizer.processFrame(inputFrame.rgba());//inputFrame.rgba();
+        }
+        if(isMatProcessed){
+            isMatProcessed = false
+            return processedMat!!
+        }else {
+            return inputFrame.rgba()
+        }
+    }
+
+    fun onMatProcessed(mat : Mat?){
+        processedMat = mat
+        isMatProcessed = true
     }
 
     //ask permission for camera using

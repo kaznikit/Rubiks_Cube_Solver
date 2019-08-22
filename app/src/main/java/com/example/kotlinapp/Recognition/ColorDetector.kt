@@ -1,33 +1,25 @@
 package com.example.kotlinapp.Recognition
 
+import com.example.kotlinapp.Enums.Color
 import org.opencv.core.Core
 import org.opencv.core.CvException
 import org.opencv.core.Mat
 
 class ColorDetector {
-    /*internal var tempTiles: Array<Array<Tile>>
+    internal var tempTiles: Array<Array<RubikTile?>>
 
-    fun ColorDetector(): ??? {
-        tempTiles = Array<Array<Tile>>(3) { arrayOfNulls<Tile>(3) }
+    constructor() {
+        tempTiles = Array(3) { arrayOfNulls<RubikTile>(3) }
         for (i in 0..2) {
             for (j in 0..2) {
-                tempTiles[i][j] = Tile(Constants.FaceNameEnum.FRONT, i, j)
+                tempTiles[i][j] = null//RubikTile(Constants.FaceNameEnum.FRONT, i, j)
             }
         }
     }
 
-    /**
-     * Find Closest Tile Color
-     *
-     *
-     * Two Pass algorithm:
-     * 1) Find closest fit using just U and V axis.
-     * 2) Calculate luminous correction value assuming above choices are correct (exclude Red and Orange)
-     * 3) Find closed fit again using Y, U and V axis where Y is corrected.
-     */
-    fun faceTileColorRecognition(image: Mat, rubikFace: RubikFace): Array<Array<Tile>> {
+    fun faceTileColorRecognition(image: Mat, rubikFace: RubikFace): Array<Array<RubikTile?>> {
         // Obtain actual measured tile color from image.
-        for (n in 0..2) {
+        /*for (n in 0..2) {
             for (m in 0..2) {
                 val tileCenter = rubikFace.getTileCenterInPixels(n, m)
                 val size = image.size()
@@ -63,7 +55,7 @@ class ColorDetector {
                 //if (rubikFace.observedTileArray[n][m].ColorError > 20.0) {
                 val measuredColor = rubikFace.measuredColorArray[n][m]
                 val measuredColorYUV = Tool.getYUVfromRGB(measuredColor)
-                val bestCandidate = Constants.ColorTileEnum.GREY
+                val bestCandidate = Color.BLACK
                 var smallestError = java.lang.Double.MAX_VALUE
 
                 for (candidateColorTile in Constants.ColorTileEnum.values()) {
@@ -72,25 +64,6 @@ class ColorDetector {
 
                         //если прошла калибровка, берем эти значения
                         if (candidateColorTile.hsvCalibrateValue != null) {
-                            /*if(candidateColorTile != Constants.ColorTileEnum.RED || candidateColorTile != Constants.ColorTileEnum.ORANGE) {
-                                error = (measuredColor[0] - candidateColorTile.hsvCalibrateValue.val[0]) * (measuredColor[0] - candidateColorTile.hsvCalibrateValue.val[0]) +
-                                        (measuredColor[1] - candidateColorTile.hsvCalibrateValue.val[1]) * (measuredColor[1] - candidateColorTile.hsvCalibrateValue.val[1]);
-                                //(measuredColor[2] - candidateColorTile.hsvCalibrateValue.val[2]) * (measuredColor[2] - candidateColorTile.hsvCalibrateValue.val[2]);
-                            }
-                            else{
-                                error = (measuredColor[0] - candidateColorTile.hsvCalibrateValue.val[0]) * (measuredColor[0] - candidateColorTile.hsvCalibrateValue.val[0]) +
-                                        (measuredColor[1] - candidateColorTile.hsvCalibrateValue.val[1]) * (measuredColor[1] - candidateColorTile.hsvCalibrateValue.val[1]);
-                                        //(measuredColor[2] - candidateColorTile.hsvCalibrateValue.val[2]) * (measuredColor[2] - candidateColorTile.hsvCalibrateValue.val[2]);
-                            }
-                            error = Math.sqrt(error);*/
-
-
-                            //working variant
-                            /*error = 2*(measuredColor[0] - candidateColorTile.hsvCalibrateValue.val[0]) * (measuredColor[0] - candidateColorTile.hsvCalibrateValue.val[0]) +
-                                    4*(measuredColor[1] - candidateColorTile.hsvCalibrateValue.val[1]) * (measuredColor[1] - candidateColorTile.hsvCalibrateValue.val[1]) +
-                                    3*(measuredColor[2] - candidateColorTile.hsvCalibrateValue.val[2]) * (measuredColor[2] - candidateColorTile.hsvCalibrateValue.val[2]);
-                            error = Math.sqrt(error);*/
-
                             val r = (measuredColor[0] + candidateColorTile.hsvCalibrateValue.`val`[0]) / 2.0
                             error = ((2 + r / 256.0) * Math.pow(
                                 measuredColor[0] - candidateColorTile.hsvCalibrateValue.`val`[0],
@@ -130,7 +103,7 @@ class ColorDetector {
                             tempTiles[n][m].tileColor = candidateColorTile
                             tempTiles[n][m].SetRotationAxis(rubikFace.rotationAxis)
                             rubikFace.averageColorArray[rubikFace.ColorDetectionCount][k] = candidateColorTile
-                            smallestError = error//Math.abs(upError - downError);
+                            smallestError = error
                         }
                     }
                 }
@@ -139,7 +112,7 @@ class ColorDetector {
         }
         if (rubikFace.faceRecognitionStatus !== RubikFace.FaceRecognitionStatusEnum.SOLVED) {
             rubikFace.ColorDetectionCount++
-        }
+        }*/
         return tempTiles
-    }*/
+    }
 }

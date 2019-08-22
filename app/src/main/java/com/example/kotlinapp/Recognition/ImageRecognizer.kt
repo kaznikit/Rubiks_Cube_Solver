@@ -1,103 +1,58 @@
 package com.example.kotlinapp.Recognition
 
-import com.example.kotlinapp.CurrentState
+import android.os.AsyncTask
 import com.example.kotlinapp.MainActivity
 import com.example.kotlinapp.Enums.Color
 import org.opencv.core.*
 import org.opencv.core.CvType.CV_8UC1
 import org.opencv.imgproc.Imgproc
+import java.lang.ref.WeakReference
 import java.util.*
 
-class ImageRecognizer {
-    internal var grayscale_image: Mat
-    internal var testImage: Mat
-    internal var currentState: CurrentState
+class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTask<Mat, Int, Mat>() {
+    internal lateinit var grayscale_image: Mat
+    internal lateinit var testImage: Mat
+    private val activityReference: WeakReference<MainActivity> = WeakReference(mainActivity)
 
-    constructor(currentState: CurrentState) {
-        grayscale_image = Mat()
+    override fun doInBackground(vararg rgbaImage: Mat): Mat {
         testImage = Mat()
-        this.currentState = currentState
-    }
-
-    private fun testColor(image: Mat, minColor: Scalar, maxColor: Scalar): List<Rectangle> {
-        val skin = Mat()
-        val global_dilate_image = Mat()
-        val skinMask = Mat()
+        grayscale_image = Mat()
         val canny_image = Mat()
-        val sampleImage = Mat()
-        image.copyTo(sampleImage)
+        val dilate_image = Mat()
+        var lightenedImage = Mat()
 
-        val alpha = 3.0
-        val beta = 30.0
-        //skin.convertTo(skin, -1, alpha, beta);
-        Imgproc.cvtColor(sampleImage, sampleImage, Imgproc.COLOR_RGB2HSV)
+        rgbaImage[0].copyTo(testImage)
 
-        Core.inRange(sampleImage, minColor, maxColor, skinMask)
-        Core.bitwise_and(sampleImage, sampleImage, skin, skinMask)
-        //Imgproc.cvtColor(skin, skin, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.GaussianBlur(skin, skin, Size(25.0, 25.0), 0.0, 0.0)
-        Imgproc.Canny(skin, canny_image, 30.0, 200.0)
+        rgbaImage[0].copyTo(lightenedImage)
 
-        Imgproc.dilate(
-            canny_image,
-            global_dilate_image,
-            Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(7.0, 7.0))
-        )
+        lightenedImage = correctGamma(lightenedImage, 1.3)
 
-        Imgproc.GaussianBlur(global_dilate_image, global_dilate_image, Size(21.0, 21.0), 0.0, 0.0)
+        Imgproc.cvtColor(lightenedImage, grayscale_image, Imgproc.COLOR_BGR2GRAY)
+
+        Imgproc.Canny(lightenedImage, canny_image, 30.0, 100.0)
+        Imgproc.dilate(canny_image, dilate_image, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(5.0, 5.0)))
+
+        Imgproc.GaussianBlur(dilate_image, dilate_image, Size(17.0, 17.0), 0.0, 0.0)
 
         val contours = LinkedList<MatOfPoint>()
-
-
         val heirarchy = Mat()
-        Imgproc.findContours(global_dilate_image, contours, heirarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_NONE)
+        Imgproc.findContours(dilate_image, contours, heirarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE)
+        heirarchy.release()
 
-        /*       //bound rects
-        Rect[] boundRect = new Rect[contours.size()];
-        MatOfPoint2f[] contoursPoly  = new MatOfPoint2f[contours.size()];
-        int i=0;*/
-
-        //hull convex
-        val hullRectList = LinkedList<Rectangle>()
-
-        val polygons = LinkedList<Rectangle>()
-        for (mat in contours) {
+        val polygonList = LinkedList<Rectangle>()
+        var i = 0
+        for (contour in contours) {
             val contour2f = MatOfPoint2f()
             val polygone2f = MatOfPoint2f()
             val polygon = MatOfPoint()
-            mat.convertTo(contour2f, CvType.CV_32FC2)
-            Imgproc.approxPolyDP(contour2f, polygone2f, 21.0, true)
+
+            // Make a Polygon out of a contour with provide Epsilon accuracy parameter.
+            // It uses the Douglas-Peucker algorithm http://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm
+            contour.convertTo(contour2f, CvType.CV_32FC2)
+            Imgproc.approxPolyDP(contour2f, polygone2f, 15.0, true)
             polygone2f.convertTo(polygon, CvType.CV_32S)
 
-            //hull
-            val hull = MatOfInt()
-            Imgproc.convexHull(polygon, hull)
-            val contourArray = polygon.toArray()
-            val hullPoints = arrayOfNulls<Point>(hull.rows())
-            val hullContourIdxList = hull.toList()
-            for (k in hullContourIdxList.indices) {
-                hullPoints[k] = contourArray[hullContourIdxList[k]]
-            }
-            if (Imgproc.contourArea(MatOfPoint(*hullPoints)) > 100) {
-                if (MatOfPoint(*hullPoints).toArray().size == 4) {
-                    var maxCosine = 0.0
-                    for (j in 2..4) {
-                        // find the maximum cosine of the angle between joint edges
-                        val cosine = Math.abs(
-                            angle(
-                                MatOfPoint(*hullPoints).toArray()[j % 4],
-                                MatOfPoint(*hullPoints).toArray()[j - 2],
-                                MatOfPoint(*hullPoints).toArray()[j - 1]
-                            )
-                        )
-                        maxCosine = Math.max(maxCosine, cosine)
-                    }
-                    if (maxCosine < 0.3)
-                        hullRectList.add(Rectangle(MatOfPoint(*hullPoints)))
-                }
-            }
-
-            if (polygon.toArray().size == 4) { //&& Imgproc.isContourConvex(polygon)) {
+            if (polygon.toArray().size == 4 && Imgproc.isContourConvex(polygon)) {
                 if (Math.abs(Imgproc.contourArea(polygon)) > 100) {
                     var maxCosine = 0.0
                     for (j in 2..4) {
@@ -111,61 +66,50 @@ class ImageRecognizer {
                         )
                         maxCosine = Math.max(maxCosine, cosine)
                     }
-
+                    //Imgproc.drawContours(rgbaImage, contours, i, Constants.ColorTileEnum.YELLOW.cvColor, 5);
                     // if cosines of all angles are small
                     // (all angles are ~90 degree) then write quandrange
                     // vertices to resultant sequence
                     if (maxCosine < 0.3)
-                        polygons.add(Rectangle(polygon))//new Rectangle(polygon));
+                        polygonList.add(Rectangle(polygon))
                 }
             }
-            //  i++;
+            i++
         }
-
-        //bound
-        /*      List<MatOfPoint> contoursPolyList = new ArrayList<>(contoursPoly.length);
-        for (MatOfPoint2f poly : contoursPoly) {
-            contoursPolyList.add(new MatOfPoint(poly.toArray()));
-        }
-        for (int j = 0; j < contours.size(); j++) {
-            if(boundRect[j].area() > 300) {
-                //  Imgproc.drawContours(image, contoursPolyList, j, Constants.ColorTileEnum.ORANGE.cvColor);
-                //Imgproc.rectangle(image, boundRect[j].tl(), boundRect[j].br(), Constants.ColorTileEnum.ORANGE.cvColor, 2);
-            }
-        }*/
-
-        //hull
-        val hullRectangles = LinkedList<Rectangle>()
-        for (rect in hullRectList) {
-            rect.qualify()
-            if (rect.status === Rectangle.StatusEnum.VALID) {
-                //rect.draw(image, Constants.ColorTileEnum.GREEN.cvColor);
-                hullRectangles.add(rect)
-            }
-        }
-
-
         val rectangleList = LinkedList<Rectangle>()
-        var center = Point(0.0, 0.0)
-        for (rectangle in polygons) {
+        for (rectangle in polygonList) {
             rectangle.qualify()
-            if (rectangle.status === Rectangle.StatusEnum.VALID && rectangle.center.x > center.x + 5 && rectangle.center.y > center.y + 5) {
+            if (rectangle.status === Rectangle.StatusEnum.VALID) {
                 rectangleList.add(rectangle)
-                center = rectangle.center
             }
-            //rectangleList.add(rectangle);
         }
 
-        skin.release()
-        skinMask.release()
+        Rectangle.removedOutlierRhombi(rectangleList)
+        for (rect in rectangleList)
+            rect.draw(rgbaImage[0], Color.YELLOW.cvColor)
+
+        val activity = activityReference.get() ?: return rgbaImage[0]
+
+        //in calibration mode it's necessary to scan colors and write them
+        if (!MainActivity.IsCalibrationMode) {
+            activity.currentState.activeRubikFace.calculateTiles(rectangleList, rgbaImage[0])
+        } else {
+            //scan colors
+            activity.currentState.cameraCalibration!!.getColor(rgbaImage[0], rectangleList)
+        }
+
         canny_image.release()
-        sampleImage.release()
-        global_dilate_image.release()
-        return hullRectangles
+        lightenedImage.release()
+        dilate_image.release()
+        return rgbaImage[0]
+    }
+
+    override fun onPostExecute(result: Mat?) {
+        val activity = activityReference.get() ?: return
+        activity.onMatProcessed(result)
     }
 
     fun testProcess(rgbaImage: Mat): Mat {
-        val laplacian = Mat()
         val canny_image = Mat()
         val dilate_image = Mat()
         var lightenedImage = Mat()
@@ -258,7 +202,6 @@ class ImageRecognizer {
         dilate_image.release()
         return rgbaImage
     }
-
 
     fun threesholdTestImage(image: Mat): Mat {
         val lightened = Mat()

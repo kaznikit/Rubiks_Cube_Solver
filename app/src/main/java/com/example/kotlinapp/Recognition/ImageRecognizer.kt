@@ -92,7 +92,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
 
         //in calibration mode it's necessary to scan colors and write them
         if (!MainActivity.IsCalibrationMode) {
-            activity.currentState.activeRubikFace.calculateTiles(rectangleList, rgbaImage[0])
+            activity.currentState.calculateTilesForFace(rectangleList, rgbaImage[0])
         } else {
             //scan colors
             activity.currentState.cameraCalibration!!.getColor(rgbaImage[0], rectangleList)

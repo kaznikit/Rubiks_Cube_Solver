@@ -265,7 +265,7 @@ class Cubie {
         var k = 0
 
         for (tile in tiles) {
-            GLES20.glUniform4f(uColorLocation, tile.color.redComponent, tile.color.greenComponent, tile.color.blueComponent, 0.0f)
+            GLES20.glUniform4f(uColorLocation, tile.color.redComponent, tile.color.greenComponent, tile.color.blueComponent, 1.0f)
             // Draw Triangles
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, k * 4, 4)
             k++

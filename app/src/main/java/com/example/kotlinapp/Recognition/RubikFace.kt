@@ -63,15 +63,12 @@ class RubikFace {
 
     //endregion
 
-    // Face Designation: i.e., Up, Down, ....
-    var faceName: LayerEnum
-
     var currentState : CurrentState
 
     var isObservedFilled = false
 
     constructor(faceName : LayerEnum, currentState: CurrentState){
-        this.faceName = faceName
+        this.layerName = faceName
         this.currentState = currentState
     }
 
@@ -145,7 +142,7 @@ class RubikFace {
 
     //check if user rotated cube (true is ok)
     fun checkPreviousTileColors(tiles : Array<Array<RubikTile>>): Boolean {
-        if (tiles.size == 0) {
+        if (tiles.isEmpty()) {
             return false
         }
         if (currentState.adoptFaceCount !== 0 && tiles != null) {

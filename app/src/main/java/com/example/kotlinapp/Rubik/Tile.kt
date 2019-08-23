@@ -7,7 +7,7 @@ import com.example.kotlinapp.Recognition.Rectangle
 class Tile {
     var isActive : Boolean = false
 
-    var coordinates : Array<Vertex> = arrayOf<Vertex>()
+    var coordinates : Array<Vertex> = arrayOf()
 
     var color : Color
     var direction : Char
@@ -18,5 +18,9 @@ class Tile {
         this.color = color
         this.direction = direction
         this.normalAxis = normalAxis
+    }
+
+    fun setTileColor(color: Color){
+        this.color = color
     }
 }

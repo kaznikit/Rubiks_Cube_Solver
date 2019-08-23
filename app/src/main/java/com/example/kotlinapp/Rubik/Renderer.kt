@@ -17,9 +17,6 @@ import com.example.kotlinapp.R
 import com.example.kotlinapp.Util.ShaderUtils
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import com.example.kotlinapp.MainActivity
-import org.opencv.core.Point
-
 
 class Renderer : GLSurfaceView.Renderer {
     val context: Context
@@ -30,8 +27,6 @@ class Renderer : GLSurfaceView.Renderer {
     val mMVPMatrix = FloatArray(16)
     val mMatrix = FloatArray(16)
     var mCubeModelMatrix = FloatArray(16)
-
-    private lateinit var mCube: Cube
 
     var uMatrixLocation: Int = 0
 
@@ -49,7 +44,6 @@ class Renderer : GLSurfaceView.Renderer {
         this.view = view
         this.context = context
         this.state = state
-        mCube = Cube()
         val main = context as Activity
         main.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics)
         density = displayMetrics.density;
@@ -82,9 +76,9 @@ class Renderer : GLSurfaceView.Renderer {
 
     override fun onDrawFrame(gl: GL10?) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        mCube.resetLayerCubies()
+        state.cube.resetLayerCubies()
 
-        for (cubie in mCube.cubies) {
+        for (cubie in state.cube.cubies) {
             cubie.draw(mProjectionMatrix, mViewMatrix, programId)
         }
     }
@@ -169,35 +163,22 @@ class Renderer : GLSurfaceView.Renderer {
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
-                /*try {
+                try {
                     // right to left swipe
-                    if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                        Axis.xAxis = 0
-                        yAxis = 1
-                        zAxis = 0
-                        angleValue += 90
+                    if (e1.x - e2.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        state.cube.rotateCube(90f, Axis.yAxis)
                     } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                        xAxis = 0
-                        yAxis = -1
-                        zAxis = 0
-                        angleValue += 90
+                        state.cube.rotateCube(-90f, Axis.yAxis)
                     }// left to right swipe
                     //down to up
                     if (e1.getY() - e2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
-                        xAxis = 0
-                        yAxis = 0
-                        zAxis = 1
-                        angleValue += 90
+                        state.cube.rotateCube(90f, Axis.zAxis)
                     } else if (e2.getY() - e1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
-                        xAxis = 0
-                        yAxis = 0
-                        zAxis = -1
-                        angleValue += 90
+                        state.cube.rotateCube(-90f, Axis.zAxis)
                     }//up to down
-                    isCubeRotation = true
                 } catch (e: Exception) {
 
-                }*/
+                }
 
                 return false
             }

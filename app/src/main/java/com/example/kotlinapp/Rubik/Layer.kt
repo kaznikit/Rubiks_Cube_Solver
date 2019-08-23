@@ -12,14 +12,17 @@ class Layer {
 
     var direction : Direction
 
+    var id = 0
+
     //cubies will have such centers
     var centerPoint: Float = 0.0f
 
-    constructor(centerPoint: Float, layerName: LayerEnum, direction: Direction, cube: Cube) {
+    constructor(centerPoint: Float, layerName: LayerEnum, direction: Direction, cube: Cube, id : Int) {
         this.centerPoint = centerPoint
         this.layerName = layerName
         this.direction = direction
         mCube = cube
+        this.id = id
     }
 
     fun addCubie(cubie: Cubie) {

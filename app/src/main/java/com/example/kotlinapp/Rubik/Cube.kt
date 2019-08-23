@@ -4,6 +4,7 @@ import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
+import com.example.kotlinapp.Recognition.RubikFace
 
 class Cube() {
     val spaceBetweenCubies: Float = 0.3f;
@@ -75,19 +76,29 @@ class Cube() {
     }
 
     fun CreateLayers() {
-        addLayer(LayerEnum.LEFT, directionsControl.getDirectionByCharName('L'))
-        addLayer(LayerEnum.MIDDLE, directionsControl.getDirectionByCharName('N'))
-        addLayer(LayerEnum.RIGHT, directionsControl.getDirectionByCharName('R'))
-        addLayer(LayerEnum.BACK, directionsControl.getDirectionByCharName('B'))
-        addLayer(LayerEnum.STANDING, directionsControl.getDirectionByCharName('N'))
-        addLayer(LayerEnum.FRONT, directionsControl.getDirectionByCharName('F'))
-        addLayer(LayerEnum.DOWN, directionsControl.getDirectionByCharName('D'))
-        addLayer(LayerEnum.EQUATOR, directionsControl.getDirectionByCharName('N'))
-        addLayer(LayerEnum.UP, directionsControl.getDirectionByCharName('U'))
+        var id = 0
+        addLayer(LayerEnum.LEFT, directionsControl.getDirectionByCharName('L'), id)
+        id++
+        addLayer(LayerEnum.MIDDLE, directionsControl.getDirectionByCharName('N'), id)
+        id++
+        addLayer(LayerEnum.RIGHT, directionsControl.getDirectionByCharName('R'), id)
+        id++
+        addLayer(LayerEnum.BACK, directionsControl.getDirectionByCharName('B'), id)
+        id++
+        addLayer(LayerEnum.STANDING, directionsControl.getDirectionByCharName('N'), id)
+        id++
+        addLayer(LayerEnum.FRONT, directionsControl.getDirectionByCharName('F'), id)
+        id++
+        addLayer(LayerEnum.DOWN, directionsControl.getDirectionByCharName('D'), id)
+        id++
+        addLayer(LayerEnum.EQUATOR, directionsControl.getDirectionByCharName('N'), id)
+        id++
+        addLayer(LayerEnum.UP, directionsControl.getDirectionByCharName('U'), id)
+        id++
     }
 
-    fun addLayer(layerName: LayerEnum, direction: Direction) {
-        var layer = Layer(layerName.centerPoint, layerName, direction, this)
+    fun addLayer(layerName: LayerEnum, direction: Direction, id : Int) {
+        var layer = Layer(layerName.centerPoint, layerName, direction, this, id)
         for (cubie1 in cubies) {
             if (cubie1.centerPoint.getCoordinateByAxis(layer.layerName.rotationAxis) == layer.centerPoint) {
                 layer.addCubie(cubie1)
@@ -1107,6 +1118,23 @@ class Cube() {
                 && layer.layerName.rotationAxis.z == -axis.z)
             {
                 layer.rotate(-angle)
+            }
+        }
+    }
+
+    //add rubik face colors to the necessary layer
+    fun fillFaceColors(rubikFace: RubikFace){
+        var layer = layers.filter { x -> x.layerName == rubikFace.layerName }.single()
+
+        var k = 0
+        for(rubikTileArray in rubikFace.transformedTileArray){
+            for(rubikTile in rubikTileArray){
+                var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
+
+                cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
+                    .setTileColor(rubikTile!!.tileColor)
+                cubies[cubie.id] = cubie
+                k++
             }
         }
     }

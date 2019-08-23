@@ -11,13 +11,8 @@ import org.opencv.imgproc.Imgproc
 import com.example.kotlinapp.Enums.Color
 import org.opencv.core.Point
 
-class Calibration {
+class Calibration(internal var mainActivity: MainActivity) {
     internal lateinit var image: Mat
-    internal var mainActivity: MainActivity
-
-    constructor(mainActivity: MainActivity){
-        this.mainActivity = mainActivity
-    }
 
     //go through all colors
     internal var colorNumber = 0
@@ -101,8 +96,6 @@ class Calibration {
             (tileCenter.x - 10).toInt(),
             (tileCenter.x + 10).toInt()
         )
-        //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2HSV);
-        //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2BGR);
         measuredColorArray = Core.mean(mat).`val`
         val color =
             android.graphics.Color.rgb(measuredColorArray[0].toFloat(), measuredColorArray[1].toFloat(), measuredColorArray[2].toFloat())

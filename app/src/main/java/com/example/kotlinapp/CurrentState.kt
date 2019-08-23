@@ -4,11 +4,11 @@ import android.opengl.Matrix
 import android.os.Environment
 import android.util.Log
 import com.example.kotlinapp.Enums.Axis
+import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.LayerEnum
-import com.example.kotlinapp.Recognition.Calibration
-import com.example.kotlinapp.Recognition.ColorDetector
-import com.example.kotlinapp.Recognition.RubikFace
+import com.example.kotlinapp.Recognition.*
 import com.example.kotlinapp.Rubik.Cube
+import org.opencv.core.Mat
 import org.opencv.core.Scalar
 import org.opencv.core.Size
 import java.io.*
@@ -46,12 +46,28 @@ class CurrentState {
         colorDetector = ColorDetector()
         cube = Cube()
         activeRubikFace = RubikFace(LayerEnum.DOWN, this)
+        activeRubikFace.transformedTileArray[0][0] = RubikTile(null, Color.RED)
+        activeRubikFace.transformedTileArray[0][1] = RubikTile(null, Color.BLUE)
+        activeRubikFace.transformedTileArray[0][2] = RubikTile(null, Color.GREEN)
+        activeRubikFace.transformedTileArray[1][0] = RubikTile(null, Color.ORANGE)
+        activeRubikFace.transformedTileArray[1][1] = RubikTile(null, Color.WHITE)
+        activeRubikFace.transformedTileArray[1][2] = RubikTile(null, Color.RED)
+        activeRubikFace.transformedTileArray[2][0] = RubikTile(null, Color.YELLOW)
+        activeRubikFace.transformedTileArray[2][1] = RubikTile(null, Color.BLUE)
+        activeRubikFace.transformedTileArray[2][2] = RubikTile(null, Color.ORANGE)
+
+        cube.fillFaceColors(activeRubikFace)
+
         addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
+    }
+
+    fun calculateTilesForFace(rectangleList : LinkedList<Rectangle>, image : Mat){
+        activeRubikFace.calculateTiles(rectangleList, image)
     }
 
     fun addNewFace(activeFaceName: LayerEnum, frontFace: LayerEnum) {
         //create first face in front of user
-        //val activeFace = RubikFace()
+        //val activeFace = RubikFace(this)
         //activeFace.faceNameEnum = activeFaceName
 
         /*activeFace.rotationAxis = Axis.yMinusAxis
@@ -75,51 +91,36 @@ class CurrentState {
         glRenderer.CalculateRotationAxis()*/
     }
 
-   /* fun adopt(rubikFace: RubikFace) {
+    fun adopt(rubikFace: RubikFace) {
         when (adoptFaceCount) {
             1 -> {
-                MainActivity.glRenderer.fillFaceColors(rubikFace.faceNameEnum, rubikFace.transformedTileArray)
-                MainActivity.glRenderer.isCubeRotation = true
-                MainActivity.glRenderer.rotateCubeDegrees(Constants.FaceNameEnum.LEFT.axis)
-                //if(MainActivity.glRenderer.CalculateRotationAxis()) {
-                MainActivity.addNewFace(Constants.FaceNameEnum.LEFT, Constants.FaceNameEnum.FRONT)
+                cube.fillFaceColors(rubikFace)
+                cube.rotateCube(90f, Axis.zAxis)
+                addNewFace(LayerEnum.LEFT, LayerEnum.FRONT)
             }
             2 -> {
-                MainActivity.glRenderer.fillFaceColors(rubikFace.faceNameEnum, rubikFace.transformedTileArray)
-                MainActivity.glRenderer.isCubeRotation = true
-                MainActivity.glRenderer.rotateCubeDegrees(Constants.FaceNameEnum.FRONT.axis)
-                //if(MainActivity.glRenderer.CalculateRotationAxis()) {
-                MainActivity.addNewFace(Constants.FaceNameEnum.FRONT, Constants.FaceNameEnum.RIGHT)
+                cube.fillFaceColors(rubikFace)
+                cube.rotateCube(90f, Axis.xAxis)
+                addNewFace(LayerEnum.FRONT, LayerEnum.RIGHT)
             }
             3 -> {
-                MainActivity.glRenderer.fillFaceColors(rubikFace.faceNameEnum, rubikFace.transformedTileArray)
-                MainActivity.glRenderer.rotateCubeDegrees(Constants.FaceNameEnum.UP.axis)
-                MainActivity.glRenderer.isCubeRotation = true
-                // if(MainActivity.glRenderer.CalculateRotationAxis()) {
-                MainActivity.addNewFace(Constants.FaceNameEnum.UP, Constants.FaceNameEnum.RIGHT)
+                cube.fillFaceColors(rubikFace)
+                cube.rotateCube(90f, Axis.zAxis)
+                addNewFace(LayerEnum.UP, LayerEnum.RIGHT)
             }
             4 -> {
-                MainActivity.glRenderer.fillFaceColors(rubikFace.faceNameEnum, rubikFace.transformedTileArray)
-                MainActivity.glRenderer.rotateCubeDegrees(Constants.FaceNameEnum.RIGHT.axis)
-                MainActivity.glRenderer.isCubeRotation = true
-                //  if(MainActivity.glRenderer.CalculateRotationAxis()) {
-                MainActivity.addNewFace(Constants.FaceNameEnum.RIGHT, Constants.FaceNameEnum.DOWN)
+                cube.fillFaceColors(rubikFace)
+                cube.rotateCube(90f, Axis.xAxis)
+                addNewFace(LayerEnum.RIGHT, LayerEnum.DOWN)
             }
             5 -> {
-                MainActivity.glRenderer.fillFaceColors(rubikFace.faceNameEnum, rubikFace.transformedTileArray)
-                MainActivity.glRenderer.rotateCubeDegrees(Constants.FaceNameEnum.BACK.axis)
-                MainActivity.glRenderer.isCubeRotation = true
-                //  if(MainActivity.glRenderer.CalculateRotationAxis()) {
-                MainActivity.addNewFace(Constants.FaceNameEnum.BACK, Constants.FaceNameEnum.DOWN)
-                //  }
+                cube.fillFaceColors(rubikFace)
+                cube.rotateCube(90f, Axis.zAxis)
+                addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
                 isCubeSolved = true
             }
         }
-        if (adoptFaceCount < 6) {
-            // Record Face by Name: i.e., UP, DOWN, LEFT, ...
-            nameRubikFaceMap[rubikFace.faceNameEnum] = rubikFace
-        }
-    }*/
+    }
 
    /*fun drawArchArrow() {
         when (adoptFaceCount) {

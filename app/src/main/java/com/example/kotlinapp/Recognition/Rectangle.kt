@@ -210,10 +210,10 @@ class Rectangle {
 
             val midIndex = rhombusList.size / 2
 
-            rhombusList.sortWith(Comparator { lhs, rhs -> (lhs.alphaAngle - rhs.alphaAngle) as Int })
+            rhombusList.sortWith(Comparator { lhs, rhs -> (lhs.alphaAngle.toInt() - rhs.alphaAngle.toInt())})
             val medianAlphaAngle = rhombusList[midIndex].alphaAngle
 
-            rhombusList.sortWith(Comparator { lhs, rhs -> (lhs.betaAngle - rhs.betaAngle) as Int })
+            rhombusList.sortWith(Comparator { lhs, rhs -> (lhs.betaAngle.toInt() - rhs.betaAngle.toInt())})
             val medianBetaAngle = rhombusList[midIndex].betaAngle
 
             val rhombusItr = rhombusList.iterator()

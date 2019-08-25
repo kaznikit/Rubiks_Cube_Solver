@@ -9,6 +9,7 @@ import com.example.kotlinapp.Enums.LayerEnum
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
+import kotlin.math.abs
 
 class Cubie {
     private lateinit var mVertexBuffer: FloatBuffer
@@ -212,7 +213,7 @@ class Cubie {
 
     fun animateTransform() {
         if (isRotating) {
-            if (Math.abs(currentRotation) >= Math.abs(rotationAngle)) {
+            if (abs(currentRotation) >= abs(rotationAngle)) {
                 endAnimation()
                 currentRotation = 0.0f
             } else {

@@ -17,7 +17,7 @@ class Calibration(internal var mainActivity: MainActivity) {
     //go through all colors
     internal var colorNumber = 0
 
-    fun getColor(image: Mat, rectangleList: List<Rectangle>): Scalar? {
+    fun getColor(image: Mat): Scalar? {
         this.image = image
         when (colorNumber) {
             0 -> Imgproc.putText(
@@ -145,7 +145,7 @@ class Calibration(internal var mainActivity: MainActivity) {
             else -> {
                 MainActivity.IsCalibrationMode = false
                 colorNumber = 0
-                //mainActivity.ResetFaces()
+                mainActivity.currentState.resetFaces()
             }
         }
     }

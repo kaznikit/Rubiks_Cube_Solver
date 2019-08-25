@@ -1,18 +1,14 @@
 package com.example.kotlinapp
 
-import android.opengl.Matrix
-import android.os.Environment
-import android.util.Log
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.Recognition.*
 import com.example.kotlinapp.Rubik.Cube
 import org.opencv.core.Mat
-import org.opencv.core.Scalar
-import org.opencv.core.Size
-import java.io.*
 import java.util.*
+import com.example.kotlinapp.Recognition.RubikTile
+import com.example.kotlinapp.Util.Constants
 
 class CurrentState {
     lateinit var activeRubikFace: RubikFace
@@ -43,85 +39,205 @@ class CurrentState {
 
     constructor(mainActivity: MainActivity) {
         this.mainActivity = mainActivity
+        cameraCalibration = Calibration(mainActivity)
         colorDetector = ColorDetector()
         cube = Cube()
-        activeRubikFace = RubikFace(LayerEnum.DOWN, this)
-        activeRubikFace.transformedTileArray[0][0] = RubikTile(null, Color.RED)
-        activeRubikFace.transformedTileArray[0][1] = RubikTile(null, Color.BLUE)
-        activeRubikFace.transformedTileArray[0][2] = RubikTile(null, Color.GREEN)
-        activeRubikFace.transformedTileArray[1][0] = RubikTile(null, Color.ORANGE)
-        activeRubikFace.transformedTileArray[1][1] = RubikTile(null, Color.WHITE)
-        activeRubikFace.transformedTileArray[1][2] = RubikTile(null, Color.RED)
-        activeRubikFace.transformedTileArray[2][0] = RubikTile(null, Color.YELLOW)
-        activeRubikFace.transformedTileArray[2][1] = RubikTile(null, Color.BLUE)
-        activeRubikFace.transformedTileArray[2][2] = RubikTile(null, Color.ORANGE)
-
-        cube.fillFaceColors(activeRubikFace)
-
         addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
     }
 
     fun calculateTilesForFace(rectangleList : LinkedList<Rectangle>, image : Mat){
-        activeRubikFace.calculateTiles(rectangleList, image)
+        var faceColors = activeRubikFace.calculateTiles(rectangleList, image)
+
+        if(faceColors != null) {
+            if (isCubeSolved && adoptFaceCount > 6) {
+                //if cube solved we should just check
+                // which side of cube user holds the cube and rotate drawing cube
+                if (!IsCubeScannedAndReset) {
+                    checkCubeDownside(faceColors)
+                } else if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
+                    //glRenderer.findActiveSideOfCube(faceColors)
+                }
+                return
+            }
+
+            //если прошел цикл определения
+            if (activeRubikFace.ColorDetectionCount == 4) {
+                for (j in 0..8) {
+                    var colorTime = 0
+                    var color2Time = 0
+                    val temp = activeRubikFace.averageColorArray[0][j]
+                    var temp2 = activeRubikFace.averageColorArray[1][j]
+                    for (i in 2..3) {
+                        if (activeRubikFace.averageColorArray[i][j]?.cvColor === temp?.cvColor) {
+                            colorTime++
+                        } else {
+                            temp2 = activeRubikFace.averageColorArray[i][j]
+                            color2Time++
+                        }
+                    }
+                    if (colorTime > color2Time) {
+                        activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp!!
+                    } else {
+                        activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp2!!
+                    }
+                }
+                activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
+                cube.fillFaceColors(activeRubikFace)
+                activeRubikFace.ColorDetectionCount++
+                activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
+                adoptFaceCount++
+            } else if (activeRubikFace.ColorDetectionCount > 4) {
+                //проверяем повернули ли сторону кубика
+                if (!checkIfFaceExist(faceColors)) {
+                    //кубик повернут другой стороной
+                    mainActivity.glRenderer.drawArrow(false)
+                    adopt(activeRubikFace)
+                } else {
+                    mainActivity.glRenderer.drawArrow(true)
+                }
+            }
+            //processFinished = true
+        }
     }
 
-    fun addNewFace(activeFaceName: LayerEnum, frontFace: LayerEnum) {
+    fun addNewFace(activeFaceName: LayerEnum, frontFaceName: LayerEnum) {
         //create first face in front of user
-        //val activeFace = RubikFace(this)
-        //activeFace.faceNameEnum = activeFaceName
-
-        /*activeFace.rotationAxis = Axis.yMinusAxis
+        val activeFace = RubikFace(activeFaceName, this)
         activeRubikFace = activeFace
-
         //face shown to user
-        if (!Arrays.asList(cube.rubikFaces).contains(frontFace)) {
-            val activeFrontFace = RubikFace()
-            activeFrontFace.faceNameEnum = frontFace
+        frontFace = if (!rubikFaces.any{ x -> x.layerName == frontFaceName}) {
+            val activeFrontFace = RubikFace(frontFaceName, this)
             activeFrontFace.createObservedTilesArray()
-            //activeFrontFace.faceNameEnum.axis = Constants.RotationAxis.zAxis;
-            activeFrontFace.rotationAxis = Axis.zAxis
-            MainActivity.currentState.frontFace = activeFrontFace
+            activeFrontFace
         } else {
-            val index = Arrays.asList(mCube.rubikFaces).lastIndexOf(frontFace)
-            MainActivity.currentState.frontFace = mCube.rubikFaces[index]
+            rubikFaces.filter { x -> x.layerName == frontFaceName }.single()
         }
-
         activeFace.createObservedTilesArray()
-        mCube.rubikFaces[MainActivity.currentState.adoptFaceCount] = activeFace
-        glRenderer.CalculateRotationAxis()*/
+        rubikFaces.add(activeFace)
     }
 
     fun adopt(rubikFace: RubikFace) {
         when (adoptFaceCount) {
             1 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(90f, Axis.zAxis)
+                cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.LEFT, LayerEnum.FRONT)
             }
             2 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(90f, Axis.xAxis)
+                cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.FRONT, LayerEnum.RIGHT)
             }
             3 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(90f, Axis.zAxis)
+                cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.UP, LayerEnum.RIGHT)
             }
             4 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(90f, Axis.xAxis)
+                cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.RIGHT, LayerEnum.DOWN)
             }
             5 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(90f, Axis.zAxis)
+                cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
                 isCubeSolved = true
             }
         }
     }
 
+    //check if user turned cube to the start position
+    fun checkCubeDownside(tiles: Array<Array<RubikTile?>>) {
+        if (tiles != null) {
+            //how many tiles have the same colors
+            for (face in rubikFaces) {
+                if (face!!.layerName == LayerEnum.DOWN) {
+                    var coincide = 0
+                    for (i in 0..2) {
+                        for (j in 0..2) {
+                            if (tiles!![i][j]?.tileColor == Color.BLACK || face == null || face!!.transformedTileArray == null) {
+                                continue
+                            }
+                            if (face!!.transformedTileArray[i][j]?.tileColor == tiles!![i][j]?.tileColor) {
+                                coincide++
+                            }
+                        }
+                    }
+                    if (coincide > 5) {
+                        IsCubeScannedAndReset = true
+                        adoptFaceCount++
+                    }
+                }
+            }
+        }
+    }
+
+    fun checkActiveTileColors(tiles: Array<Array<RubikTile?>>): Boolean {
+        if (tiles != null && tiles.size == 0) {
+            return false
+        }
+        //how many tiles have the same colors
+        var coincide = 0
+        for (k in 0..2) {
+            for (l in 0..2) {
+                for (i in 0..2) {
+                    for (j in 0..2) {
+                        if (activeRubikFace.transformedTileArray[i][j]?.tileColor == tiles!![k][l]?.tileColor
+                            && tiles!![k][l]?.tileState != Constants.TileState.PROCESSED) {
+                            tiles!![k][l]?.tileState = Constants.TileState.PROCESSED
+                            coincide++
+                        }
+                    }
+                }
+                if (coincide > 5) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    /**
+     * check by two tiles
+     * @param tiles
+     * @return true if face exist, false if not
+     */
+    fun checkIfFaceExist(tiles: Array<Array<RubikTile?>>): Boolean {
+        if (tiles != null && tiles.isEmpty()) {
+            return false
+        }
+        //check the center tile
+        for (face in rubikFaces) {
+            if (face == null || face!!.transformedTileArray == null) {
+                continue
+            }
+            var sameTiles = 0
+            if (face!!.transformedTileArray[1][1]?.tileColor === tiles!![1][1]?.tileColor) {
+                //if we found a face with such center tile
+                sameTiles++
+            }
+            //check the tile close to center
+            if (face!!.transformedTileArray[2][1]?.tileColor === tiles!![2][1]?.tileColor) {
+                sameTiles++
+            }
+            //if we found the same two tiles, need to scan more
+            if (sameTiles > 1) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fun resetFaces() {
+        adoptFaceCount = 0
+        if (rubikFaces.size != 0) {
+            for (i in 0 until rubikFaces.size - 1) {
+                rubikFaces.remove(rubikFaces[i])
+            }
+        }
+        addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
+    }
    /*fun drawArchArrow() {
         when (adoptFaceCount) {
             1 -> MainActivity.glRenderer.drawArrow(true)

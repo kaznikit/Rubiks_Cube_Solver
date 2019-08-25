@@ -39,7 +39,6 @@ class Layer {
     }
 
     fun rotate(angle: Float) {
-        mCube.permutationAllowed = false
         //check if it's possible to rotate layer on this rotationAxis
         for (cubie in mCube.cubies) {
             if (cubiesIds.contains(cubie.id)) {

@@ -11,19 +11,11 @@ import org.opencv.core.Mat
 import org.opencv.core.Point
 
 class RubikFace {
-    lateinit var layerName : LayerEnum
+    var layerName : LayerEnum
 
-    // A Rubik Face can exist in the following states:
     enum class FaceRecognitionStatusEnum {
         UNKNOWN,
-        INSUFFICIENT, // Insufficient Provided Rhombi to attempt solution
-        BAD_METRICS, // Metric Calculation did not produce reasonable results
-        INCOMPLETE, // Rhombi did not converge to proper solution
-        INADEQUATE, // We require at least one Rhombus in each row and column
-        BLOCKED, // Attempt to improve Rhombi layout in face was blocked: incorrect move direction reported
-        INVALID_MATH, // LMS algorithm result in invalid math.
-        UNSTABLE, // Last Tile move resulted in a increase in the overall error (LMS).
-        SOLVED                   // Full and proper solution obtained.
+        SOLVED
     }
 
     var faceRecognitionStatus = FaceRecognitionStatusEnum.UNKNOWN
@@ -67,35 +59,39 @@ class RubikFace {
 
     var isObservedFilled = false
 
+    fun createObservedTilesArray() {
+        for (i in 0..2) {
+            for (j in 0..2) {
+                observedTileArray[i][j] =
+                    RubikTile(null, Color.BLACK)
+                transformedTileArray[i][j] =
+                    RubikTile(null, Color.BLACK)
+                isObservedFilled = true
+            }
+        }
+    }
+
     constructor(faceName : LayerEnum, currentState: CurrentState){
         this.layerName = faceName
         this.currentState = currentState
     }
 
-    fun calculateTiles(rectanglesList: List<Rectangle>, image: Mat) {
-        // Don't even attempt if less than 7 rectangles are identified.
+    fun calculateTiles(rectanglesList: List<Rectangle>, image: Mat) : Array<Array<RubikTile?>>? {
         if (rectanglesList.size < 7) {
-            return
+            return null
         }
-
-        // Calculate average alpha and beta angles, and also gamma ratio.
-        // Sometimes (but probably only when certain bugs exist) can contain NaN data.
         if (calculateMetrics(rectanglesList) === false) {
-            return
+            return null
         }
-
-        // Layout Rhombi into Face Array
         if (isObservedFilled) {
             if (RectanglesLayout.MakeLayout(rectanglesList, observedTileArray, alphaAngle, betaAngle) === false)
             {
-                return
+                return null
             }
         }
-
-        // Evaluate Rhombi into Array fit RMS
         lmsResult = findOptimumFaceFit()
         if (lmsResult.valid === false) {
-            return
+            return null
         }
         alphaLatticLength = lmsResult.alphaLattice
         betaLatticLength = gammaRatio * lmsResult.alphaLattice
@@ -104,27 +100,22 @@ class RubikFace {
         // Loop until some resolution
         while (lmsResult.sigma > 35) {
             if (numRhombusMoves > 5) {
-                //    faceRecognitionStatus = FaceRecognitionStatusEnum.INCOMPLETE;
-                return
+                return null
             }
-
-            // Move a Rhombi
             if (findAndMoveRectangleToBetterLocation() === false) {
-                return
+                return null
             }
             numRhombusMoves++
-
-            // Evaluate
             lmsResult = findOptimumFaceFit()
             if (lmsResult.valid === false) {
-                return
+                return null
             }
             alphaLatticLength = lmsResult.alphaLattice
             betaLatticLength = gammaRatio * lmsResult.alphaLattice
         }
 
         //определение цветов
-        //val tempTiles = currentState.colorDetector!!.faceTileColorRecognition(image, MainActivity.currentState.activeRubikFace)
+        return currentState.colorDetector!!.faceTileColorRecognition(image, currentState.activeRubikFace)
     }
 
     private fun calculateMetrics(rectanglesList: List<Rectangle>): Boolean {

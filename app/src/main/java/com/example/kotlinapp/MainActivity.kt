@@ -207,9 +207,9 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
         //make processing 1 time per second
-        if(System.currentTimeMillis() - start >= 300) {
+        if(System.currentTimeMillis() - start >= 50) {
+            ImageRecognizer(this).execute(inputFrame.rgba())
             start = System.currentTimeMillis()
-            ImageRecognizer(this).execute(inputFrame.rgba())//imageRecognizer.threesholdTestImage(inputFrame.rgba())//imageRecognizer.testProcess(inputFrame.rgba());//imageRecognizer.processFrame(inputFrame.rgba());//inputFrame.rgba();
         }
         if(isMatProcessed){
             isMatProcessed = false

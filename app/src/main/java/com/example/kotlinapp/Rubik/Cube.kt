@@ -5,6 +5,7 @@ import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.Recognition.RubikFace
+import kotlin.concurrent.thread
 
 class Cube() {
     val spaceBetweenCubies: Float = 0.3f;
@@ -1106,6 +1107,10 @@ class Cube() {
     }
 
     fun rotateCube(angle : Float, axis: Axis) {
+        while(!permutationAllowed){
+            Thread.sleep(50)
+        }
+        permutationAllowed = false
         for (layer in layers) {
             if (layer.layerName.rotationAxis.x == axis.x
                 && layer.layerName.rotationAxis.y == axis.y
@@ -1124,7 +1129,25 @@ class Cube() {
 
     //add rubik face colors to the necessary layer
     fun fillFaceColors(rubikFace: RubikFace){
-        var layer = layers.filter { x -> x.layerName == rubikFace.layerName }.single()
+        /*var layer = layers.filter { x -> x.layerName == rubikFace.layerName }.single()
+
+        var k = 0
+        for(rubikTileArray in rubikFace.transformedTileArray){
+            for(rubikTile in rubikTileArray){
+                var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
+
+                cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
+                    .setTileColor(rubikTile!!.tileColor)
+                cubies[cubie.id] = cubie
+                k++
+            }
+        }*/
+
+        while(!permutationAllowed){
+            Thread.sleep(20)
+        }
+        //always take down layer
+        var layer = layers.single { x -> x.layerName == LayerEnum.DOWN }
 
         var k = 0
         for(rubikTileArray in rubikFace.transformedTileArray){

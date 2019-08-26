@@ -15,6 +15,7 @@ import android.view.View
 import com.example.kotlinapp.CurrentState
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
+import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.MainActivity
 import com.example.kotlinapp.R
@@ -39,9 +40,11 @@ class Renderer : GLSurfaceView.Renderer {
     private var arrowQuarterTurn: ArrowArch? = null
     private var arrowHalfTurn: ArrowArch? = null
     private var isArrowDrawing = false
+    private var arrowDirection = 'R'
     private var mArrowMatrix = FloatArray(16)
     private val mMatrixArrow = FloatArray(16)
 private var rotation = 0f
+
     //endregion
 
     //region Matrices
@@ -113,7 +116,7 @@ private var rotation = 0f
 
             if (isArrowDrawing) {
                 Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0)
-                renderCubeEdgeRotationArrow(mMVPMatrix, getRotationInDegrees())
+                renderCubeEdgeRotationArrow(90f, arrowDirection)
             }
             else{
                 rotation = 0f
@@ -122,75 +125,43 @@ private var rotation = 0f
         }
     }
 
-    fun drawArrow(isDrawing: Boolean) {
+    fun drawArrow(isDrawing: Boolean, direction: Char) {
         isArrowDrawing = isDrawing
+        arrowDirection = direction
     }
 
-    private fun getRotationInDegrees(): Int {
-        val time = System.currentTimeMillis()
-
-        val rate = 10
-        return ((time - timeReference) / rate % 180).toInt()
-    }
-
-    private fun renderCubeEdgeRotationArrow(mvpMatrix: FloatArray, arrowRotationInDegrees: Int) {
-        var direction: ArrowDirection? = null
-
+    private fun renderCubeEdgeRotationArrow(degrees : Float, direction : Char) {
         if(abs(rotation) >= 90f){
             rotation = 0f
         }
-        // Rotate and Translate Arrow as required by Rubik Logic Solution algorithm.
-        when (state.activeRubikFace.layerName) {
-            LayerEnum.DOWN -> {
-                Matrix.rotateM(mArrowMatrix, 0, -2f, 0.0f, 0.0f, -1.0f)
-                rotation += 2f
-                direction = ArrowDirection.NEGATIVE
-            }
-            LayerEnum.LEFT -> {
-                Matrix.rotateM(mArrowMatrix, 0, -2f, 1.0f, 0.0f, 0.0f)
-                direction = ArrowDirection.NEGATIVE
-            }
-            LayerEnum.FRONT -> {
-                Matrix.rotateM(mArrowMatrix, 0, -2f, 0.0f, 0.0f, -1.0f)
-                direction = ArrowDirection.NEGATIVE
-            }
-            LayerEnum.UP -> {
-                Matrix.rotateM(mArrowMatrix, 0, -2f, 1.0f, 0.0f, 0.0f)
-                direction = ArrowDirection.NEGATIVE
-            }
-            LayerEnum.RIGHT -> {
-                Matrix.rotateM(mArrowMatrix, 0, -2f, 0f, 0.0f, -1f)
-                direction = ArrowDirection.NEGATIVE
-            }
-            LayerEnum.BACK -> {
-                direction = ArrowDirection.POSITIVE
-                Matrix.rotateM(mArrowMatrix, 0, -2f, 1f, 0.0f, 0f)
-            }
-        }
-        /*if (direction == ArrowDirection.NEGATIVE) {
-            //Matrix.rotateM(mvpMatrix, 0, arrowRotationInDegrees.toFloat(), 0.0f, 0.0f, 1.0f)
-            Matrix.rotateM(mArrowMatrix, 0, -90f, 0.0f, 0.0f, 1.0f)
-            Matrix.rotateM(mArrowMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
-        }*/ //else
-          //  Matrix.rotateM(mArrowMatrix, 0, (-1 * arrowRotationInDegrees).toFloat(), 0.0f, 0.0f, 1.0f)
-
-       // Matrix.transposeM(mArrowMatrix, 0, mArrowMatrix, 0)
-
-        Matrix.multiplyMM(mMatrixArrow, 0, mViewMatrix, 0, mArrowMatrix, 0)
-        Matrix.multiplyMM(mvpMatrix, 0, mProjectionMatrix, 0, mMatrixArrow, 0)
-
-        if (direction == ArrowDirection.NEGATIVE) {
-            Matrix.rotateM(mvpMatrix, 0, -2f, 0.0f, 0.0f, 1.0f)
-            Matrix.rotateM(mvpMatrix, 0, -90f, 0.0f, 0.0f, 1.0f)
-            Matrix.rotateM(mvpMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
+        var vec = LayerEnum.getVectorByDirection(direction)
+        if(degrees > 0) {
+            Matrix.rotateM(mArrowMatrix, 0, 2f, vec[0], vec[1], vec[2])
+            rotation += 2
         }
         else{
-            Matrix.rotateM(mvpMatrix, 0, -2f, 0.0f, 0.0f, 1.0f)
+            Matrix.rotateM(mArrowMatrix, 0, -2f, vec[0], vec[1], vec[2])
+            rotation -= 2
+        }
+        Matrix.multiplyMM(mMatrixArrow, 0, mViewMatrix, 0, mArrowMatrix, 0)
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrixArrow, 0)
+
+        //to the user (front), left for the back
+        if(direction == 'R') {
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
+        }
+        //to the left, back to the right
+        else if(direction == 'F'){
+            Matrix.rotateM(mMVPMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
+        }
+        //counterclockwise, down for clockwise
+        else if(direction == 'U'){
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
         }
 
-        Matrix.scaleM(mvpMatrix, 0, 4.5f, 4.5f, 3.5f)
+        Matrix.scaleM(mMVPMatrix, 0, 4.5f, 4.5f, 3.5f)
 
-        arrowHalfTurn?.draw(mvpMatrix, Color.WHITE.cvColor, programId)
+        arrowHalfTurn?.draw(mMVPMatrix, Color.WHITE.cvColor, programId)
     }
 
     fun CreateViewMatrix() {

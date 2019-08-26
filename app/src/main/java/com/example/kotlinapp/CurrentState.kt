@@ -90,14 +90,26 @@ class CurrentState {
                 //проверяем повернули ли сторону кубика
                 if (!checkIfFaceExist(faceColors)) {
                     //кубик повернут другой стороной
-                    mainActivity.glRenderer.drawArrow(false)
+                    mainActivity.glRenderer.drawArrow(false, 'D')
                     adopt(activeRubikFace)
                 } else {
-                    mainActivity.glRenderer.drawArrow(true)
+                    mainActivity.glRenderer.drawArrow(true, getNextArrowRotation())
                 }
             }
             //processFinished = true
         }
+    }
+
+    fun getNextArrowRotation() : Char{
+        when (adoptFaceCount) {
+            0 -> return 'F'
+            1 -> return 'R'
+            2 -> return 'F'
+            3 -> return 'R'
+            4 -> return 'F'
+            5 -> return 'R'
+        }
+        return 'F'
     }
 
     fun addNewFace(activeFaceName: LayerEnum, frontFaceName: LayerEnum) {

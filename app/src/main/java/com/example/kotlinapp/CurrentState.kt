@@ -82,7 +82,7 @@ class CurrentState {
                     }
                 }
                 activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
-                cube.fillFaceColors(activeRubikFace)
+                //cube.fillFaceColors(activeRubikFace)
                 activeRubikFace.ColorDetectionCount++
                 activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
                 adoptFaceCount++
@@ -102,12 +102,11 @@ class CurrentState {
 
     fun getNextArrowRotation() : Char{
         when (adoptFaceCount) {
-            0 -> return 'F'
-            1 -> return 'R'
-            2 -> return 'F'
-            3 -> return 'R'
-            4 -> return 'F'
-            5 -> return 'R'
+            1 -> return 'F'
+            2 -> return 'R'
+            3 -> return 'F'
+            4 -> return 'R'
+            5 -> return 'F'
         }
         return 'F'
     }
@@ -132,27 +131,27 @@ class CurrentState {
         when (adoptFaceCount) {
             1 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(-90f, Axis.zAxis)
+                var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.LEFT, LayerEnum.FRONT)
             }
             2 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(-90f, Axis.xAxis)
+                var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.FRONT, LayerEnum.RIGHT)
             }
             3 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(-90f, Axis.zAxis)
+                var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.UP, LayerEnum.RIGHT)
             }
             4 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(-90f, Axis.xAxis)
+                var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.RIGHT, LayerEnum.DOWN)
             }
             5 -> {
                 cube.fillFaceColors(rubikFace)
-                cube.rotateCube(-90f, Axis.zAxis)
+                var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
                 isCubeSolved = true
             }

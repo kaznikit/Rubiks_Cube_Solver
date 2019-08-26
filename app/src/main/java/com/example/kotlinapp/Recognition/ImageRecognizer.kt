@@ -13,30 +13,20 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
     internal lateinit var grayscale_image: Mat
     internal lateinit var testImage: Mat
     private val activityReference: WeakReference<MainActivity> = WeakReference(mainActivity)
+    val cl = Imgproc.createCLAHE(10.0)
 
     override fun doInBackground(vararg image: Mat): Mat {
-        val lightened = Mat()
+        var lightened = Mat()
         image[0].copyTo(lightened)
-        //lightened = correctGamma(lightened, 1.0);
-
         Imgproc.cvtColor(lightened, lightened, Imgproc.COLOR_BGR2GRAY)
+        lightened = correctGamma(lightened, 2.0)
+        cl.apply(lightened, lightened)
         Imgproc.GaussianBlur(lightened, lightened, Size(9.0, 9.0), 0.0, 0.0)
-        Imgproc.adaptiveThreshold(
+        Imgproc.Canny(lightened, lightened, 30.0, 100.0)
+        Imgproc.dilate(
             lightened,
             lightened,
-            180.0,
-            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-            Imgproc.THRESH_BINARY_INV,
-            5,
-            2.0
-        )
-
-        //added
-        Imgproc.Laplacian(lightened, lightened, lightened.depth(), 7)//, 0, Core.BORDER_DEFAULT);
-
-        Imgproc.threshold(lightened, lightened, 1.0, 180.0, Imgproc.THRESH_BINARY)
-
-        Imgproc.dilate(lightened, lightened, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(15.0, 15.0)))
+            Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(11.0, 11.0)))
 
         val contours = LinkedList<MatOfPoint>()
         val heirarchy = Mat()
@@ -61,8 +51,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
                             angle(
                                 polygon.toArray()[j % 4],
                                 polygon.toArray()[j - 2],
-                                polygon.toArray()[j - 1]
-                            )
+                                polygon.toArray()[j - 1])
                         )
                         maxCosine = Math.max(maxCosine, cosine)
                     }
@@ -118,8 +107,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
             Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
             Imgproc.THRESH_BINARY_INV,
             5,
-            2.0
-        )
+            2.0)
         //Imgproc.GaussianBlur(lightened, lightened, new Size(9, 9), 0, 0);
         //Imgproc.dilate(lightened, lightened, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(9, 9)));
 

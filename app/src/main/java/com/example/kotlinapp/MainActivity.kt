@@ -82,8 +82,6 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
         glRenderer = Renderer(glSurfaceView, this, currentState)
 
-        glRenderer.isTestArrows = true
-
         mGesture = GestureDetector(this, glRenderer.mOnGesture)
 
         glSurfaceView.holder.setFormat(PixelFormat.TRANSPARENT)

@@ -50,15 +50,15 @@ class Cube() {
                 for (k in 0 until 3) {
                     cubies.add(Cubie(leftX, leftY, leftZ, sideLength, id, !isCorner, !isEdge))
                     id++
-                    leftX += sideLength
-                    leftX += spaceBetweenCubies
+                    leftZ += sideLength
+                    leftZ += spaceBetweenCubies
 
                     isCorner = !isCorner
                     isEdge = !isEdge
                 }
-                leftX = lowerBound
-                leftZ += sideLength
-                leftZ += spaceBetweenCubies
+                leftZ = lowerBound
+                leftX += sideLength
+                leftX += spaceBetweenCubies
             }
             leftX = lowerBound
             leftZ = lowerBound
@@ -1106,7 +1106,10 @@ class Cube() {
         return moves
     }
 
-    fun rotateCube(angle : Float, axis: Axis) {
+    /**
+     * return value when rotation process is complete
+     */
+    fun rotateCube(angle : Float, axis: Axis) : Boolean {
         while(!permutationAllowed){
             Thread.sleep(50)
         }
@@ -1125,6 +1128,11 @@ class Cube() {
                 layer.rotate(-angle)
             }
         }
+
+        while(!permutationAllowed){
+            Thread.sleep(50)
+        }
+        return true
     }
 
     //add rubik face colors to the necessary layer
@@ -1150,7 +1158,20 @@ class Cube() {
         var layer = layers.single { x -> x.layerName == LayerEnum.DOWN }
 
         var k = 0
-        for(rubikTileArray in rubikFace.transformedTileArray){
+
+        for(i in 2 downTo 0){
+            for(j in 2 downTo 0){
+                var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
+
+                cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
+                    .setTileColor(rubikFace.transformedTileArray[i][j]!!.tileColor)
+                cubies[cubie.id] = cubie
+                k++
+            }
+        }
+
+
+        /*for(rubikTileArray in rubikFace.transformedTileArray){
             for(rubikTile in rubikTileArray){
                 var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
 
@@ -1159,6 +1180,6 @@ class Cube() {
                 cubies[cubie.id] = cubie
                 k++
             }
-        }
+        }*/
     }
 }

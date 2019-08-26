@@ -30,7 +30,7 @@ class Renderer : GLSurfaceView.Renderer {
 
     var uMatrixLocation: Int = 0
 
-    lateinit var view: View
+    var view: View
     lateinit var state: CurrentState
 
     val displayMetrics = DisplayMetrics()
@@ -114,7 +114,7 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     fun CreateProjectionMatrix(width: Int, height: Int) {
-        var ratio = 1f
+        var ratio : Float
         var left = -1f
         var right = 1f
         var bottom = -1f

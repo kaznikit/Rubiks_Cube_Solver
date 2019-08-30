@@ -105,6 +105,7 @@ class Cube() {
                 layer.addCubie(cubie1)
             }
         }
+
         if (layer.direction != directionsControl.getDirectionByCharName('N')) {
             layer.verifyTiles()
         }
@@ -189,7 +190,7 @@ class Cube() {
         //find center white point and add it to the up layer
         for (qb in cubies) {
             if (!qb.isEdge && !qb.isCorner) {
-                if (qb.tiles.any() { x -> x.color == Color.WHITE }) {
+                if (qb.tiles.any { x -> x.color == Color.WHITE }) {
                     for (tile in qb.tiles) {
                         if (tile.color == Color.WHITE && tile.isActive) {
                             if (tile.direction == 'L') {
@@ -1137,49 +1138,58 @@ class Cube() {
 
     //add rubik face colors to the necessary layer
     fun fillFaceColors(rubikFace: RubikFace){
-        /*var layer = layers.filter { x -> x.layerName == rubikFace.layerName }.single()
+        while(!permutationAllowed){
+            Thread.sleep(20)
+        }
+        var layer = layers.filter { x -> x.layerName == LayerEnum.DOWN }.single()
+
+        var tempCubies = sortCubiesForLayer(layer)
 
         var k = 0
         for(rubikTileArray in rubikFace.transformedTileArray){
             for(rubikTile in rubikTileArray){
-                var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
+                var cubie = cubies.single { x -> x.id == tempCubies[k].id }
 
                 cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
                     .setTileColor(rubikTile!!.tileColor)
                 cubies[cubie.id] = cubie
                 k++
             }
-        }*/
+        }
 
         while(!permutationAllowed){
             Thread.sleep(20)
         }
-        //always take down layer
-        var layer = layers.single { x -> x.layerName == LayerEnum.DOWN }
-
-        var k = 0
-
-        for(i in 2 downTo 0){
-            for(j in 2 downTo 0){
-                var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
-
-                cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
-                    .setTileColor(rubikFace.transformedTileArray[i][j]!!.tileColor)
-                cubies[cubie.id] = cubie
-                k++
-            }
-        }
-
-
-        /*for(rubikTileArray in rubikFace.transformedTileArray){
-            for(rubikTile in rubikTileArray){
-                var cubie = cubies.single { x -> x.id == layer.cubiesIds[k] }
-
-                cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
-                    .setTileColor(rubikTile!!.tileColor)
-                cubies[cubie.id] = cubie
-                k++
-            }
-        }*/
     }
+
+    //sort cubies for layer to go on X axis
+    fun sortCubiesForLayer(layer: Layer) : List<Cubie>{
+        var tempCubies = layer.cubies//arrayListOf<Cubie>()
+
+        var sortedList = arrayListOf<Cubie>()
+
+        //find cubie close to the user
+        //go on minus z
+        sortedList.add(tempCubies.single{ x -> x.tiles.any { t -> t.direction == 'F' && t.isActive} && x.tiles.any { t -> t.direction == 'L' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive}})
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'L' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive} && x.isEdge})
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'L' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive} && x.tiles.any{t -> t.direction == 'B' && t.isActive}})
+
+        //increase x and go on minus z
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'F' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive} && x.isEdge})
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'D' && t.isActive} && !x.isEdge && !x.isCorner})
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'D' && t.isActive} && x.tiles.any{t -> t.direction == 'B' && t.isActive} && x.isEdge})
+
+        //increase x and go on minus z
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'F' && t.isActive} && x.tiles.any { t -> t.direction == 'R' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive}})
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'R' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive} && x.isEdge })
+        sortedList.add(tempCubies.single { x -> x.tiles.any { t -> t.direction == 'R' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive} && x.tiles.any{t -> t.direction == 'B' && t.isActive}})
+
+        return sortedList
+    }
+
+    //get layers on the sides of cube
+    fun getSideLayers() : List<Layer>{
+        return layers.filter { x -> x.layerName != LayerEnum.MIDDLE && x.layerName != LayerEnum.EQUATOR && x.layerName != LayerEnum.STANDING }
+    }
+
 }

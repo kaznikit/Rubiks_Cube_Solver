@@ -3,8 +3,8 @@ package com.example.kotlinapp.Rubik
 class Solver(var cube: Cube) {
 
     fun makeCube() {
-        var scramble = "F2 D' B U' D L2 B2 R B L'"
-        cube.scramble(scramble)
+        /*var scramble = "F2 D' B U' D L2 B2 R B L'"
+        cube.scramble(scramble)*/
 
         var sunflower = cube.makeWhiteCross()
         System.out.print(sunflower)

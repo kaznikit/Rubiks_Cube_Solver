@@ -77,9 +77,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         val activityReference = activityReference.get()
         //in calibration mode it's necessary to scan colors and write them
         if (!MainActivity.IsCalibrationMode) {
-            //if (activityReference!!.currentState.activeRubikFace.processFinished) {
                 activityReference!!.currentState.calculateTilesForFace(rectangleList, image[0])
-            //}
         } else {
             //scan colors
             activityReference!!.currentState.cameraCalibration!!.getColor(image[0])

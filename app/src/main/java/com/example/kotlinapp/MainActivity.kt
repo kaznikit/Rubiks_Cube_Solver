@@ -22,6 +22,7 @@ import com.example.kotlinapp.Recognition.ImageRecognizer
 import com.example.kotlinapp.Rubik.Cube
 import com.example.kotlinapp.Rubik.Renderer
 import com.example.kotlinapp.Rubik.Solver
+import com.example.kotlinapp.Util.InfoDisplayer
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
 import org.opencv.core.Mat
@@ -209,15 +210,15 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
         //make processing 1 time per second
-        if(System.currentTimeMillis() - start >= 50) {
+        if (System.currentTimeMillis() - start >= 50) {
             ImageRecognizer(this).execute(inputFrame.rgba())
             start = System.currentTimeMillis()
         }
-        if(isMatProcessed){
+        if (isMatProcessed) {
             isMatProcessed = false
             return processedMat!!
-        }else {
-            return inputFrame.rgba()
+        } else {
+            return InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
         }
     }
 

@@ -40,10 +40,12 @@ class Renderer : GLSurfaceView.Renderer {
     private var arrowQuarterTurn: ArrowArch? = null
     private var arrowHalfTurn: ArrowArch? = null
     private var isArrowDrawing = false
-    private var arrowDirection = 'R'
+    private var arrowDirection = "R"
     private var mArrowMatrix = FloatArray(16)
     private val mMatrixArrow = FloatArray(16)
-private var rotation = 0f
+    private var rotation = 0f
+    private var isLayerArrow = false
+    private var arrowDirectionValue = ArrowDirection.POSITIVE
 
     //endregion
 
@@ -108,33 +110,49 @@ private var rotation = 0f
     override fun onDrawFrame(gl: GL10?) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
         if(!MainActivity.IsCalibrationMode) {
-            state.cube.resetLayerCubies()
+            if(state.cube.cubies.size != 0) {
+                state.cube.resetLayerCubies()
 
-            for (cubie in state.cube.cubies) {
-                cubie.draw(mProjectionMatrix, mViewMatrix, programId)
-            }
+                for (cubie in state.cube.cubies) {
+                    cubie.draw(mProjectionMatrix, mViewMatrix, programId)
+                }
 
-            if (isArrowDrawing) {
-                Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0)
-                renderCubeEdgeRotationArrow(90f, arrowDirection)
-            }
-            else{
-                rotation = 0f
-                Matrix.setIdentityM(mArrowMatrix, 0)
+                if (isArrowDrawing) {
+                    Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0)
+                    if (!isLayerArrow) {
+                        renderCubeEdgeRotationArrow(90f, arrowDirection)
+                    } else {
+                        if (arrowDirectionValue == ArrowDirection.NEGATIVE) {
+                            renderCubeLayerRotationArrow(90f, arrowDirection)
+                        } else {
+                            renderCubeLayerRotationArrow(-90f, arrowDirection)
+                        }
+                    }
+                } else {
+                    rotation = 0f
+                    Matrix.setIdentityM(mArrowMatrix, 0)
+                }
             }
         }
     }
 
-    fun drawArrow(isDrawing: Boolean, direction: Char) {
+    fun drawArrow(isDrawing: Boolean, direction: String, isLayer : Boolean) {
         isArrowDrawing = isDrawing
         arrowDirection = direction
+        if (arrowDirection.contains("'")) {
+            arrowDirectionValue = ArrowDirection.NEGATIVE
+        }
+        else{
+            arrowDirectionValue = ArrowDirection.POSITIVE
+        }
+        isLayerArrow = isLayer
     }
 
-    private fun renderCubeEdgeRotationArrow(degrees : Float, direction : Char) {
+    private fun renderCubeEdgeRotationArrow(degrees : Float, direction : String) {
         if(abs(rotation) >= 90f){
             rotation = 0f
         }
-        var vec = LayerEnum.getVectorByDirection(direction)
+        var vec = LayerEnum.getVectorByDirection(direction.first())
         if(degrees > 0) {
             Matrix.rotateM(mArrowMatrix, 0, 2f, vec[0], vec[1], vec[2])
             rotation += 2
@@ -147,21 +165,182 @@ private var rotation = 0f
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrixArrow, 0)
 
         //to the user (front), left for the back
-        if(direction == 'R') {
+        if(direction == "R") {
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
         }
         //to the left, back to the right
-        else if(direction == 'F'){
+        else if(direction == "F"){
             Matrix.rotateM(mMVPMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
         }
         //counterclockwise, down for clockwise
-        else if(direction == 'U'){
+        else if(direction == "U"){
             Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
         }
 
         Matrix.scaleM(mMVPMatrix, 0, 4.5f, 4.5f, 3.5f)
 
         arrowHalfTurn?.draw(mMVPMatrix, Color.WHITE.cvColor, programId)
+    }
+
+    private fun renderCubeLayerRotationArrow(degrees: Float, direction: String) {
+        var color = Color.WHITE.cvColor
+        if (abs(rotation) >= 90f) {
+            rotation = 0f
+        }
+        var vec = FloatArray(4)
+        if(direction.first() == 'M'){
+            vec[0] = -1f
+            vec[1] = 0f
+            vec[2] = 0f
+            vec[3] = 0f
+        }
+        else if(direction.first() == 'E'){
+            vec[0] = 0f
+            vec[1] = -1f
+            vec[2] = 0f
+            vec[3] = 0f
+        }
+        else {
+            vec = LayerEnum.getVectorByDirection(direction.first())
+        }
+        if (degrees > 0) {
+            Matrix.rotateM(mArrowMatrix, 0, 2f, vec[0], vec[1], vec[2])
+            rotation += 2
+        } else {
+            Matrix.rotateM(mArrowMatrix, 0, -2f, vec[0], vec[1], vec[2])
+            rotation -= 2
+        }
+        Matrix.multiplyMM(mMatrixArrow, 0, mViewMatrix, 0, mArrowMatrix, 0)
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrixArrow, 0)
+
+        var usualScaling = true
+
+        //to the user (front), left for the back
+        if (direction == "R") {
+            Matrix.translateM(mMVPMatrix, 0, 4f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 1f, 0f)
+            color = Color.RED.cvColor
+            Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
+            usualScaling = false
+        } else if (direction == "R'") {
+            Matrix.translateM(mMVPMatrix, 0, 4f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
+            color = Color.RED.cvColor
+            Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
+            usualScaling = false
+        }
+        //to the left, back to the right
+        else if (direction == "F") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 4f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0.0f, 1.0f, 0.0f)
+            color = Color.GREEN.cvColor
+        } else if (direction == "F'") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 4f)
+            Matrix.rotateM(mMVPMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 0f, 1f)
+            color = Color.GREEN.cvColor
+        }
+        else if (direction == "L") {
+            Matrix.translateM(mMVPMatrix, 0, -4f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
+            color = Color.ORANGE.cvColor
+        } else if (direction == "L'") {
+            Matrix.translateM(mMVPMatrix, 0, -4f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 1f, 0f)
+            color = Color.ORANGE.cvColor
+        }
+        else if (direction == "B") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, -4f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            color = Color.BLUE.cvColor
+            Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
+            usualScaling = false
+        } else if (direction == "B'") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, -4f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 1f, 0f)
+            color = Color.BLUE.cvColor
+            Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
+            usualScaling = false
+        }
+        //counterclockwise, down for clockwise
+        else if (direction == "U") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 4f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 1f, 0f, 0f)
+            color = Color.WHITE.cvColor
+        }else if(direction == "U'"){
+            Matrix.translateM(mMVPMatrix, 0, 0f, 4f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
+            color = Color.WHITE.cvColor
+        }
+        else if(direction == "D"){
+            Matrix.translateM(mMVPMatrix, 0, 0f, -4f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
+            color = Color.YELLOW.cvColor
+            Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
+            usualScaling = false
+        } else if(direction == "D'"){
+            Matrix.translateM(mMVPMatrix, 0, 0f, -4f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 1f, 0f, 0f)
+            color = Color.YELLOW.cvColor
+            Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
+            usualScaling = false
+        }
+        else if (direction == "S") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0.0f, 1.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 0f, 1f)
+            Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
+            usualScaling = false
+        }else if(direction == "S'"){
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
+            usualScaling = false
+        }
+        else if (direction == "M") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
+            Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
+            usualScaling = false
+        }else if(direction == "M'"){
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
+            Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
+            usualScaling = false
+        }
+        else if (direction == "E") {
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
+            Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
+            usualScaling = false
+        }else if(direction == "E'"){
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 1f, 0f, 0f)
+            Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
+            usualScaling = false
+        }
+
+        if(usualScaling) {
+            Matrix.scaleM(mMVPMatrix, 0, 3f, 3f, 1.5f)
+        }
+        arrowHalfTurn?.draw(mMVPMatrix, color, programId)
     }
 
     fun CreateViewMatrix() {

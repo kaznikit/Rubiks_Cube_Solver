@@ -1,6 +1,7 @@
 package com.example.kotlinapp.Rubik
 
 import com.example.kotlinapp.Enums.SolvingPhaseEnum
+import com.example.kotlinapp.Recognition.RubikTile
 import com.example.kotlinapp.Rubik.LogicSolving.LogicCube
 import com.example.kotlinapp.Rubik.LogicSolving.LogicCubie
 import com.example.kotlinapp.Rubik.LogicSolving.LogicLayer
@@ -24,30 +25,30 @@ class Solver {
         logicCube.directionsControl = DirectionsControl.CloneDirectionsControl(cube.directionsControl)
     }
 
-    fun solveNextPhase() : String{
+    fun solveNextPhase() : ArrayList<String>{
         phaseDownLayerArray.clear()
-        var solution = ""
+        var solution = ArrayList<String>()
         when(solvingPhase){
             SolvingPhaseEnum.WhiteCross -> {
                 solution = logicCube.makeWhiteCross()
             }
             SolvingPhaseEnum.WhiteLayer -> {
-                solution = logicCube.finishWhiteLayer()
+                //solution = logicCube.finishWhiteLayer()
             }
             SolvingPhaseEnum.TwoLayers -> {
-                solution = logicCube.finishTwoLayers()
+                //solution = logicCube.finishTwoLayers()
             }
             SolvingPhaseEnum.YellowCross -> {
-                solution = logicCube.makeYellowCross()
+                //solution = logicCube.makeYellowCross()
             }
             SolvingPhaseEnum.YellowEdges -> {
-                solution = logicCube.swapYellowEdgesTopLayer()
+                //solution = logicCube.swapYellowEdgesTopLayer()
             }
             SolvingPhaseEnum.YellowCornersOrient -> {
-                solution = logicCube.findRightOrientedYellowCubie()
+                //solution = logicCube.findRightOrientedYellowCubie()
             }
             SolvingPhaseEnum.YellowCorners -> {
-                solution = logicCube.finishSolvingYellowCorners()
+                //solution = logicCube.finishSolvingYellowCorners()
             }
         }
         return solution
@@ -61,6 +62,34 @@ class Solver {
             phaseDownLayerArray.add(cubies)
         }
     }
+
+    /**
+     * Compare obtained tiles with down layer
+     */
+    fun cubeSideRightRotated(faceColors : Array<Array<RubikTile?>>?, elementNumber : Int) : Boolean{
+        var currentLayerState = phaseDownLayerArray[elementNumber]
+
+        if (faceColors != null) {
+            var k = 0
+            for(tiles in faceColors){
+                for(tile in tiles){
+                    var currentCubie = currentLayerState?.get(k)
+
+                    //check if cubie has tile color
+                    if(!currentCubie?.tiles?.any{ x -> x.isActive && x.color == tile?.tileColor}!!){
+                        return false
+                    }
+                    k++
+                }
+            }
+        }
+        return true
+    }
+
+
+
+
+
 
 
 

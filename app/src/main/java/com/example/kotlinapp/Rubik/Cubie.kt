@@ -69,7 +69,7 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(leftBottomBack, leftBottomFront, rightBottomBack, rightBottomFront),
-                Color.YELLOW,
+                Color.BLACK,
                 'D',
                 Axis.yMinusAxis
             )
@@ -78,7 +78,8 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(leftBottomFront, leftTopFront, rightBottomFront, rightTopFront),
-                Color.GREEN,
+                //Color.GREEN,
+                Color.BLACK,
                 'F',
                 Axis.zAxis
             )
@@ -87,7 +88,8 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(leftBottomBack, leftTopBack, leftBottomFront, leftTopFront),
-                Color.ORANGE,
+                //Color.ORANGE,
+                Color.BLACK,
                 'L',
                 Axis.xMinusAxis
             )
@@ -96,7 +98,8 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(rightBottomBack, rightBottomFront, rightTopBack, rightTopFront),
-                Color.RED,
+                //Color.RED,
+                Color.BLACK,
                 'R',
                 Axis.xAxis
             )
@@ -105,7 +108,8 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(leftBottomBack, rightBottomBack, leftTopBack, rightTopBack),
-                Color.BLUE,
+                //Color.BLUE,
+                Color.BLACK,
                 'B',
                 Axis.zMinusAxis
             )
@@ -114,7 +118,8 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(leftTopBack, rightTopBack, leftTopFront, rightTopFront),
-                Color.WHITE,
+                //Color.WHITE,
+                Color.BLACK,
                 'U',
                 Axis.yAxis
             )

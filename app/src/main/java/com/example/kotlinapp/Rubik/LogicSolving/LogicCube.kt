@@ -7,7 +7,6 @@ import com.example.kotlinapp.Rubik.Abstract.ICube
 import com.example.kotlinapp.Rubik.Abstract.ICubie
 import com.example.kotlinapp.Rubik.Abstract.ILayer
 import com.example.kotlinapp.Rubik.DirectionsControl
-import com.example.kotlinapp.Rubik.Layer
 import com.example.kotlinapp.Rubik.Solver
 import java.lang.Exception
 
@@ -25,8 +24,8 @@ class LogicCube : ICube {
     //region Solving Algorithms
 
     //make white cross on the up layer
-    fun makeWhiteCross() : String {
-        var moves = String()
+    fun makeWhiteCross() : ArrayList<String> {
+        var moves = ArrayList<String>() //String()
 
         //find center white point and add it to the up layer
         for (qb in cubies) {
@@ -35,16 +34,16 @@ class LogicCube : ICube {
                     for (tile in qb.tiles) {
                         if (tile.color == Color.WHITE && tile.isActive) {
                             if (tile.direction == 'L') {
-                                moves += performMoves("S")
+                                moves.add(performMoves("S"))
                             } else if (tile.direction == 'R') {
-                                moves += performMoves("S'")
+                                moves.add(performMoves("S'"))
                             } else if (tile.direction == 'D') {
-                                moves += performMoves("M")
-                                moves += performMoves("M")
+                                moves.add(performMoves("M"))
+                                moves.add(performMoves("M"))
                             } else if (tile.direction == 'B') {
-                                moves += performMoves("M")
+                                moves.add(performMoves("M"))
                             } else if (tile.direction == 'F') {
-                                moves += performMoves("M'")
+                                moves.add(performMoves("M'"))
                             }
                         }
                     }
@@ -71,22 +70,34 @@ class LogicCube : ICube {
                                     == directionsControl.getColorByDirection(whiteTile.direction).charNotation
                                 ) {
                                     if (whiteTile.direction == 'R') {
-                                        moves += performMoves("D S D' S'")
+                                        moves.add(performMoves("D"))
+                                        moves.add(performMoves("S"))
+                                        moves.add(performMoves("D'"))
+                                        moves.add(performMoves("S'"))
                                     } else if (whiteTile.direction == 'L') {
-                                        moves += performMoves("D S' D' S")
+                                        moves.add(performMoves("D"))
+                                        moves.add(performMoves("S'"))
+                                        moves.add(performMoves("D'"))
+                                        moves.add(performMoves("S"))
                                     } else if (whiteTile.direction == 'F') {
-                                        moves += performMoves("D M D' M'")
+                                        moves.add(performMoves("D"))
+                                        moves.add(performMoves("M"))
+                                        moves.add(performMoves("D'"))
+                                        moves.add(performMoves("M'"))
                                     } else if (whiteTile.direction == 'B') {
-                                        moves += performMoves("D M' D' M")
+                                        moves.add(performMoves("D"))
+                                        moves.add(performMoves("M'"))
+                                        moves.add(performMoves("D'"))
+                                        moves.add(performMoves("M"))
                                     }
                                 } else {
                                     //rotate down to check layout on the another iteration
                                     if (qb.getNormalVectorAfterRotation(whiteTile, 90f, 'D')
                                         == directionsControl.getDirectionByColor(anotherTile.color))
                                     {
-                                        moves += performMoves("D")
+                                        moves.add(performMoves("D"))
                                     } else {
-                                        moves += performMoves("D'")
+                                        moves.add(performMoves("D'"))
                                     }
 
                                 }
@@ -98,29 +109,29 @@ class LogicCube : ICube {
                                     if (qb.getNormalVectorAfterRotation(anotherTile, 90f, 'D')
                                         == directionsControl.getDirectionByColor(anotherTile.color)
                                     ) {
-                                        moves += performMoves("D")
+                                        moves.add(performMoves("D"))
                                     } else {
-                                        moves += performMoves("D'")
+                                        moves.add(performMoves("D'"))
                                     }
                                 } else {
-                                    moves += performMoves(anotherTile.direction.toString())
-                                    moves += performMoves(anotherTile.direction.toString())
+                                    moves.add(performMoves(anotherTile.direction.toString()))
+                                    moves.add(performMoves(anotherTile.direction.toString()))
                                 }
                             } else if (anotherTile.direction == 'U') {
-                                moves += performMoves(whiteTile.direction.toString())
-                                moves += performMoves(whiteTile.direction.toString())
+                                moves.add(performMoves(whiteTile.direction.toString()))
+                                moves.add(performMoves(whiteTile.direction.toString()))
                             }
                             //tile is on the equator layer
                             else if(directionsControl.getDirectionByColor(anotherTile.color) == anotherTile.direction){
                                 if(qb.getNormalVectorAfterRotation(whiteTile, 90f, anotherTile.direction) == 'U'){
-                                    moves += performMoves(anotherTile.direction.toString())
+                                    moves.add(performMoves(anotherTile.direction.toString()))
                                 }
                                 else{
-                                    moves += performMoves(anotherTile.direction + "'")
+                                    moves.add(performMoves(anotherTile.direction + "'"))
                                 }
                             }
                             else {
-                                moves += performMoves(whiteTile.direction + "'")//qb.getDirOfColor(anotherTile.color.charNotation) + "'")
+                                moves.add(performMoves(whiteTile.direction + "'"))//qb.getDirOfColor(anotherTile.color.charNotation) + "'")
                             }
                         }
                         Thread.sleep(10)
@@ -129,7 +140,7 @@ class LogicCube : ICube {
             }
             Thread.sleep(10)
         }
-        return optimizeMoves(moves)
+        return moves//optimizeMoves(moves)
     }
 
     //complete white side of the cube

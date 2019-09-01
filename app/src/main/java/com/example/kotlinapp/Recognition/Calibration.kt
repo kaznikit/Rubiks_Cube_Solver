@@ -9,6 +9,7 @@ import org.opencv.core.Mat
 import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 import com.example.kotlinapp.Enums.Color
+import com.example.kotlinapp.Util.InfoDisplayer
 import org.opencv.core.Point
 
 class Calibration(internal var mainActivity: MainActivity) {
@@ -20,69 +21,13 @@ class Calibration(internal var mainActivity: MainActivity) {
     fun getColor(image: Mat): Scalar? {
         this.image = image
         when (colorNumber) {
-            0 -> Imgproc.putText(
-                image,
-                "Tap on the red color on the cube",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
-            1 -> Imgproc.putText(
-                image,
-                "Tap on the green color on the cube",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
-            2 -> Imgproc.putText(
-                image,
-                "Tap on the orange color on the cube",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
-            3 -> Imgproc.putText(
-                image,
-                "Tap on the yellow color on the cube",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
-            4 -> Imgproc.putText(
-                image,
-                "Tap on the white color on the cube",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
-            5 -> Imgproc.putText(
-                image,
-                "Tap on the blue color on the cube",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
-            else -> Imgproc.putText(
-                image,
-                "Calibration finished! Tap to continue.",
-                Point(50.0, 100.0),
-                Constants.FontFace,
-                5.0,
-                Color.WHITE.cvColor,
-                4
-            )
+            0 -> InfoDisplayer.text = "Tap on the red color on the cube"
+            1 -> InfoDisplayer.text = "Tap on the green color on the cube"
+            2 -> InfoDisplayer.text = "Tap on the orange color on the cube"
+            3 -> InfoDisplayer.text = "Tap on the yellow color on the cube"
+            4 -> InfoDisplayer.text = "Tap on the white color on the cube"
+            5 -> InfoDisplayer.text = "Tap on the blue color on the cube"
+            else -> InfoDisplayer.text = "Calibration finished! Tap to continue."
         }
         return null
     }

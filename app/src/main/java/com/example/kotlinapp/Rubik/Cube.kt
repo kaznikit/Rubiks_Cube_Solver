@@ -43,6 +43,12 @@ class Cube : ICube {
         }
     }
 
+    fun resetCube(){
+        cubies.clear()
+        layers.clear()
+        CreateCubies()
+    }
+
     fun CreateCubies() {
         var isCorner = false
         var isEdge = true
@@ -134,7 +140,7 @@ class Cube : ICube {
                 }
             }
             setPermutationAllowance(true)
-            //Thread.sleep(200)
+            Thread.sleep(200)
         }
         //cube rotated 180 degrees
         else if (count == 27) {
@@ -242,7 +248,7 @@ class Cube : ICube {
         while(!getPermutationAllowance()){
             Thread.sleep(20)
         }
-        return true
+        return checkEachColorNumber()
     }
 
     //sort cubies for layer to go on X axis
@@ -277,6 +283,23 @@ class Cube : ICube {
             }
             return null
         }
+    }
+
+    /**
+     * Each color of cube can't be more than 9
+     * If particular color number more than 9, reset cube
+     */
+    fun checkEachColorNumber() : Boolean{
+        for(color in Color.values().filter { x -> x != Color.BLACK }){
+            var count = 0
+            for(cubie in cubies){
+                count += cubie.tiles.filter { x -> x.color == color && x.isActive}.size
+            }
+            if(count > 9){
+                return false
+            }
+        }
+        return true
     }
 
     //get layers on the sides of cube

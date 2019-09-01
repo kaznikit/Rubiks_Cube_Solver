@@ -9,8 +9,11 @@ import org.opencv.core.Mat
 import java.util.*
 import com.example.kotlinapp.Recognition.RubikTile
 import com.example.kotlinapp.Rubik.Solver
+import com.example.kotlinapp.Rubik.Tile
 import com.example.kotlinapp.Util.Constants
+import com.example.kotlinapp.Util.InfoDisplayer
 import java.lang.Exception
+import kotlin.collections.ArrayList
 
 class CurrentState {
     lateinit var activeRubikFace: RubikFace
@@ -22,12 +25,6 @@ class CurrentState {
 
     // We assume that faces will be explored in a particular sequence.
     var adoptFaceCount = 0
-
-    // Additional Cube Rotation: initially set to Identity Rotation Matrix
-    var additionalGLCubeRotation = FloatArray(16)
-
-    // True if it is OK to render GL Pilot Cube
-    var renderPilotCube = true
 
     // Intrinsic Camera Calibration Parameters from hardware.
     var cameraCalibration: Calibration? = null
@@ -41,6 +38,11 @@ class CurrentState {
      * If cube is solving
      */
     var IsCubeSolving = false
+    var IsPhaseComplete = true
+    var CurrentMoves = ArrayList<String>()
+    var TilesProcessed = true
+    var MoveNumber = 0
+    var MoveNumberChanged = true
 
     var colorDetector: ColorDetector? = null
     var mainActivity : MainActivity
@@ -61,70 +63,80 @@ class CurrentState {
         //cube colors obtaining each frame
         var faceColors = activeRubikFace.calculateTiles(rectangleList, image)
 
-        if(!IsCubeScannedAndReset){
-            createCubeFromScannedTiles(faceColors)
-        }
-        else if(IsCubeSolving){
-            guideSolvingCube(faceColors)
+
+        if(faceColors != null) {
+            if (!IsCubeScannedAndReset) {
+                createCubeFromScannedTiles(faceColors)
+            } else if (IsCubeSolving) {
+                if (MoveNumberChanged) {
+                    if(CurrentMoves.size != 0) {
+                        //draw arrow
+                        mainActivity.glRenderer.drawArrow(true, CurrentMoves[MoveNumber], true)
+                    }
+                } else {
+                    mainActivity.glRenderer.drawArrow(false, "D", true)
+                }
+                if (TilesProcessed) {
+                    guideSolvingCube(faceColors)
+                }
+            }
         }
     }
 
     /**
        Main method for scanning the cube and fill it's sides
      **/
-    fun createCubeFromScannedTiles(faceColors : Array<Array<RubikTile?>>?){
-        if(faceColors != null) {
-            if (isCubeSolved && adoptFaceCount > 6) {
-                //if cube solved we should just check
-                // which side of cube user holds the cube and rotate drawing cube
-                if (!IsCubeScannedAndReset) {
-                    checkCubeDownside(faceColors)
-                } else if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
-                    //findActiveSideOfCube(faceColors)
+    fun createCubeFromScannedTiles(faceColors : Array<Array<RubikTile?>>) {
+        if (isCubeSolved && adoptFaceCount > 6) {
+            //if cube solved we should just check
+            // which side of cube user holds the cube and rotate drawing cube
+            if (!IsCubeScannedAndReset) {
+                checkCubeDownside(faceColors)
+            } else if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
+                //findActiveSideOfCube(faceColors)
 
-                    //solving cube
-                    /*var whiteCross = solver.logicCube.makeWhiteCross()
+                //solving cube
+                /*var whiteCross = solver.logicCube.makeWhiteCross()
                     cube.performMoves(whiteCross)*/
-                    IsCubeSolving = true
-                }
-                return
+                IsCubeSolving = true
             }
+            return
+        }
 
-            //если прошел цикл определения
-            if (activeRubikFace.ColorDetectionCount == 4) {
-                for (j in 0..8) {
-                    var colorTime = 0
-                    var color2Time = 0
-                    val temp = activeRubikFace.averageColorArray[0][j]
-                    var temp2 = activeRubikFace.averageColorArray[1][j]
-                    for (i in 2..3) {
-                        if (activeRubikFace.averageColorArray[i][j]?.cvColor === temp?.cvColor) {
-                            colorTime++
-                        } else {
-                            temp2 = activeRubikFace.averageColorArray[i][j]
-                            color2Time++
-                        }
-                    }
-                    if (colorTime > color2Time) {
-                        activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp!!
+        //если прошел цикл определения
+        if (activeRubikFace.ColorDetectionCount == 4) {
+            for (j in 0..8) {
+                var colorTime = 0
+                var color2Time = 0
+                val temp = activeRubikFace.averageColorArray[0][j]
+                var temp2 = activeRubikFace.averageColorArray[1][j]
+                for (i in 2..3) {
+                    if (activeRubikFace.averageColorArray[i][j]?.cvColor === temp?.cvColor) {
+                        colorTime++
                     } else {
-                        activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp2!!
+                        temp2 = activeRubikFace.averageColorArray[i][j]
+                        color2Time++
                     }
                 }
-                activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
-                //cube.fillFaceColors(activeRubikFace)
-                activeRubikFace.ColorDetectionCount++
-                activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
-                adoptFaceCount++
-            } else if (activeRubikFace.ColorDetectionCount > 4) {
-                //проверяем повернули ли сторону кубика
-                if (!checkIfFaceExist(faceColors) || adoptFaceCount > 5) {
-                    //кубик повернут другой стороной
-                    mainActivity.glRenderer.drawArrow(false, 'D')
-                    adopt(activeRubikFace)
+                if (colorTime > color2Time) {
+                    activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp!!
                 } else {
-                    mainActivity.glRenderer.drawArrow(true, getNextArrowRotation())
+                    activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp2!!
                 }
+            }
+            activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
+            //cube.fillFaceColors(activeRubikFace)
+            activeRubikFace.ColorDetectionCount++
+            activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
+            adoptFaceCount++
+        } else if (activeRubikFace.ColorDetectionCount > 4) {
+            //проверяем повернули ли сторону кубика
+            if (!checkIfFaceExist(faceColors) || adoptFaceCount > 5) {
+                //кубик повернут другой стороной
+                mainActivity.glRenderer.drawArrow(false, "D", false)
+                adopt(activeRubikFace)
+            } else {
+                mainActivity.glRenderer.drawArrow(true, getNextArrowRotation(), false)
             }
         }
     }
@@ -133,19 +145,43 @@ class CurrentState {
      * Main method for solving the cube
      */
     fun guideSolvingCube(faceColors : Array<Array<RubikTile?>>?){
-        
+        TilesProcessed = false
+        if(IsPhaseComplete){
+            CurrentMoves = solver.solveNextPhase()
+            InfoDisplayer.text = CurrentMoves.joinToString (separator = " ")
+            IsPhaseComplete = false
+        }
+
+        var res = solver.cubeSideRightRotated(faceColors, MoveNumber)
+        if(res){
+            MoveNumberChanged = false
+            //perform move on gl cube
+            cube.performMoves(CurrentMoves[MoveNumber])
+            MoveNumber++
+            Thread.sleep(50)
+        }
+        else{
+            //check if the user move was wrong
+            MoveNumberChanged = true
+        }
+
+        if(MoveNumber == CurrentMoves.size){
+            IsPhaseComplete = true
+        }
+
+        TilesProcessed = true
     }
 
-    fun getNextArrowRotation() : Char{
+    fun getNextArrowRotation() : String{
         when (adoptFaceCount) {
-            1 -> return 'F'
-            2 -> return 'R'
-            3 -> return 'F'
-            4 -> return 'R'
-            5 -> return 'F'
-            6 -> return 'R'
+            1 -> return "F"
+            2 -> return "R"
+            3 -> return "F"
+            4 -> return "R"
+            5 -> return "F"
+            6 -> return "R"
         }
-        return 'F'
+        return "F"
     }
 
     fun addNewFace(activeFaceName: LayerEnum, frontFaceName: LayerEnum) {
@@ -178,42 +214,48 @@ class CurrentState {
         when (adoptFaceCount) {
             1 -> {
                 if(!cube.fillFaceColors(rubikFace)){
-                    return
+                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+                    resetFaces()
                 }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.LEFT, LayerEnum.FRONT)
             }
             2 -> {
                 if(!cube.fillFaceColors(rubikFace)){
-                    return
+                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+                    resetFaces()
                 }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.FRONT, LayerEnum.RIGHT)
             }
             3 -> {
                 if(!cube.fillFaceColors(rubikFace)){
-                    return
+                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+                    resetFaces()
                 }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.UP, LayerEnum.RIGHT)
             }
             4 -> {
                 if(!cube.fillFaceColors(rubikFace)){
-                    return
+                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+                    resetFaces()
                 }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.RIGHT, LayerEnum.DOWN)
             }
             5 -> {
                 if(!cube.fillFaceColors(rubikFace)){
-                    return
+                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+                    resetFaces()
                 }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
             }
             6 -> {
                 if(!cube.fillFaceColors(rubikFace)){
-                    return
+                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+                    resetFaces()
                 }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 isCubeSolved = true
@@ -246,6 +288,7 @@ class CurrentState {
                     }
                     if (coincide > 5) {
                         IsCubeScannedAndReset = true
+                        IsCubeSolving = true
                         adoptFaceCount++
                     }
                 }
@@ -316,6 +359,9 @@ class CurrentState {
                 rubikFaces.remove(rubikFaces[i])
             }
         }
+
+        cube.resetCube()
+
         addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
     }
 

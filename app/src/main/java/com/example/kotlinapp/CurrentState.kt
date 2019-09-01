@@ -1,24 +1,20 @@
 package com.example.kotlinapp
 
-import android.util.Log
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
-import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.Recognition.*
 import com.example.kotlinapp.Rubik.Cube
 import org.opencv.core.Mat
 import java.util.*
 import com.example.kotlinapp.Recognition.RubikTile
-import com.example.kotlinapp.Rubik.Tile
+import com.example.kotlinapp.Rubik.Solver
 import com.example.kotlinapp.Util.Constants
-import java.io.Console
 import java.lang.Exception
 
 class CurrentState {
     lateinit var activeRubikFace: RubikFace
     lateinit var frontFace: RubikFace
-
 
     var rubikFaces  = arrayListOf<RubikFace>()
 
@@ -36,24 +32,47 @@ class CurrentState {
     // Intrinsic Camera Calibration Parameters from hardware.
     var cameraCalibration: Calibration? = null
 
+    /**
+     * If cube is scanning
+     */
     var IsCubeScannedAndReset = false
+
+    /**
+     * If cube is solving
+     */
+    var IsCubeSolving = false
 
     var colorDetector: ColorDetector? = null
     var mainActivity : MainActivity
 
     var cube : Cube
+    var solver : Solver
 
     constructor(mainActivity: MainActivity) {
         this.mainActivity = mainActivity
         cameraCalibration = Calibration(mainActivity)
         colorDetector = ColorDetector()
         cube = Cube()
+        solver = Solver()
         addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
     }
 
     fun calculateTilesForFace(rectangleList : LinkedList<Rectangle>, image : Mat){
+        //cube colors obtaining each frame
         var faceColors = activeRubikFace.calculateTiles(rectangleList, image)
 
+        if(!IsCubeScannedAndReset){
+            createCubeFromScannedTiles(faceColors)
+        }
+        else if(IsCubeSolving){
+            guideSolvingCube(faceColors)
+        }
+    }
+
+    /**
+       Main method for scanning the cube and fill it's sides
+     **/
+    fun createCubeFromScannedTiles(faceColors : Array<Array<RubikTile?>>?){
         if(faceColors != null) {
             if (isCubeSolved && adoptFaceCount > 6) {
                 //if cube solved we should just check
@@ -61,10 +80,12 @@ class CurrentState {
                 if (!IsCubeScannedAndReset) {
                     checkCubeDownside(faceColors)
                 } else if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
-                    findActiveSideOfCube(faceColors)
+                    //findActiveSideOfCube(faceColors)
 
                     //solving cube
-
+                    /*var whiteCross = solver.logicCube.makeWhiteCross()
+                    cube.performMoves(whiteCross)*/
+                    IsCubeSolving = true
                 }
                 return
             }
@@ -97,7 +118,7 @@ class CurrentState {
                 adoptFaceCount++
             } else if (activeRubikFace.ColorDetectionCount > 4) {
                 //проверяем повернули ли сторону кубика
-                if (!checkIfFaceExist(faceColors)) {
+                if (!checkIfFaceExist(faceColors) || adoptFaceCount > 5) {
                     //кубик повернут другой стороной
                     mainActivity.glRenderer.drawArrow(false, 'D')
                     adopt(activeRubikFace)
@@ -105,8 +126,14 @@ class CurrentState {
                     mainActivity.glRenderer.drawArrow(true, getNextArrowRotation())
                 }
             }
-            //processFinished = true
         }
+    }
+
+    /**
+     * Main method for solving the cube
+     */
+    fun guideSolvingCube(faceColors : Array<Array<RubikTile?>>?){
+        
     }
 
     fun getNextArrowRotation() : Char{
@@ -122,8 +149,7 @@ class CurrentState {
     }
 
     fun addNewFace(activeFaceName: LayerEnum, frontFaceName: LayerEnum) {
-
-        while (!cube.permutationAllowed) {
+        while (!cube.getPermutationAllowance()) {
             Thread.sleep(50)
         }
 
@@ -146,42 +172,59 @@ class CurrentState {
     }
 
     fun adopt(rubikFace: RubikFace) {
-        while(!cube.permutationAllowed){
+        while(!cube.getPermutationAllowance()){
             Thread.sleep(50)
         }
         when (adoptFaceCount) {
             1 -> {
-                cube.fillFaceColors(rubikFace)
+                if(!cube.fillFaceColors(rubikFace)){
+                    return
+                }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.LEFT, LayerEnum.FRONT)
             }
             2 -> {
-                cube.fillFaceColors(rubikFace)
+                if(!cube.fillFaceColors(rubikFace)){
+                    return
+                }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.FRONT, LayerEnum.RIGHT)
             }
             3 -> {
-                cube.fillFaceColors(rubikFace)
+                if(!cube.fillFaceColors(rubikFace)){
+                    return
+                }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.UP, LayerEnum.RIGHT)
             }
             4 -> {
-                cube.fillFaceColors(rubikFace)
+                if(!cube.fillFaceColors(rubikFace)){
+                    return
+                }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.RIGHT, LayerEnum.DOWN)
             }
             5 -> {
-                cube.fillFaceColors(rubikFace)
+                if(!cube.fillFaceColors(rubikFace)){
+                    return
+                }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
             }
             6 -> {
-                cube.fillFaceColors(rubikFace)
+                if(!cube.fillFaceColors(rubikFace)){
+                    return
+                }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 isCubeSolved = true
                 adoptFaceCount++
+                createSolver()
             }
         }
+    }
+
+    fun createSolver(){
+        solver.copyCube(cube)
     }
 
     //check if user turned cube to the start position
@@ -283,43 +326,57 @@ class CurrentState {
 
         if (activeLayer != null) {
             //center tile is not active ==> find active layer
-            if (!activeLayer.cubies.any { c -> c.tiles.any{t -> t.color == tiles[1][1]?.tileColor && t.isActive} && !c.isEdge && !c.isCorner}){
+            if (!activeLayer.cubies.any { c -> c.tiles.any { t -> t.color == tiles[1][1]?.tileColor && t.isActive } && !c.isEdge && !c.isCorner }) {
                 for (layer in cube.getSideLayers()) {
-                    //firstly check the center tile
-                    var centerCubie = layer.cubies.single{x -> !x.isCorner && !x.isEdge}
-                    if (centerCubie.tiles.any { t -> t.isActive && t.color == tiles[1][1]?.tileColor}) {
+                    try {
+                        //firstly check the center tile
+                        var centerCubie = layer.cubies.single { x -> !x.isCorner && !x.isEdge }
+                        if (centerCubie.tiles.any { t -> t.isActive && t.color == tiles[1][1]?.tileColor }) {
                             //check if this face is active
-                        var activeLayerCenterCubie = activeLayer.cubies.single{x -> !x.isCorner && !x.isEdge}
-                        if (layer.layerName != activeLayer.layerName
-                            && !activeLayerCenterCubie.tiles.any{t -> t.isActive && t.color == centerCubie.tiles.single{x -> x.isActive}.color}) {
+                            var activeLayerCenterCubie =
+                                activeLayer.cubies.single { x -> !x.isCorner && !x.isEdge }
+                            if (layer.layerName != activeLayer.layerName
+                                && !activeLayerCenterCubie.tiles.any { t -> t.isActive && t.color == centerCubie.tiles.single { x -> x.isActive }.color }
+                            ) {
                                 //if it's not active, then firstly rotate cube by active side
-                            if(layer.layerName == LayerEnum.FRONT || layer.layerName == LayerEnum.UP){
-                                cube.rotateCube(-90f, Axis.xAxis)
-                            }else if(layer.layerName == LayerEnum.LEFT){
-                                cube.rotateCube(-90f, Axis.zAxis)
-                            }else if(layer.layerName == LayerEnum.RIGHT){
-                                cube.rotateCube(90f, Axis.zAxis)
-                            }else{
-                                cube.rotateCube(90f, Axis.xAxis)
+                                if (layer.layerName == LayerEnum.FRONT || layer.layerName == LayerEnum.UP) {
+                                    cube.rotateCube(-90f, Axis.xAxis)
+                                } else if (layer.layerName == LayerEnum.LEFT) {
+                                    cube.rotateCube(-90f, Axis.zAxis)
+                                } else if (layer.layerName == LayerEnum.RIGHT) {
+                                    cube.rotateCube(90f, Axis.zAxis)
+                                } else {
+                                    cube.rotateCube(90f, Axis.xAxis)
+                                }
                             }
                         }
+                    }
+                    catch(ex : Exception){
+                        return
                     }
                 }
             }
 
-            while (!cube.permutationAllowed){
+            while (!cube.getPermutationAllowance()){
                 Thread.sleep(50)
             }
 
-            //take front left tile
-            var frontDownCubie = activeLayer.cubies.single{ x -> x.tiles.any { t -> t.direction == 'F' && t.isActive} && x.tiles.any { t -> t.direction == 'L' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive}}
+            try {
+                //take front left tile
+                var frontDownCubie =
+                    activeLayer.cubies.single { x -> x.tiles.any { t -> t.direction == 'F' && t.isActive } && x.tiles.any { t -> t.direction == 'L' && t.isActive } && x.tiles.any { t -> t.direction == 'D' && t.isActive } }
 
-            //also compare back left tile
-            var backLeftCubie = activeLayer.cubies.single { x -> x.tiles.any { t -> t.direction == 'L' && t.isActive} && x.tiles.any{t -> t.direction == 'D' && t.isActive} && x.tiles.any{t -> t.direction == 'B' && t.isActive}}
+                //also compare back left tile
+                var backLeftCubie =
+                    activeLayer.cubies.single { x -> x.tiles.any { t -> t.direction == 'L' && t.isActive } && x.tiles.any { t -> t.direction == 'D' && t.isActive } && x.tiles.any { t -> t.direction == 'B' && t.isActive } }
 
-            if(!frontDownCubie.tiles.any{x -> x.isActive && x.direction == 'D' && x.color == tiles[0][0]?.tileColor}
-                && !backLeftCubie.tiles.any{x -> x.isActive && x.direction == 'D' && x.color == tiles[2][0]?.tileColor}){
-                cube.rotateCube(-90f, Axis.yAxis)
+                if (!frontDownCubie.tiles.any { x -> x.isActive && x.direction == 'D' && x.color == tiles[0][0]?.tileColor }
+                    && !backLeftCubie.tiles.any { x -> x.isActive && x.direction == 'D' && x.color == tiles[2][0]?.tileColor }) {
+                    cube.rotateCube(-90f, Axis.yAxis)
+                }
+            }
+            catch(ex : Exception){
+
             }
         }
     }

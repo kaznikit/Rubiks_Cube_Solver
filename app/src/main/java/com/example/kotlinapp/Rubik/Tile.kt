@@ -20,7 +20,20 @@ class Tile {
         this.normalAxis = normalAxis
     }
 
+    companion object{
+        fun CloneTile(tile : Tile) : Tile{
+            var coord = tile.coordinates
+            for(i in 0 until 4){
+                coord[i] = Vertex.CloneVertex(tile.coordinates[i])
+            }
+            var cloneTile = Tile(coord, tile.color, tile.direction, tile.normalAxis)
+            cloneTile.isActive = tile.isActive
+            return cloneTile
+        }
+    }
+
     fun setTileColor(color: Color){
         this.color = color
     }
+
 }

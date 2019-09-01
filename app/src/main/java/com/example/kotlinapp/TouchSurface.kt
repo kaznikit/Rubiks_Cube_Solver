@@ -13,16 +13,16 @@ class TouchSurface : GLSurfaceView {
     //private var mRenderer: com.example.kotlinapp.Rubik.Renderer
     private var mPreviousX: Float = 0.0f
     private var mPreviousY: Float = 0.0f
-    var cube: Cube
+  //  var cube: Cube
 
     var k = 0
 
-    var solver : Solver
+        //var solver : Solver
 
     constructor(context: Context) : super(context) {
-        cube = Cube()
+      //  cube = Cube()
         //mRenderer = com.example.kotlinapp.Rubik.Renderer(context, cube)
-        solver = Solver(cube)
+       // solver = Solver(cube)
         setEGLContextClientVersion(2)
 
         //setRenderer(mRenderer)
@@ -36,7 +36,7 @@ class TouchSurface : GLSurfaceView {
         when (e.action) {
             MotionEvent.ACTION_DOWN -> {
                 //cube.randScramble()
-                solver.makeCube()
+                //solver.makeCube()
 
             }
         }

@@ -3,12 +3,25 @@ package com.example.kotlinapp.Rubik
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.Direction
+import java.lang.reflect.Array
 
-class DirectionsControl() {
-    val directions = arrayListOf<Direction>()
+class DirectionsControl {
+    var directions = arrayListOf<Direction>()
 
     init {
         createDirections()
+    }
+
+    companion object{
+        fun CloneDirectionsControl(directionsControl: DirectionsControl) : DirectionsControl{
+            var cloneArray = ArrayList<Direction>()
+            for(dir in directionsControl.directions){
+                cloneArray.add(Direction.CloneDirection(dir))
+            }
+            var cloneDir = DirectionsControl()
+            cloneDir.directions = cloneArray
+            return cloneDir
+        }
     }
 
     fun createDirections(){

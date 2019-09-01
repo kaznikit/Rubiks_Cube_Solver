@@ -12,6 +12,10 @@ class Vertex (x : Float, y : Float, z : Float){
             var s = Math.round(num * 100.0f) / 100.0f
             return s
         }
+
+        fun CloneVertex(vertex : Vertex) : Vertex{
+            return Vertex(vertex.x, vertex.y, vertex.z)
+        }
     }
 
     //return float value match to the axis

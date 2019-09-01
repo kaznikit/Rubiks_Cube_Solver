@@ -6,44 +6,46 @@ import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
+import com.example.kotlinapp.Rubik.Abstract.ICubie
+import com.example.kotlinapp.Rubik.LogicSolving.LogicCubie
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import kotlin.math.abs
 
-class Cubie {
-    private lateinit var mVertexBuffer: FloatBuffer
+class Cubie : ICubie{
+    private var mVertexBuffer: FloatBuffer
 
-    internal var aPositionLocation = 0
-    internal var uColorLocation = 0
-    internal var uMatrixLocation = 0
+    private var aPositionLocation = 0
+    private var uColorLocation = 0
+    private var uMatrixLocation = 0
     private val BYTES_PER_FLOAT = 4
 
     //matrix of tiles
-    val tiles = arrayListOf<Tile>()
+    override val tiles = arrayListOf<Tile>()
 
-    var centerPoint : Vertex
+    override var centerPoint : Vertex
     //main gl matrix
     var mTransformMatrix = FloatArray(16)
 
     //matrix with info about rotations
     var mAnimationMatrix = FloatArray(16)
 
-    var id = 0
+    override var id = 0
 
-    var currentRotation = 0.0f
-    var rotationAngle = 0.0f
-    var rotationX = 0.0f
-    var rotationY = 0.0f
-    var rotationZ = 0.0f
-    var isRotating = false
-    var isRotated = false
+    override var currentRotation = 0.0f
+    override var rotationAngle = 0.0f
+    override var rotationX = 0.0f
+    override var rotationY = 0.0f
+    override var rotationZ = 0.0f
+    override var isRotating = false
+    override var isRotated = false
 
-    val mMatrix = FloatArray(16)
-    val mMVPMatrix = FloatArray(16)
+    private val mMatrix = FloatArray(16)
+    private val mMVPMatrix = FloatArray(16)
 
-    var isCorner = false
-    var isEdge = false
+    override var isCorner = false
+    override var isEdge = false
 
     constructor(minX : Float, minY : Float, minZ : Float, sideLength : Float, id :Int, isCorner:Boolean, isEdge:Boolean) {
         this.id = id
@@ -138,19 +140,34 @@ class Cubie {
         mVertexBuffer = byteBuf.asFloatBuffer()
     }
 
-    //check if cubie is on the right place on top layer
-    fun isCubieRightOriented() : Boolean{
-        for(tile in tiles){
-            if(tile.isActive){
-                if(tile.color == Color.WHITE && tile.direction == 'U'){
-                    return true
-                }
+    companion object{
+        fun CloneCubie(qb : Cubie) : LogicCubie{
+            var cloneCubie = LogicCubie(Vertex.CloneVertex(qb.centerPoint), qb.id)
+            var cloneTiles = ArrayList<Tile>()
+            for(tile in qb.tiles){
+                cloneTiles.add(Tile.CloneTile(tile))
             }
+            cloneCubie.tiles = cloneTiles
+            cloneCubie.isEdge = qb.isEdge
+            cloneCubie.isCorner = qb.isCorner
+            return cloneCubie
         }
-        return false
     }
 
-    fun endAnimation() {
+    override fun rotate(angle: Float, rotationAxis: Axis) {
+        currentRotation = 0.0f
+        rotationAngle = angle
+
+        var vec = Axis.getRotationVector(rotationAxis)
+        rotationX = vec[0]
+        rotationY = vec[1]
+        rotationZ = vec[2]
+
+        while (rotationAngle >= 360f) rotationAngle -= 360.0f
+        isRotating = true
+    }
+
+    override fun endAnimation() {
         //stop the rotation
         isRotating = false
 
@@ -184,33 +201,6 @@ class Cubie {
         isRotated = true
     }
 
-    fun getNormalVectorAfterRotation(tile : Tile, rotationAngle : Float, direction: Char) : Char {
-        var mat = FloatArray(16)
-        Matrix.setIdentityM(mat, 0)
-
-        var rotateVec = LayerEnum.getVectorByDirection(direction)//Axis.getRotationVector(tile.normalAxis)
-        Matrix.rotateM(mat, 0, rotationAngle, -rotateVec[0], -rotateVec[1], -rotateVec[2])
-        var normalVec = LayerEnum.getVectorByDirection(tile.direction)
-        Matrix.multiplyMV(normalVec, 0, mat, 0, normalVec, 0)
-        normalVec[0] = Vertex.RoundFloat(normalVec[0])
-        normalVec[1] = Vertex.RoundFloat(normalVec[1])
-        normalVec[2] = Vertex.RoundFloat(normalVec[2])
-        return LayerEnum.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
-    }
-
-    fun rotate(angle: Float, rotationAxis: Axis){
-        currentRotation = 0.0f
-        rotationAngle = angle
-
-        var vec = Axis.getRotationVector(rotationAxis)
-        rotationX = vec[0]
-        rotationY = vec[1]
-        rotationZ = vec[2]
-
-        while (rotationAngle >= 360f) rotationAngle -= 360.0f
-        isRotating = true
-    }
-
     fun animateTransform() {
         if (isRotating) {
             if (abs(currentRotation) >= abs(rotationAngle)) {
@@ -230,7 +220,7 @@ class Cubie {
         }
     }
 
-    fun deactivateTiles(direction: Direction){
+    override fun deactivateTiles(direction: Direction){
         for(tile in tiles){
             if(!tile.isActive && tile.direction == direction.charName){
                 tile.isActive = true

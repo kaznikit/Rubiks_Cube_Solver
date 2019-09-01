@@ -21,6 +21,7 @@ import android.widget.TextView
 import com.example.kotlinapp.Recognition.ImageRecognizer
 import com.example.kotlinapp.Rubik.Cube
 import com.example.kotlinapp.Rubik.Renderer
+import com.example.kotlinapp.Rubik.Solver
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
 import org.opencv.core.Mat
@@ -116,6 +117,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
         ReadSharedPreferences()
         start = System.currentTimeMillis()
+
     }
 
     fun TurnOnCalibration() {

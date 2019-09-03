@@ -14,6 +14,30 @@ class Direction {
         fun CloneDirection(direction: Direction) : Direction{
             return Direction(direction.charName, direction.color)
         }
+
+        fun GetOppositeDirection(direction: Char) : Char? {
+            when(direction){
+                'F' -> {
+                    return 'B'
+                }
+                'L' -> {
+                    return 'R'
+                }
+                'B' -> {
+                    return 'F'
+                }
+                'R' -> {
+                    return 'L'
+                }
+                'U' -> {
+                    return 'D'
+                }
+                'D' -> {
+                    return 'U'
+                }
+            }
+            return null
+        }
     }
 
     fun changeColor(color: Color){

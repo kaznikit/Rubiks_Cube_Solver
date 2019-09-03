@@ -68,7 +68,7 @@ class Renderer : GLSurfaceView.Renderer {
     private val SWIPE_THRESHOLD_VELOCITY = 200
     var density: Float = 0.toFloat()
 
-    private val timeReference : Long = 0
+    var isDrawingCubies = false
 
     constructor(view: View, context: Context, state: CurrentState) {
         this.view = view
@@ -109,13 +109,16 @@ class Renderer : GLSurfaceView.Renderer {
 
     override fun onDrawFrame(gl: GL10?) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        if(!MainActivity.IsCalibrationMode) {
-            if(state.cube.cubies.size != 0) {
+        if(!MainActivity.IsCalibrationMode && !state.cube.isReseting) {
+            if (state.cube.cubies.size != 0) {
+                isDrawingCubies = true
                 state.cube.resetLayerCubies()
 
                 for (cubie in state.cube.cubies) {
                     cubie.draw(mProjectionMatrix, mViewMatrix, programId)
                 }
+
+                isDrawingCubies = false
 
                 if (isArrowDrawing) {
                     Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0)

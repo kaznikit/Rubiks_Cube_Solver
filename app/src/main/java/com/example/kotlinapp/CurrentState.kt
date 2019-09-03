@@ -29,6 +29,7 @@ class CurrentState {
     // Intrinsic Camera Calibration Parameters from hardware.
     var cameraCalibration: Calibration? = null
 
+    var isReset = false
     /**
      * If cube is scanning
      */
@@ -65,7 +66,7 @@ class CurrentState {
 
 
         if(faceColors != null) {
-            if (!IsCubeScannedAndReset) {
+            if (!IsCubeScannedAndReset && !isReset) {
                 createCubeFromScannedTiles(faceColors)
             } else if (IsCubeSolving) {
                 if (MoveNumberChanged) {
@@ -130,6 +131,11 @@ class CurrentState {
             activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
             adoptFaceCount++
         } else if (activeRubikFace.ColorDetectionCount > 4) {
+            if(!activeRubikFace.isLayerFilled){
+                if(fillCubeLayer(activeRubikFace)) {
+                    activeRubikFace.isLayerFilled = true
+                }
+            }
             //проверяем повернули ли сторону кубика
             if (!checkIfFaceExist(faceColors) || adoptFaceCount > 5) {
                 //кубик повернут другой стороной
@@ -139,6 +145,15 @@ class CurrentState {
                 mainActivity.glRenderer.drawArrow(true, getNextArrowRotation(), false)
             }
         }
+    }
+
+    fun fillCubeLayer(rubikFace: RubikFace) : Boolean{
+        if(!cube.fillFaceColors(rubikFace)){
+            InfoDisplayer.text = "Problem occurred during scanning process. Reset."
+            resetFaces()
+            return false
+        }
+        return true
     }
 
     /**
@@ -211,52 +226,33 @@ class CurrentState {
         while(!cube.getPermutationAllowance()){
             Thread.sleep(50)
         }
+        InfoDisplayer.text = ""
         when (adoptFaceCount) {
             1 -> {
-                if(!cube.fillFaceColors(rubikFace)){
-                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
-                    resetFaces()
-                }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.LEFT, LayerEnum.FRONT)
             }
             2 -> {
-                if(!cube.fillFaceColors(rubikFace)){
-                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
-                    resetFaces()
-                }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.FRONT, LayerEnum.RIGHT)
             }
             3 -> {
-                if(!cube.fillFaceColors(rubikFace)){
-                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
-                    resetFaces()
-                }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.UP, LayerEnum.RIGHT)
             }
             4 -> {
-                if(!cube.fillFaceColors(rubikFace)){
-                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
-                    resetFaces()
-                }
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 addNewFace(LayerEnum.RIGHT, LayerEnum.DOWN)
             }
             5 -> {
-                if(!cube.fillFaceColors(rubikFace)){
-                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
-                    resetFaces()
-                }
                 var response = cube.rotateCube(-90f, Axis.zAxis)
                 addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
             }
             6 -> {
-                if(!cube.fillFaceColors(rubikFace)){
-                    InfoDisplayer.text = "Problem occurred during scanning process. Reset."
-                    resetFaces()
-                }
+                var s = fillCubeLayer(activeRubikFace)
+                /*while(cube.cubies.any { x -> !x.areTileColorsFilled }){
+                    cube.findOppositeCubie()
+                }*/
                 var response = cube.rotateCube(-90f, Axis.xAxis)
                 isCubeSolved = true
                 adoptFaceCount++
@@ -353,16 +349,21 @@ class CurrentState {
     }
 
     fun resetFaces() {
+        isReset = true
+        cube.isReseting = true
         adoptFaceCount = 0
-        if (rubikFaces.size != 0) {
-            for (i in 0 until rubikFaces.size - 1) {
-                rubikFaces.remove(rubikFaces[i])
-            }
-        }
+        rubikFaces.clear()
 
+        while(mainActivity.glRenderer.isDrawingCubies){
+            Thread.sleep(10)
+        }
         cube.resetCube()
 
+        mainActivity.glRenderer.drawArrow(false, "D", false)
+
         addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
+        cube.isReseting = false
+        isReset = false
     }
 
     //find which side of scanned cube is active

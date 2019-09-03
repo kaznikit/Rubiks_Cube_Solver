@@ -47,6 +47,13 @@ class Cubie : ICubie{
     override var isCorner = false
     override var isEdge = false
 
+    /**
+     * if this value true, all tiles in cubie are scanned
+     * 3 tiles for corner cubie, 2 tiles for edge cubie and 1 for center
+     */
+    var areTileColorsFilled = false
+    private var numberOfFilledTiles = 0
+
     constructor(minX : Float, minY : Float, minZ : Float, sideLength : Float, id :Int, isCorner:Boolean, isEdge:Boolean) {
         this.id = id
 
@@ -69,7 +76,7 @@ class Cubie : ICubie{
         tiles.add(
             Tile(
                 arrayOf(leftBottomBack, leftBottomFront, rightBottomBack, rightBottomFront),
-                Color.BLACK,
+                Color.GRAY,
                 'D',
                 Axis.yMinusAxis
             )
@@ -79,7 +86,7 @@ class Cubie : ICubie{
             Tile(
                 arrayOf(leftBottomFront, leftTopFront, rightBottomFront, rightTopFront),
                 //Color.GREEN,
-                Color.BLACK,
+                Color.GRAY,
                 'F',
                 Axis.zAxis
             )
@@ -89,7 +96,7 @@ class Cubie : ICubie{
             Tile(
                 arrayOf(leftBottomBack, leftTopBack, leftBottomFront, leftTopFront),
                 //Color.ORANGE,
-                Color.BLACK,
+                Color.GRAY,
                 'L',
                 Axis.xMinusAxis
             )
@@ -99,7 +106,7 @@ class Cubie : ICubie{
             Tile(
                 arrayOf(rightBottomBack, rightBottomFront, rightTopBack, rightTopFront),
                 //Color.RED,
-                Color.BLACK,
+                Color.GRAY,
                 'R',
                 Axis.xAxis
             )
@@ -109,7 +116,7 @@ class Cubie : ICubie{
             Tile(
                 arrayOf(leftBottomBack, rightBottomBack, leftTopBack, rightTopBack),
                 //Color.BLUE,
-                Color.BLACK,
+                Color.GRAY,
                 'B',
                 Axis.zMinusAxis
             )
@@ -119,7 +126,7 @@ class Cubie : ICubie{
             Tile(
                 arrayOf(leftTopBack, rightTopBack, leftTopFront, rightTopFront),
                 //Color.WHITE,
-                Color.BLACK,
+                Color.GRAY,
                 'U',
                 Axis.yAxis
             )
@@ -157,6 +164,37 @@ class Cubie : ICubie{
             cloneCubie.isCorner = qb.isCorner
             return cloneCubie
         }
+    }
+
+    /**
+     * called when one of tiles is scanned
+     * check while cubie is not filled
+     */
+    fun checkIfCubieFilled(){
+        numberOfFilledTiles++
+        if(isCorner){
+            if(numberOfFilledTiles == 3){
+                areTileColorsFilled = true
+            }
+        }else if(isEdge){
+            if(numberOfFilledTiles == 2){
+                areTileColorsFilled = true
+            }
+        }else{
+            areTileColorsFilled = true
+        }
+    }
+
+    /**
+     * check if any tile has such color
+     */
+    fun checkIfColorExist(color : Color) : Boolean{
+        for(tile in tiles){
+            if(tile.color == color){
+                return true
+            }
+        }
+        return false
     }
 
     override fun rotate(angle: Float, rotationAxis: Axis) {

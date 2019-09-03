@@ -31,9 +31,10 @@ class Solver {
         when(solvingPhase){
             SolvingPhaseEnum.WhiteCross -> {
                 solution = logicCube.makeWhiteCross()
+                solvingPhase = SolvingPhaseEnum.WhiteLayer
             }
             SolvingPhaseEnum.WhiteLayer -> {
-                //solution = logicCube.finishWhiteLayer()
+                solution = logicCube.finishWhiteLayer()
             }
             SolvingPhaseEnum.TwoLayers -> {
                 //solution = logicCube.finishTwoLayers()

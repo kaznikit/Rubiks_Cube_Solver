@@ -53,6 +53,8 @@ class RubikFace {
     // Number of rhombus that were moved in order to obtain better LMS fit.
     var numRhombusMoves = 0
 
+    var isLayerFilled = false
+
     //endregion
 
     var currentState : CurrentState

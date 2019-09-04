@@ -167,17 +167,18 @@ class CurrentState {
             IsPhaseComplete = false
         }
 
-        var res = solver.cubeSideRightRotated(faceColors, MoveNumber)
-        if(res){
-            MoveNumberChanged = false
-            //perform move on gl cube
-            cube.performMoves(CurrentMoves[MoveNumber])
-            MoveNumber++
-            Thread.sleep(50)
-        }
-        else{
-            //check if the user move was wrong
-            MoveNumberChanged = true
+        if(CurrentMoves.size != 0) {
+            var res = solver.cubeSideRightRotated(faceColors, MoveNumber)
+            if (res) {
+                MoveNumberChanged = false
+                //perform move on gl cube
+                cube.performMoves(CurrentMoves[MoveNumber])
+                MoveNumber++
+                Thread.sleep(50)
+            } else {
+                //check if the user move was wrong
+                MoveNumberChanged = true
+            }
         }
 
         if(MoveNumber == CurrentMoves.size){

@@ -68,19 +68,21 @@ class Solver {
      * Compare obtained tiles with down layer
      */
     fun cubeSideRightRotated(faceColors : Array<Array<RubikTile?>>?, elementNumber : Int) : Boolean{
-        var currentLayerState = phaseDownLayerArray[elementNumber]
+        if(phaseDownLayerArray.size != 0) {
+            var currentLayerState = phaseDownLayerArray[elementNumber]
 
-        if (faceColors != null) {
-            var k = 0
-            for(tiles in faceColors){
-                for(tile in tiles){
-                    var currentCubie = currentLayerState?.get(k)
+            if (faceColors != null) {
+                var k = 0
+                for (tiles in faceColors) {
+                    for (tile in tiles) {
+                        var currentCubie = currentLayerState?.get(k)
 
-                    //check if cubie has tile color
-                    if(!currentCubie?.tiles?.any{ x -> x.isActive && x.color == tile?.tileColor}!!){
-                        return false
+                        //check if cubie has tile color
+                        if (!currentCubie?.tiles?.any { x -> x.isActive && x.color == tile?.tileColor }!!) {
+                            return false
+                        }
+                        k++
                     }
-                    k++
                 }
             }
         }

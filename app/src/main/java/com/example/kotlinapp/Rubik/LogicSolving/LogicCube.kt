@@ -1,5 +1,6 @@
 package com.example.kotlinapp.Rubik.LogicSolving
 
+import android.util.Log
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.LayerEnum
@@ -148,23 +149,31 @@ class LogicCube : ICube {
         var moves = ArrayList<String>()
 
         //calculate white corners layout
-        while(numWhiteCornersOriented() < 4){
-            if(getPermutationAllowance()) {
-                var tempCubies = cubies.filter { x -> x.isCorner && x.tiles.any { t -> t.color == Color.WHITE } }
+        while (numWhiteCornersOriented() < 4) {
+            if (getPermutationAllowance()) {
+                var tempCubies =
+                    cubies.filter { x -> x.isCorner && x.tiles.any { t -> t.color == Color.WHITE } }
                 for (qb in tempCubies) {
                     while (!isCornerRightOriented(qb)) {
                         if (getPermutationAllowance()) {
                             //find all edges with white tiles
                             var tempTiles = qb.tiles.filter { x -> x.isActive }
-                            var whiteTile = tempTiles.filter { x -> x.color == Color.WHITE }.single()
+                            var whiteTile =
+                                tempTiles.filter { x -> x.color == Color.WHITE }.single()
                             var firstTile = tempTiles.filter { x -> x.color != Color.WHITE }[0]
                             var secondTile = tempTiles.filter { x -> x.color != Color.WHITE }[1]
 
-                            //first case wrong layout on the UP layer
+                            Log.i("info", ""+firstTile.color +" dir = " + firstTile.direction + "  " + secondTile.color + " dir = " + secondTile.direction + "  White dir = " + whiteTile.direction)
+
+                            //WHITE is UP
                             if (whiteTile.direction == 'U') {
                                 var c = firstTile.direction
-                                if (qb.getNormalVectorAfterRotation(secondTile, 90f, firstTile.direction) == 'D'
-                                    || qb.getNormalVectorAfterRotation(firstTile, 90f, secondTile.direction) == 'D'
+                                if (qb.getNormalVectorAfterRotation(
+                                        secondTile,
+                                        90f,
+                                        firstTile.direction
+                                    ) == 'D'
+                                //|| qb.getNormalVectorAfterRotation(firstTile, 90f, secondTile.direction) == 'D'
                                 ) {
                                     moves.add(performMoves(c.toString()))
                                     moves.add(performMoves("D"))
@@ -176,16 +185,31 @@ class LogicCube : ICube {
                                 }
                             }
 
-                            //second case White color directs down
+                            //WHITE is DOWN
                             else if (whiteTile.direction == 'D') {
-                                if (firstTile.color == directionsControl.getColorByDirection(secondTile.direction)
-                                    || secondTile.color == directionsControl.getColorByDirection(firstTile.direction)
+                                //if one of tiles is on the right side of another
+                                if (firstTile.color == directionsControl.getColorByDirection(
+                                        secondTile.direction
+                                    )
+                                    || secondTile.color == directionsControl.getColorByDirection(
+                                        firstTile.direction
+                                    )
                                 ) {
                                     var c = secondTile.direction
-                                    if (qb.getNormalVectorAfterRotation(firstTile, -90f, secondTile.direction) == 'D') {
+                                    if (qb.getNormalVectorAfterRotation(
+                                            firstTile,
+                                            -90f,
+                                            secondTile.direction
+                                        ) == 'D'
+                                    ) {
                                         moves.add(performMoves(c + "'"))
                                         var whiteC = whiteTile.direction
-                                        if (qb.getNormalVectorAfterRotation(secondTile, -90f, whiteC) == 'D') {
+                                        if (qb.getNormalVectorAfterRotation(
+                                                secondTile,
+                                                -90f,
+                                                whiteC
+                                            ) == 'D'
+                                        ) {
                                             moves.add(performMoves(whiteC + "'"))
                                             moves.add(performMoves("D"))
                                             moves.add(performMoves("D"))
@@ -201,7 +225,12 @@ class LogicCube : ICube {
                                     } else {
                                         moves.add(performMoves(c.toString()))
                                         var whiteC1 = whiteTile.direction
-                                        if (qb.getNormalVectorAfterRotation(secondTile, 90f, whiteC1) == 'D') {
+                                        if (qb.getNormalVectorAfterRotation(
+                                                secondTile,
+                                                90f,
+                                                whiteC1
+                                            ) == 'D'
+                                        ) {
                                             moves.add(performMoves(whiteC1.toString()))
                                             moves.add(performMoves("D"))
                                             moves.add(performMoves("D"))
@@ -215,9 +244,17 @@ class LogicCube : ICube {
                                             moves.add(performMoves(c + "'"))
                                         }
                                     }
-                                } else if (secondTile.color == directionsControl.getColorByDirection(firstTile.direction)) {
+                                } else if (secondTile.color == directionsControl.getColorByDirection(
+                                        firstTile.direction
+                                    )
+                                ) {
                                     var c = firstTile.direction
-                                    if (qb.getNormalVectorAfterRotation(secondTile, 90f, c) == 'D') {
+                                    if (qb.getNormalVectorAfterRotation(
+                                            secondTile,
+                                            90f,
+                                            c
+                                        ) == 'D'
+                                    ) {
                                         moves.add(performMoves(c + "'"))
                                         moves.add(performMoves("D"))
                                         moves.add(performMoves("D"))
@@ -237,12 +274,29 @@ class LogicCube : ICube {
                                         moves.add(performMoves(c + "'"))
                                     }
                                 } else {
-                                    moves.add(performMoves("D"))
-                                }
+                                    if (qb.getNormalVectorAfterRotation(firstTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(firstTile.color)
+                                        || qb.getNormalVectorAfterRotation(firstTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(secondTile.color)
 
+                                        || qb.getNormalVectorAfterRotation(secondTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(secondTile.color)
+                                        || qb.getNormalVectorAfterRotation(secondTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(firstTile.color)
+                                    ) {
+                                        moves.add(performMoves("D'"))
+                                    } else {
+                                        moves.add(performMoves("D"))
+                                    }
+
+                                }
+                                //check
+                                /*else {
+                                    moves.add(performMoves("D"))
+                                }*/
                             }
 
-                            //third case one of tiles is on UP layer
+                            //TILE is UP
                             else if (firstTile.direction == 'U' || secondTile.direction == 'U') {
                                 var c = whiteTile.direction
                                 if (qb.getNormalVectorAfterRotation(firstTile, -90f, c) == 'D' ||
@@ -258,21 +312,45 @@ class LogicCube : ICube {
                                 }
                             }
 
-                            //one of tiles has DOWN direction
+                            //TILE is DOWN
                             else {
                                 if (directionsControl.getColorByDirection(firstTile.direction) == firstTile.color
                                     && directionsControl.getColorByDirection(whiteTile.direction) == secondTile.color
                                 ) {
                                     var c = directionsControl.getDirectionByColor(firstTile.color)
-                                    moves.add(performMoves("D'"))
+                                    var downMove = "D"
+                                    if (qb.getNormalVectorAfterRotation(firstTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(secondTile.color)
+                                    ) {
+                                        downMove = "D'"
+                                    }
+                                    //change 04.09.2019
+
+                                    /*moves.add(performMoves("D'"))
                                     moves.add(performMoves(c + "'"))
                                     moves.add(performMoves("D"))
-                                    moves.add(performMoves(c.toString()))
+                                    moves.add(performMoves(c.toString()))*/
+
+                                    moves.add(performMoves(downMove))
+                                    if (downMove == "D") {
+                                        moves.add(performMoves(c.toString()))
+                                        moves.add(performMoves("D'"))
+                                        moves.add(performMoves(c + "'"))
+                                    } else {
+                                        moves.add(performMoves(c + "'"))
+                                        moves.add(performMoves("D"))
+                                        moves.add(performMoves(c.toString()))
+                                    }
+
                                 } else if (directionsControl.getColorByDirection(secondTile.direction) == secondTile.color
                                     && directionsControl.getColorByDirection(whiteTile.direction) == firstTile.color
                                 ) {
-
-                                    if (qb.getNormalVectorAfterRotation(secondTile, -90f, whiteTile.direction)
+                                    //change 04.09.2019
+                                    if (qb.getNormalVectorAfterRotation(
+                                            secondTile,
+                                            -90f,
+                                            'D'
+                                        )//whiteTile.direction)
                                         == directionsControl.getDirectionByColor(firstTile.color)
                                     ) {
                                         moves.add(performMoves("D'"))
@@ -281,12 +359,57 @@ class LogicCube : ICube {
                                         moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color).toString()))
                                     } else {
                                         moves.add(performMoves("D"))
-                                        moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color).toString()))
+                                        moves.add(
+                                            performMoves(
+                                                directionsControl.getDirectionByColor(
+                                                    secondTile.color
+                                                ).toString()
+                                            )
+                                        )
                                         moves.add(performMoves("D'"))
-                                        moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color) + "'"))
+                                        moves.add(
+                                            performMoves(
+                                                directionsControl.getDirectionByColor(
+                                                    secondTile.color
+                                                ) + "'"
+                                            )
+                                        )
                                     }
-                                } else {
+                                }
+                                //04.09.2019
+                                //if one of tiles is down
+                                /*else if(qb.getNormalVectorAfterRotation(whiteTile, 90f, 'D') == directionsControl.getDirectionByColor(firstTile.color)
+                                    && qb.getNormalVectorAfterRotation(secondTile, 90f, 'D') == directionsControl.getDirectionByColor(secondTile.color)){
+                                    moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color) + "'"))
                                     moves.add(performMoves("D"))
+                                    moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color).toString()))
+                                }
+                                else if(qb.getNormalVectorAfterRotation(whiteTile, 90f, 'D') == directionsControl.getDirectionByColor(secondTile.color)
+                                    && qb.getNormalVectorAfterRotation(firstTile, 90f, 'D') == directionsControl.getDirectionByColor(firstTile.color)){
+                                    moves.add(performMoves(directionsControl.getDirectionByColor(firstTile.color) + "'"))
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves(directionsControl.getDirectionByColor(firstTile.color).toString()))
+                                }*/
+                                else {
+                                    if (qb.getNormalVectorAfterRotation(firstTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(firstTile.color)
+                                        || qb.getNormalVectorAfterRotation(firstTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(secondTile.color)
+
+                                        || qb.getNormalVectorAfterRotation(secondTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(secondTile.color)
+                                        || qb.getNormalVectorAfterRotation(secondTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(firstTile.color)
+
+                                        || qb.getNormalVectorAfterRotation(whiteTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(firstTile.color)
+                                        || qb.getNormalVectorAfterRotation(whiteTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(secondTile.color)
+                                    ) {
+                                        moves.add(performMoves("D'"))
+                                    } else {
+                                        moves.add(performMoves("D"))
+                                    }
                                 }
                             }
                         }

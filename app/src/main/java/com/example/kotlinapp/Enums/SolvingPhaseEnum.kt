@@ -7,5 +7,6 @@ enum class SolvingPhaseEnum {
     YellowCross,
     YellowEdges,
     YellowCornersOrient,
-    YellowCorners
+    YellowCorners,
+    Finish
 }

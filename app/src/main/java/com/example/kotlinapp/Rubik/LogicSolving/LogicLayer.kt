@@ -28,6 +28,20 @@ class LogicLayer : ILayer {
         this.id = id
     }
 
+    companion object{
+        fun CloneLayer(layer : LogicLayer, logicCube: LogicCube) : LogicLayer {
+            var cloneLayer = LogicLayer(layer.centerPoint, layer.layerName, Direction.CloneDirection(layer.direction), logicCube, layer.id)
+            var cloneCubies = ArrayList<LogicCubie>()
+            for(qb in layer.cubies){
+                cloneCubies.add(LogicCubie.CloneCubie(qb))
+            }
+            cloneLayer.cubies = cloneCubies
+            cloneLayer.cubiesIds = layer.cubiesIds.toList() as ArrayList<Int>
+            return cloneLayer
+        }
+    }
+
+
     fun addCubie(cubie: LogicCubie) {
         cubies.add(cubie)
         cubiesIds.add(cubie.id)

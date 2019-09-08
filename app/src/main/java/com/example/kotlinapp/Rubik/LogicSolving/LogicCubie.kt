@@ -28,6 +28,34 @@ class LogicCubie : ICubie {
         this.id = id
     }
 
+    companion object{
+        fun CloneCubie(qb : LogicCubie) : LogicCubie{
+            var cloneCubie = LogicCubie(Vertex.CloneVertex(qb.centerPoint), qb.id)
+            var cloneTiles = ArrayList<Tile>()
+            for(tile in qb.tiles){
+                cloneTiles.add(Tile.CloneTile(tile))
+            }
+            cloneCubie.tiles = cloneTiles
+            cloneCubie.isEdge = qb.isEdge
+            cloneCubie.isCorner = qb.isCorner
+            return cloneCubie
+        }
+    }
+
+    /**
+     * Check if cubies are equal by comparing tile colors
+     */
+    fun isEqual(qb : LogicCubie) : Boolean{
+        var k = 0
+        for(tile in tiles){
+            if(tile.color != qb.tiles[k].color){
+                return false
+            }
+            k++
+        }
+        return true
+    }
+
     override fun rotate(angle: Float, rotationAxis: Axis) {
         rotationAngle = angle
 

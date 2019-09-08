@@ -8,6 +8,7 @@ import com.example.kotlinapp.Rubik.Abstract.ICube
 import com.example.kotlinapp.Rubik.Abstract.ICubie
 import com.example.kotlinapp.Rubik.Abstract.ILayer
 import com.example.kotlinapp.Rubik.DirectionsControl
+import com.example.kotlinapp.Rubik.Layer
 import com.example.kotlinapp.Rubik.Solver
 import java.lang.Exception
 
@@ -21,6 +22,7 @@ class LogicCube : ICube {
     override var rotationAngle = 0f
     override val permutationLock = Any()
 
+    var currentTurn = ""
 
     //region Solving Algorithms
 
@@ -420,6 +422,21 @@ class LogicCube : ICube {
             Thread.sleep(10)
         }
 
+        var greenCenterCubie = cubies.single { x -> !x.isCorner && !x.isEdge && x.tiles.any { t -> t.color == Color.GREEN } }
+        if(greenCenterCubie.tiles.single { x -> x.isActive }.direction != 'F'){
+            var tile = greenCenterCubie.tiles.single { x -> x.isActive }
+            if(tile.direction == 'L'){
+                moves.add(performMoves("E'"))
+            }
+            else if(tile.direction == 'R'){
+                moves.add(performMoves("E"))
+            }
+            else{
+                moves.add(performMoves("E"))
+                moves.add(performMoves("E"))
+            }
+        }
+
         return moves
     }
 
@@ -760,10 +777,91 @@ class LogicCube : ICube {
     //rotate cube to get right cubie in front of user
     fun findRightOrientedYellowCubie() : ArrayList<String> {
         var moves = ArrayList<String>()
-        if(numYellowCornersOnPlace() != 4) {
+        while(numYellowCornersOnPlace() != 4) {
+            var num = numYellowCornersOnPlace()
             var tempCubies =
                 cubies.filter { x -> x.isCorner && x.tiles.any { y -> y.color == Color.YELLOW } }
-            for (qb in tempCubies) {
+
+            //first case one cubie is on the right place
+            if(num != 0) {
+                //move the cube to make the right cubie in front
+                for (qb in tempCubies) {
+                    if (isYellowCornerOnRightPlace(qb)) {
+                        var tempTiles = qb.tiles.filter { x -> x.isActive }
+                        var yellowTile = tempTiles.single { x -> x.color == Color.YELLOW }
+                        var firstTile = tempTiles.filter { x -> x.color != Color.YELLOW }[0]
+                        var secondTile = tempTiles.filter { x -> x.color != Color.YELLOW }[1]
+
+                        if ((yellowTile.direction == 'F' || firstTile.direction == 'F' || secondTile.direction == 'F')
+                            && (yellowTile.direction == 'L' || firstTile.direction == 'L' || secondTile.direction == 'L')
+                        ) {
+                        } else {
+                            if ((qb.getNormalVectorAfterRotation(firstTile, 180f, 'D') == 'F'
+                                        || qb.getNormalVectorAfterRotation(
+                                    secondTile,
+                                    180f,
+                                    'D'
+                                ) == 'F'
+                                        || qb.getNormalVectorAfterRotation(
+                                    yellowTile,
+                                    180f,
+                                    'D'
+                                ) == 'F') &&
+                                (qb.getNormalVectorAfterRotation(firstTile, 180f, 'D') == 'L'
+                                        || qb.getNormalVectorAfterRotation(
+                                    secondTile,
+                                    180f,
+                                    'D'
+                                ) == 'L'
+                                        || qb.getNormalVectorAfterRotation(
+                                    yellowTile,
+                                    180f,
+                                    'D'
+                                ) == 'L')
+                            ) {
+                                rotationAxis = Axis.yAxis
+                                rotationAngle = 90f
+                                moves.add(performMoves("Y"))
+                                moves.add(performMoves("Y"))
+                            } else if ((qb.getNormalVectorAfterRotation(firstTile, 90f, 'D') == 'F'
+                                        || qb.getNormalVectorAfterRotation(
+                                    secondTile,
+                                    90f,
+                                    'D'
+                                ) == 'F'
+                                        || qb.getNormalVectorAfterRotation(
+                                    yellowTile,
+                                    90f,
+                                    'D'
+                                ) == 'F') &&
+                                (qb.getNormalVectorAfterRotation(firstTile, 90f, 'D') == 'L'
+                                        || qb.getNormalVectorAfterRotation(
+                                    secondTile,
+                                    90f,
+                                    'D'
+                                ) == 'L'
+                                        || qb.getNormalVectorAfterRotation(
+                                    yellowTile,
+                                    90f,
+                                    'D'
+                                ) == 'L')
+                            ) {
+                                rotationAxis = Axis.yAxis
+                                rotationAngle = 90f
+                                moves.add(performMoves("Y"))
+                            } else {
+                                rotationAxis = Axis.yAxis
+                                rotationAngle = -90f
+                                moves.add(performMoves("Y'"))
+                            }
+                        }
+                        break
+                    }
+                }
+            }
+
+
+            /*for (qb in tempCubies) {
                 while (!getPermutationAllowance()) {
                     Thread.sleep(10)
                 }
@@ -803,9 +901,9 @@ class LogicCube : ICube {
                             moves.add(performMoves("Y'"))
                         }
                     }
-                    break
+                    //break
                 }
-            }
+            }*/
 
             // moves += performMoves("U F U' B' U F' U' B")
             moves.add(performMoves("D'"))
@@ -929,6 +1027,25 @@ class LogicCube : ICube {
             if (yellowTile.direction == 'D') {
                 return true
             }
+        }
+        return false
+    }
+
+    fun isYellowCornerOnRightPlace(qb : LogicCubie) : Boolean{
+        var tempTiles = qb.tiles.filter { x -> x.isActive }
+        var yellowTile = tempTiles.single { x -> x.color == Color.YELLOW }
+        var firstTile = tempTiles.filter { x -> x.color != Color.YELLOW }[0]
+        var secondTile = tempTiles.filter { x -> x.color != Color.YELLOW }[1]
+
+        if (yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color) ||
+            yellowTile.direction == directionsControl.getDirectionByColor(secondTile.color) ||
+            yellowTile.direction == 'D' &&
+            (directionsControl.getDirectionByColor(firstTile.color) == secondTile.direction
+                    || directionsControl.getDirectionByColor(firstTile.color) == firstTile.direction
+                    || directionsControl.getDirectionByColor(secondTile.color) == firstTile.direction ||
+                    directionsControl.getDirectionByColor(secondTile.color) == secondTile.direction))
+        {
+            return true
         }
         return false
     }
@@ -1116,8 +1233,31 @@ class LogicCube : ICube {
             setPermutationAllowance(true)
             Thread.sleep(10)
         }
+        else{
+            //problem with rotation
+            //it's necessary to return cubies back and try to rotate again
+            var rotatedCubies = cubies.filter { x -> x.isRotated }
+            var angle: Float
+            var curr = ""
+            if(currentTurn.contains("'")){
+                curr = currentTurn.substring(0, 1)
+                angle = 90f
+            }
+            else{
+                angle = -90f
+            }
+            var layer = LayerEnum.values().single{x -> x.charName == curr[0] }
+            for(qb in rotatedCubies){
+                qb.rotate(angle, LayerEnum.getRotationAxisByLayerName(layer))
+            }
+            Thread.sleep(10)
+            turn(currentTurn)
+            Thread.sleep(10)
+        }
+
         var downLayer = layers.single{x -> x.layerName == LayerEnum.DOWN}
-        var cubies = sortCubiesForLayer(downLayer) as List<LogicCubie>
+        var tempLayer = LogicLayer.CloneLayer(downLayer, this)
+        var cubies = sortCubiesForLayer(tempLayer) as List<LogicCubie>
         Solver.addPhaseLayer(cubies)
     }
 
@@ -1181,6 +1321,7 @@ class LogicCube : ICube {
                 rotateCube(rotationAngle, rotationAxis)
             }
         }
+        currentTurn = turn
         resetLayerCubies()
     }
 

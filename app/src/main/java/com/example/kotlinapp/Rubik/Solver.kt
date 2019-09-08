@@ -13,6 +13,8 @@ class Solver {
 
     var solvingPhase = SolvingPhaseEnum.WhiteCross
 
+    private var stateChangedTime : Long = 0
+
     fun copyCube(cube: Cube){
         for(qb in cube.cubies){
             logicCube.cubies.add(Cubie.CloneCubie(qb))
@@ -55,6 +57,7 @@ class Solver {
             }
             SolvingPhaseEnum.YellowCorners -> {
                 solution = logicCube.finishSolvingYellowCorners()
+                solvingPhase = SolvingPhaseEnum.Finish
             }
         }
         return solution
@@ -76,14 +79,26 @@ class Solver {
         if(phaseDownLayerArray.size != 0) {
             var currentLayerState = phaseDownLayerArray[elementNumber]
 
+            //if previous state equals new state, rotate arrow 3 seconds before rotation
+            if(stateChangedTime.toInt() != 0){
+                if(elementNumber != 0) {
+                    if (checkIfPreviousPhaseStateTheSame(elementNumber - 1)) {
+                        if (System.currentTimeMillis() - stateChangedTime < 3000) {
+                            return false
+                        }
+                    }
+                }
+            }
+
             if (faceColors != null) {
                 var k = 0
                 for (tiles in faceColors) {
                     for (tile in tiles) {
-                        var currentCubie = currentLayerState?.get(k)
+                        var currentCubieTile = currentLayerState?.get(k)?.tiles?.single { x -> x.isActive
+                                && x.direction == 'D' }
 
                         //check if cubie has tile color
-                        if (!currentCubie?.tiles?.any { x -> x.isActive && x.color == tile?.tileColor }!!) {
+                        if (currentCubieTile?.color != tile?.tileColor ) {
                             return false
                         }
                         k++
@@ -91,11 +106,62 @@ class Solver {
                 }
             }
         }
+        stateChangedTime = System.currentTimeMillis()
         return true
     }
 
+    /**
+     * Check if two states are the same
+     */
+    private fun checkIfPreviousPhaseStateTheSame(index : Int) : Boolean{
+        if(index + 1 < phaseDownLayerArray.size) {
+            var currentStateTiles = phaseDownLayerArray.get(index)
+            var nextStateTiles = phaseDownLayerArray.get(index + 1)
 
+            if (currentStateTiles != null && nextStateTiles != null) {
+                var k = 0
+                for (currQb in currentStateTiles) {
+                    if (!currQb.isEqual(nextStateTiles[k])) {
+                        return false
+                    }
+                    k++
+                }
+                return true
+            }
+        }
+        return false
+    }
 
+    /**
+     * If current state is equal previous state
+     */
+    fun checkIfUserRotatedSideBackward(index : Int, faceColors : Array<Array<RubikTile?>>?) : Boolean {
+        if(index >= 2) {
+            var previousStateTiles = phaseDownLayerArray[index - 1]
+
+            if(checkIfPreviousPhaseStateTheSame(index - 1)){
+                return false
+            }
+
+            if (faceColors != null) {
+                var k = 0
+                for (tiles in faceColors) {
+                    for (tile in tiles) {
+                        var previousCubie = previousStateTiles?.get(k)
+
+                        //check if cubie has tile color
+                        if (!previousCubie?.tiles?.any { x -> x.isActive && x.direction == 'D'
+                                    && x.color == tile?.tileColor }!!) {
+                            return false
+                        }
+                        k++
+                    }
+                }
+                return true
+            }
+        }
+        return false
+    }
 
 
 

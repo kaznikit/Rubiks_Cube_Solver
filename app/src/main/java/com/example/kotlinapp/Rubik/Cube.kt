@@ -263,6 +263,10 @@ class Cube : ICube {
         return checkEachColorNumber()
     }
 
+    fun getUnscannedCubiesCount() : Int {
+        return cubies.filter { x -> x.areTileColorsFilled }.count()
+    }
+
     fun findOppositeCubie(){
         //not solved cubies
         var cubiesToCheck = getCubiesToCheck()

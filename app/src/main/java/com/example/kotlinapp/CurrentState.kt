@@ -1,8 +1,11 @@
 package com.example.kotlinapp
 
+import android.icu.lang.UCharacter
+import android.icu.text.IDNA
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.LayerEnum
+import com.example.kotlinapp.Enums.SolvingPhaseEnum
 import com.example.kotlinapp.Recognition.*
 import com.example.kotlinapp.Rubik.Cube
 import org.opencv.core.Mat
@@ -22,7 +25,7 @@ class CurrentState {
 
     var rubikFaces  = arrayListOf<RubikFace>()
 
-    var isCubeSolved = false
+    var isCubeScanned = false
 
     // We assume that faces will be explored in a particular sequence.
     var adoptFaceCount = 0
@@ -45,6 +48,9 @@ class CurrentState {
     var TilesProcessed = true
     var MoveNumber = 0
     var MoveNumberChanged = true
+    var IsWrongMove = false
+    var WrongMove = ""
+    var IsCubeSolved = false
 
     var colorDetector: ColorDetector? = null
     var mainActivity : MainActivity
@@ -65,8 +71,6 @@ class CurrentState {
         //cube colors obtaining each frame
         var faceColors = activeRubikFace.calculateTiles(rectangleList, image)
 
-        //mainActivity.glRenderer.drawArrow(true, "Y", true)
-
         if(faceColors != null) {
             if (!IsCubeScannedAndReset && !isReset) {
                 createCubeFromScannedTiles(faceColors)
@@ -74,7 +78,13 @@ class CurrentState {
                 if (MoveNumberChanged) {
                     if(CurrentMoves.size != 0) {
                         //draw arrow
-                        mainActivity.glRenderer.drawArrow(true, CurrentMoves[MoveNumber], true)
+                        //if user move was not wrong
+                        if(!IsWrongMove) {
+                            mainActivity.glRenderer.drawArrow(true, CurrentMoves[MoveNumber], true)
+                        }
+                        else{
+                            mainActivity.glRenderer.drawArrow(true, WrongMove, true)
+                        }
                     }
                 } else {
                     mainActivity.glRenderer.drawArrow(false, "D", true)
@@ -90,7 +100,7 @@ class CurrentState {
        Main method for scanning the cube and fill it's sides
      **/
     fun createCubeFromScannedTiles(faceColors : Array<Array<RubikTile?>>) {
-        if (isCubeSolved && adoptFaceCount > 6) {
+        if (isCubeScanned && adoptFaceCount > 6) {
             //if cube solved we should just check
             // which side of cube user holds the cube and rotate drawing cube
             if (!IsCubeScannedAndReset) {
@@ -136,6 +146,13 @@ class CurrentState {
             if(!activeRubikFace.isLayerFilled){
                 if(fillCubeLayer(activeRubikFace)) {
                     activeRubikFace.isLayerFilled = true
+
+                    //remain one center cubie ==> cube scanned
+                    /*if(cube.getUnscannedCubiesCount() == 26){
+                        isCubeScanned = true
+                        adoptFaceCount = 7
+                        createSolver()
+                    }*/
                 }
             }
             //проверяем повернули ли сторону кубика
@@ -161,31 +178,56 @@ class CurrentState {
     /**
      * Main method for solving the cube
      */
-    fun guideSolvingCube(faceColors : Array<Array<RubikTile?>>?){
+    fun guideSolvingCube(faceColors : Array<Array<RubikTile?>>?) {
         TilesProcessed = false
-        if(IsPhaseComplete){
+        if (IsPhaseComplete) {
             CurrentMoves = solver.solveNextPhase()
             //InfoDisplayer.text = CurrentMoves.joinToString (separator = " ")
             IsPhaseComplete = false
         }
 
-        if(CurrentMoves.size != 0) {
+        if (CurrentMoves.size != 0) {
             var res = solver.cubeSideRightRotated(faceColors, MoveNumber)
             if (res) {
+                IsWrongMove = false
                 MoveNumberChanged = false
                 //perform move on gl cube
                 cube.performMoves(CurrentMoves[MoveNumber])
                 MoveNumber++
                 Thread.sleep(50)
             } else {
-                //check if the user move was wrong
+                //check if user returned to the right path
+                if(IsWrongMove){
+                    //we know user is wrong
+                    if(solver.checkIfUserRotatedSideBackward(MoveNumber, faceColors)){
+                        WrongMove = ""
+                        IsWrongMove = false
+                        InfoDisplayer.text = ""
+                        //MoveNumberChanged = false
+                        TilesProcessed = true
+                        return
+                    }
+                }
+
+                //check on wrong move
+                if (MoveNumber != 0 && solver.checkIfUserRotatedSideBackward(
+                        MoveNumber - 1, faceColors))
+                {
+                    WrongMove = CurrentMoves[MoveNumber - 1]
+                    IsWrongMove = true
+                    MoveNumberChanged = true
+                }
                 MoveNumberChanged = true
             }
         }
 
-        if(MoveNumber == CurrentMoves.size){
+        if (MoveNumber == CurrentMoves.size) {
             IsPhaseComplete = true
             MoveNumber = 0
+            if(solver.solvingPhase == SolvingPhaseEnum.Finish){
+                IsCubeSolved = true
+                IsCubeSolving = false
+            }
         }
 
         TilesProcessed = true
@@ -258,7 +300,7 @@ class CurrentState {
                     cube.findOppositeCubie()
                 }*/
                 var response = cube.rotateCube(-90f, Axis.xAxis)
-                isCubeSolved = true
+                isCubeScanned = true
                 adoptFaceCount++
                 createSolver()
             }

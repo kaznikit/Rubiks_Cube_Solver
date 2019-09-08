@@ -232,34 +232,29 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         if (currentState.IsCubeSolving) {
             if (currentState.CurrentMoves.size != 0) {
                 var mat: Mat
-                if (currentState.MoveNumber != 0) {
+                if(currentState.IsWrongMove){
+                    mat = InfoDisplayer.writeInfoFromPlace(
+                        mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                        "Wrong move, return back!",
+                        Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
+                }
+                else if (currentState.MoveNumber != 0) {
                     InfoDisplayer.text = currentState.CurrentMoves[currentState.MoveNumber - 1]
                     mat = InfoDisplayer.writeInfo(
                         mat1,
-                        com.example.kotlinapp.Enums.Color.WHITE.cvColor
-                    )
+                        com.example.kotlinapp.Enums.Color.WHITE.cvColor)
 
                     if (currentState.MoveNumber != currentState.CurrentMoves.size) {
                         mat = InfoDisplayer.writeInfoFromPlace(
-                            mat,
-                            com.example.kotlinapp.Enums.Color.RED.cvColor,
+                            mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
                             currentState.CurrentMoves[currentState.MoveNumber],
-                            Point(
-                                Constants.StartingTextPoint.x + 60.0,
-                                Constants.StartingTextPoint.y
-                            )
-                        )
+                            Point(Constants.StartingTextPoint.x + 60.0, Constants.StartingTextPoint.y))
 
                         mat = InfoDisplayer.writeInfoFromPlace(
                             mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
                             currentState.CurrentMoves.drop(currentState.MoveNumber + 1).joinToString(
-                                separator = " "
-                            ),
-                            Point(
-                                Constants.StartingTextPoint.x + 120.0,
-                                Constants.StartingTextPoint.y
-                            )
-                        )
+                                separator = " "),
+                            Point(Constants.StartingTextPoint.x + 120.0, Constants.StartingTextPoint.y))
                     }
                     return mat
                 } else {
@@ -278,6 +273,12 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                     )
                 }
                 return mat
+            }
+            else if(currentState.IsCubeSolved){
+                return InfoDisplayer.writeInfoFromPlace(
+                    mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                    "Congratulations, you are awesome!",
+                    Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
             }
         }
         return InfoDisplayer.writeInfo(mat1, com.example.kotlinapp.Enums.Color.WHITE.cvColor)

@@ -35,21 +35,26 @@ class Solver {
             }
             SolvingPhaseEnum.WhiteLayer -> {
                 solution = logicCube.finishWhiteLayer()
+                solvingPhase = SolvingPhaseEnum.TwoLayers
             }
             SolvingPhaseEnum.TwoLayers -> {
-                //solution = logicCube.finishTwoLayers()
+                solution = logicCube.finishTwoLayers()
+                solvingPhase = SolvingPhaseEnum.YellowCross
             }
             SolvingPhaseEnum.YellowCross -> {
-                //solution = logicCube.makeYellowCross()
+                solution = logicCube.makeYellowCross()
+                solvingPhase = SolvingPhaseEnum.YellowEdges
             }
             SolvingPhaseEnum.YellowEdges -> {
-                //solution = logicCube.swapYellowEdgesTopLayer()
+                solution = logicCube.swapYellowEdgesTopLayer()
+                solvingPhase = SolvingPhaseEnum.YellowCornersOrient
             }
             SolvingPhaseEnum.YellowCornersOrient -> {
-                //solution = logicCube.findRightOrientedYellowCubie()
+                solution = logicCube.findRightOrientedYellowCubie()
+                solvingPhase = SolvingPhaseEnum.YellowCorners
             }
             SolvingPhaseEnum.YellowCorners -> {
-                //solution = logicCube.finishSolvingYellowCorners()
+                solution = logicCube.finishSolvingYellowCorners()
             }
         }
         return solution

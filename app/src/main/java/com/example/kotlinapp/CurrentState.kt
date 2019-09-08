@@ -12,6 +12,7 @@ import com.example.kotlinapp.Rubik.Solver
 import com.example.kotlinapp.Rubik.Tile
 import com.example.kotlinapp.Util.Constants
 import com.example.kotlinapp.Util.InfoDisplayer
+import org.opencv.imgproc.Moments
 import java.lang.Exception
 import kotlin.collections.ArrayList
 
@@ -64,6 +65,7 @@ class CurrentState {
         //cube colors obtaining each frame
         var faceColors = activeRubikFace.calculateTiles(rectangleList, image)
 
+        //mainActivity.glRenderer.drawArrow(true, "Y", true)
 
         if(faceColors != null) {
             if (!IsCubeScannedAndReset && !isReset) {
@@ -163,7 +165,7 @@ class CurrentState {
         TilesProcessed = false
         if(IsPhaseComplete){
             CurrentMoves = solver.solveNextPhase()
-            InfoDisplayer.text = CurrentMoves.joinToString (separator = " ")
+            //InfoDisplayer.text = CurrentMoves.joinToString (separator = " ")
             IsPhaseComplete = false
         }
 
@@ -183,6 +185,7 @@ class CurrentState {
 
         if(MoveNumber == CurrentMoves.size){
             IsPhaseComplete = true
+            MoveNumber = 0
         }
 
         TilesProcessed = true

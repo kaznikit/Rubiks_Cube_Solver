@@ -8,6 +8,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.icu.text.IDNA
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -22,11 +23,14 @@ import com.example.kotlinapp.Recognition.ImageRecognizer
 import com.example.kotlinapp.Rubik.Cube
 import com.example.kotlinapp.Rubik.Renderer
 import com.example.kotlinapp.Rubik.Solver
+import com.example.kotlinapp.Util.Constants
 import com.example.kotlinapp.Util.InfoDisplayer
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
 import org.opencv.core.Mat
+import org.opencv.core.Point
 import org.opencv.core.Scalar
+import java.io.File.separator
 
 class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     private lateinit var mOpenCvCameraView: CameraBridgeViewBase
@@ -209,17 +213,74 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     }
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
+        var mat = displayCurrentMoves(inputFrame.rgba())
+
         //make processing 1 time per second
         if (System.currentTimeMillis() - start >= 50) {
-            ImageRecognizer(this).execute(inputFrame.rgba())
+            ImageRecognizer(this).execute(mat)
             start = System.currentTimeMillis()
         }
         if (isMatProcessed) {
             isMatProcessed = false
             return processedMat!!
         } else {
-            return InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
+            return mat//displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
         }
+    }
+
+    fun displayCurrentMoves(mat1 : Mat) : Mat {
+        if (currentState.IsCubeSolving) {
+            if (currentState.CurrentMoves.size != 0) {
+                var mat: Mat
+                if (currentState.MoveNumber != 0) {
+                    InfoDisplayer.text = currentState.CurrentMoves[currentState.MoveNumber - 1]
+                    mat = InfoDisplayer.writeInfo(
+                        mat1,
+                        com.example.kotlinapp.Enums.Color.WHITE.cvColor
+                    )
+
+                    if (currentState.MoveNumber != currentState.CurrentMoves.size) {
+                        mat = InfoDisplayer.writeInfoFromPlace(
+                            mat,
+                            com.example.kotlinapp.Enums.Color.RED.cvColor,
+                            currentState.CurrentMoves[currentState.MoveNumber],
+                            Point(
+                                Constants.StartingTextPoint.x + 60.0,
+                                Constants.StartingTextPoint.y
+                            )
+                        )
+
+                        mat = InfoDisplayer.writeInfoFromPlace(
+                            mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
+                            currentState.CurrentMoves.drop(currentState.MoveNumber + 1).joinToString(
+                                separator = " "
+                            ),
+                            Point(
+                                Constants.StartingTextPoint.x + 120.0,
+                                Constants.StartingTextPoint.y
+                            )
+                        )
+                    }
+                    return mat
+                } else {
+                    mat = InfoDisplayer.writeInfoFromPlace(
+                        mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                        currentState.CurrentMoves[currentState.MoveNumber],
+                        Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y)
+                    )
+
+                    mat = InfoDisplayer.writeInfoFromPlace(
+                        mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
+                        currentState.CurrentMoves.drop(1).joinToString(
+                            separator = " "
+                        ),
+                        Point(Constants.StartingTextPoint.x + 70.0, Constants.StartingTextPoint.y)
+                    )
+                }
+                return mat
+            }
+        }
+        return InfoDisplayer.writeInfo(mat1, com.example.kotlinapp.Enums.Color.WHITE.cvColor)
     }
 
     fun onMatProcessed(mat : Mat?){

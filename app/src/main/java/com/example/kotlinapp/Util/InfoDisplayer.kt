@@ -12,5 +12,10 @@ class InfoDisplayer {
             Imgproc.putText(image, text, Constants.StartingTextPoint, Constants.FontFace, Constants.FontSize, color, Constants.TextThickness)
             return image
         }
+
+        fun writeInfoFromPlace(image:Mat, color: Scalar, s : String?, point : Point) : Mat{
+            Imgproc.putText(image, s, point, Constants.FontFace, Constants.FontSize, color, Constants.TextThickness)
+            return image
+        }
     }
 }

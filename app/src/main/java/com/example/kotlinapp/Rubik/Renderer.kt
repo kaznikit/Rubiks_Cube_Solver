@@ -142,13 +142,39 @@ class Renderer : GLSurfaceView.Renderer {
     fun drawArrow(isDrawing: Boolean, direction: String, isLayer : Boolean) {
         isArrowDrawing = isDrawing
         arrowDirection = direction
+        isLayerArrow = isLayer
+
         if (arrowDirection.contains("'")) {
             arrowDirectionValue = ArrowDirection.NEGATIVE
         }
         else{
             arrowDirectionValue = ArrowDirection.POSITIVE
         }
-        isLayerArrow = isLayer
+
+        if(arrowDirection == "X'"){
+            arrowDirection = "R"
+            isLayerArrow = false
+        }
+        else if(arrowDirection == "X"){
+            arrowDirection = "L"
+            isLayerArrow = false
+        }
+        else if(arrowDirection == "Z"){
+            arrowDirection = "B"
+            isLayerArrow = false
+        }
+        else if(arrowDirection == "Z'"){
+            arrowDirection = "F"
+            isLayerArrow = false
+        }
+        else if(arrowDirection == "Y'"){
+            arrowDirection = "U"
+            isLayerArrow = false
+        }
+        else if(arrowDirection == "Y"){
+            arrowDirection = "D"
+            isLayerArrow = false
+        }
     }
 
     private fun renderCubeEdgeRotationArrow(degrees : Float, direction : String) {
@@ -171,13 +197,28 @@ class Renderer : GLSurfaceView.Renderer {
         if(direction == "R") {
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
         }
+        else if(direction == "L"){
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 1f, 0f)
+        }
         //to the left, back to the right
         else if(direction == "F"){
             Matrix.rotateM(mMVPMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
         }
+        else if(direction == "B"){
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0.0f, 1.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 0f, 1f)
+        }
         //counterclockwise, down for clockwise
         else if(direction == "U"){
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
+        }
+        else if(direction == "D"){
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
+            Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
+            Matrix.rotateM(mMVPMatrix, 0, -90f, 1f, 0f, 0f)
         }
 
         Matrix.scaleM(mMVPMatrix, 0, 4.5f, 4.5f, 3.5f)

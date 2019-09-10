@@ -104,13 +104,11 @@ class CurrentState {
             //if cube solved we should just check
             // which side of cube user holds the cube and rotate drawing cube
             if (!IsCubeScannedAndReset) {
+                mainActivity.glRenderer.drawArrow(true, "R", false)
                 checkCubeDownside(faceColors)
-            } else if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
+            }
+            if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
                 //findActiveSideOfCube(faceColors)
-
-                //solving cube
-                /*var whiteCross = solver.logicCube.makeWhiteCross()
-                    cube.performMoves(whiteCross)*/
                 IsCubeSolving = true
             }
             return
@@ -142,17 +140,18 @@ class CurrentState {
             activeRubikFace.ColorDetectionCount++
             activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
             adoptFaceCount++
-        } else if (activeRubikFace.ColorDetectionCount > 4) {
+        }
+        else if (activeRubikFace.ColorDetectionCount > 4) {
             if(!activeRubikFace.isLayerFilled){
                 if(fillCubeLayer(activeRubikFace)) {
                     activeRubikFace.isLayerFilled = true
 
                     //remain one center cubie ==> cube scanned
-                    /*if(cube.getUnscannedCubiesCount() == 26){
+                    if(cube.getUnscannedCubiesCount() == 26){
                         isCubeScanned = true
                         adoptFaceCount = 7
                         createSolver()
-                    }*/
+                    }
                 }
             }
             //проверяем повернули ли сторону кубика
@@ -300,9 +299,9 @@ class CurrentState {
                     cube.findOppositeCubie()
                 }*/
                 var response = cube.rotateCube(-90f, Axis.xAxis)
-                isCubeScanned = true
-                adoptFaceCount++
-                createSolver()
+                //isCubeScanned = true
+                //adoptFaceCount++
+                //createSolver()
             }
         }
     }
@@ -323,7 +322,8 @@ class CurrentState {
                             if (tiles!![i][j]?.tileColor == Color.BLACK || face == null || face!!.transformedTileArray == null) {
                                 continue
                             }
-                            if (face!!.transformedTileArray[i][j]?.tileColor == tiles!![i][j]?.tileColor) {
+                            //if (face!!.transformedTileArray[i][j]?.tileColor == tiles!![i][j]?.tileColor) {
+                            if(tiles.any { x -> x.any { y -> y!!.tileColor == face!!.transformedTileArray[i][j]!!.tileColor}}){
                                 coincide++
                             }
                         }
@@ -332,6 +332,8 @@ class CurrentState {
                         IsCubeScannedAndReset = true
                         IsCubeSolving = true
                         adoptFaceCount++
+                        var response = cube.rotateCube(-90f, Axis.xAxis)
+                        mainActivity.glRenderer.drawArrow(false, "D", false)
                     }
                 }
             }

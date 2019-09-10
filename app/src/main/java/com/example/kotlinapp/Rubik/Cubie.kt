@@ -47,6 +47,8 @@ class Cubie : ICubie{
     override var isCorner = false
     override var isEdge = false
 
+    var isHighlighted = false
+
     /**
      * if this value true, all tiles in cubie are scanned
      * 3 tiles for corner cubie, 2 tiles for edge cubie and 1 for center
@@ -308,5 +310,18 @@ class Cubie : ICubie{
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(aPositionLocation)
         GLES20.glDisable(GLES20.GL_CULL_FACE)
+    }
+
+    val pulseTimePeriod: Long = 3000
+    private var pulseTime: Long = 0
+
+    fun update(delta: Long) {
+        pulseTime += delta
+        while (pulseTime > pulseTimePeriod)
+            pulseTime -= pulseTimePeriod
+
+        val ratio = pulseTime / java.lang.Float.valueOf(pulseTimePeriod.toFloat())
+        val `val` = (Math.cos(ratio.toDouble() * 3.14 * 2.0) * 0.5 + 0.5).toFloat()
+        val coefficient = Math.pow(`val`.toDouble(), 2.0).toFloat() //power makes it more pulsey
     }
 }

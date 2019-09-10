@@ -311,9 +311,7 @@ class Cube : ICube {
                                     x.tiles.any { t -> t.color == getOppositeCenterColor(twoColors[0].color) }
                                             && x.tiles.any { t ->
                                         t.color == getOppositeCenterColor(
-                                            twoColors[1].color
-                                        )
-                                    }
+                                            twoColors[1].color) }
                                 }
                                 if (oppositeCubie == null) {
                                     if (cubiesToCheck[i].tiles.any { x ->

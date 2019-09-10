@@ -65,4 +65,11 @@ class Layer : ILayer{
             }
         }
     }
+
+    /**
+     * Highlight rotating cubies
+     */
+    fun turnOnCubieLight(){
+
+    }
 }

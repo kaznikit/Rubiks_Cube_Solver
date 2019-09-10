@@ -56,90 +56,180 @@ class LogicCube : ICube {
             }
         }
 
-        while (numWhiteEdgesOriented() < 4) {
-            if(getPermutationAllowance()) {
-                var tempCubies = cubies.filter { x -> x.isEdge && x.tiles.any { t -> t.color == Color.WHITE } }
-                for (qb in tempCubies) {
-                    //do while cubie is not on the right place
-                    while (!qb.isCubieRightOriented()) {
-                        if (getPermutationAllowance()) {
-                            //find all edges with white tiles
-                            var tempTiles = qb.tiles.filter { x -> x.isActive }
-                            var whiteTile = tempTiles.filter { x -> x.color == Color.WHITE }.single()
-                            var anotherTile = tempTiles.filter { x -> x.color != Color.WHITE }.single()
+        if(numWhiteEdgesOriented() == 4) {
+            //check if they are on the right places
+            var tempCubies =
+                cubies.filter { x -> x.isEdge && x.tiles.any { t -> t.color == Color.WHITE } }
+            while (tempCubies.any { x ->
+                    x.tiles.any { t ->
+                        t.isActive && t.direction != directionsControl.getDirectionByColor(t.color) } }) {
+                if (getPermutationAllowance()) {
+                    for (qb in tempCubies) {
+                        //find all edges with white tiles
+                        var tempTiles = qb.tiles.filter { x -> x.isActive }
+                        var anotherTile =
+                            tempTiles.single { x -> x.color != Color.WHITE }
 
-                            //white tile on the side, another tile on down layer
-                            if (whiteTile.direction != 'D' && anotherTile.direction == 'D') {
-                                //if cubie is on the right layer
-                                var whiteDir : Char
-                                var downMove = "D'"
-                                if(whiteTile.direction == directionsControl.getDirectionByColor(anotherTile.color)){
-                                    whiteDir = whiteTile.direction
+                        if (directionsControl.getDirectionByColor(anotherTile.color) != anotherTile.direction) {
+                            var swapColor =
+                                directionsControl.getColorByDirection(anotherTile.direction)
+                            var swapCubie =
+                                tempCubies.single { x -> x.tiles.any { t -> t.color == swapColor } }
+                            var swapTile = swapCubie.tiles.single { x -> x.color == swapColor }
+                            var dir = swapTile.direction
+                            if (anotherTile.direction == 'L') {
+                                moves.add(performMoves("S'"))
+                                if (dir == 'R') {
                                     moves.add(performMoves("D"))
-                                }else {
-                                    whiteDir = qb.getNormalVectorAfterRotation(whiteTile, 90f, 'D')
-                                    downMove = "D"
+                                    moves.add(performMoves("S"))
+                                    moves.add(performMoves("S"))
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves("S'"))
+                                    moves.add(performMoves("S'"))
+                                    moves.add(performMoves("D"))
+                                } else if (dir == 'B') {
+                                    moves.add(performMoves("M'"))
+                                    moves.add(performMoves("D'"))
+                                    moves.add(performMoves("M"))
+                                    moves.add(performMoves("D'"))
+                                    moves.add(performMoves("D'"))
+                                } else if (dir == 'F') {
+                                    moves.add(performMoves("M"))
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves("M'"))
+                                    moves.add(performMoves("D'"))
+                                    moves.add(performMoves("D'"))
                                 }
-                                if (whiteDir == directionsControl.getDirectionByColor(anotherTile.color))
-                                {
-                                    if (whiteDir == 'R') {
-                                        moves.add(performMoves("S"))
-                                        moves.add(performMoves(downMove))
-                                        moves.add(performMoves("S'"))
-                                    } else if (whiteDir == 'L') {
-                                        moves.add(performMoves("S'"))
-                                        moves.add(performMoves(downMove))
-                                        moves.add(performMoves("S"))
-                                    } else if (whiteDir == 'F') {
-                                        moves.add(performMoves("M"))
-                                        moves.add(performMoves(downMove))
-                                        moves.add(performMoves("M'"))
-                                    } else if (whiteDir == 'B') {
-                                        moves.add(performMoves("M'"))
-                                        moves.add(performMoves(downMove))
-                                        moves.add(performMoves("M"))
-                                    }
-                                } else {
+                                moves.add(performMoves("S"))
+                            } else if (anotherTile.direction == 'B') {
+                                moves.add(performMoves("M'"))
+                                if (dir == 'L') {
+                                    moves.add(performMoves("S'"))
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves("S"))
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves("D"))
+                                } else if (dir == 'R') {
+                                    moves.add(performMoves("S"))
+                                    moves.add(performMoves("D'"))
+                                    moves.add(performMoves("S'"))
+                                    moves.add(performMoves("D'"))
+                                    moves.add(performMoves("D'"))
+                                } else if (dir == 'F') {
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves("M"))
+                                    moves.add(performMoves("M"))
+                                    moves.add(performMoves("D"))
+                                    moves.add(performMoves("M'"))
+                                    moves.add(performMoves("M'"))
                                     moves.add(performMoves("D"))
                                 }
-                            }
-                            //white tile is on down
-                            else if (whiteTile.direction == 'D') {
-                                //check if cubie on the right layer
-                                if (directionsControl.getColorByDirection(anotherTile.direction) != anotherTile.color) {
-                                    if (qb.getNormalVectorAfterRotation(anotherTile, 90f, 'D')
-                                        == directionsControl.getDirectionByColor(anotherTile.color)
-                                    ) {
-                                        moves.add(performMoves("D"))
-                                    } else {
-                                        moves.add(performMoves("D'"))
-                                    }
-                                } else {
-                                    moves.add(performMoves(anotherTile.direction.toString()))
-                                    moves.add(performMoves(anotherTile.direction.toString()))
-                                }
-                            } else if (anotherTile.direction == 'U') {
-                                moves.add(performMoves(whiteTile.direction.toString()))
-                                moves.add(performMoves(whiteTile.direction.toString()))
-                            }
-                            //tile is on the equator layer
-                            else if(directionsControl.getDirectionByColor(anotherTile.color) == anotherTile.direction){
-                                if(qb.getNormalVectorAfterRotation(whiteTile, 90f, anotherTile.direction) == 'U'){
-                                    moves.add(performMoves(anotherTile.direction.toString()))
-                                }
-                                else{
-                                    moves.add(performMoves(anotherTile.direction + "'"))
-                                }
-                            }
-                            else{
-                                moves.add(performMoves(whiteTile.direction + "'"))
+                                moves.add(performMoves("M"))
                             }
                         }
-                        Thread.sleep(10)
                     }
                 }
+                Thread.sleep(10)
             }
-            Thread.sleep(10)
+        }
+        else {
+            while (numWhiteEdgesOriented() < 4) {
+                if (getPermutationAllowance()) {
+                    var tempCubies =
+                        cubies.filter { x -> x.isEdge && x.tiles.any { t -> t.color == Color.WHITE } }
+                    for (qb in tempCubies) {
+                        //do while cubie is not on the right place
+                        while (!qb.isCubieRightOriented()) {
+                            if (getPermutationAllowance()) {
+                                //find all edges with white tiles
+                                var tempTiles = qb.tiles.filter { x -> x.isActive }
+                                var whiteTile =
+                                    tempTiles.filter { x -> x.color == Color.WHITE }.single()
+                                var anotherTile =
+                                    tempTiles.filter { x -> x.color != Color.WHITE }.single()
+
+                                //white tile on the side, another tile on down layer
+                                if (whiteTile.direction != 'D' && anotherTile.direction == 'D') {
+                                    //if cubie is on the right layer
+                                    var whiteDir: Char
+                                    var downMove = "D'"
+                                    if (whiteTile.direction == directionsControl.getDirectionByColor(
+                                            anotherTile.color
+                                        )
+                                    ) {
+                                        whiteDir = whiteTile.direction
+                                        moves.add(performMoves("D"))
+                                    } else {
+                                        whiteDir =
+                                            qb.getNormalVectorAfterRotation(whiteTile, 90f, 'D')
+                                        downMove = "D"
+                                    }
+                                    if (whiteDir == directionsControl.getDirectionByColor(
+                                            anotherTile.color
+                                        )
+                                    ) {
+                                        if (whiteDir == 'R') {
+                                            moves.add(performMoves("S"))
+                                            moves.add(performMoves(downMove))
+                                            moves.add(performMoves("S'"))
+                                        } else if (whiteDir == 'L') {
+                                            moves.add(performMoves("S'"))
+                                            moves.add(performMoves(downMove))
+                                            moves.add(performMoves("S"))
+                                        } else if (whiteDir == 'F') {
+                                            moves.add(performMoves("M"))
+                                            moves.add(performMoves(downMove))
+                                            moves.add(performMoves("M'"))
+                                        } else if (whiteDir == 'B') {
+                                            moves.add(performMoves("M'"))
+                                            moves.add(performMoves(downMove))
+                                            moves.add(performMoves("M"))
+                                        }
+                                    } else {
+                                        moves.add(performMoves("D"))
+                                    }
+                                }
+                                //white tile is on down
+                                else if (whiteTile.direction == 'D') {
+                                    //check if cubie on the right layer
+                                    if (directionsControl.getColorByDirection(anotherTile.direction) != anotherTile.color) {
+                                        if (qb.getNormalVectorAfterRotation(anotherTile, 90f, 'D')
+                                            == directionsControl.getDirectionByColor(anotherTile.color)
+                                        ) {
+                                            moves.add(performMoves("D"))
+                                        } else {
+                                            moves.add(performMoves("D'"))
+                                        }
+                                    } else {
+                                        moves.add(performMoves(anotherTile.direction.toString()))
+                                        moves.add(performMoves(anotherTile.direction.toString()))
+                                    }
+                                } else if (anotherTile.direction == 'U') {
+                                    moves.add(performMoves(whiteTile.direction.toString()))
+                                    moves.add(performMoves(whiteTile.direction.toString()))
+                                }
+                                //tile is on the equator layer
+                                else if (directionsControl.getDirectionByColor(anotherTile.color) == anotherTile.direction) {
+                                    if (qb.getNormalVectorAfterRotation(
+                                            whiteTile,
+                                            90f,
+                                            anotherTile.direction
+                                        ) == 'U'
+                                    ) {
+                                        moves.add(performMoves(anotherTile.direction.toString()))
+                                    } else {
+                                        moves.add(performMoves(anotherTile.direction + "'"))
+                                    }
+                                } else {
+                                    moves.add(performMoves(whiteTile.direction + "'"))
+                                }
+                            }
+                            Thread.sleep(10)
+                        }
+                    }
+                }
+                Thread.sleep(10)
+            }
         }
         return moves
     }

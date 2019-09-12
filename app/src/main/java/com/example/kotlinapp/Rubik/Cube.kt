@@ -521,10 +521,10 @@ class Cube : ICube {
                 layers.filter { x -> x.layerName == LayerEnum.DOWN }.single().rotate(-90f)
             }
             "E" -> {
-                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(-90f)
             }
             "E'" -> {
-                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(90f)
             }
             "F" -> {
                 layers.filter { x -> x.layerName == LayerEnum.FRONT }.single().rotate(90f)
@@ -564,13 +564,13 @@ class Cube : ICube {
             }
             "X" -> {
                 setPermutationAllowance(true)
-                rotationAngle = -90f
+                rotationAngle = 90f
                 rotationAxis = Axis.xAxis
                 rotateCube(rotationAngle, rotationAxis)
             }
             "X'" -> {
                 setPermutationAllowance(true)
-                rotationAngle = 90f
+                rotationAngle = -90f
                 rotationAxis = Axis.xAxis
                 rotateCube(rotationAngle, rotationAxis)
             }

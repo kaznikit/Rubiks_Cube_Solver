@@ -150,7 +150,7 @@ class CurrentState {
                     if(cube.getUnscannedCubiesCount() == 26){
                         isCubeScanned = true
                         adoptFaceCount = 7
-                        createSolver()
+                            //createSolver()
                     }
                 }
             }
@@ -223,6 +223,7 @@ class CurrentState {
         if (MoveNumber == CurrentMoves.size) {
             IsPhaseComplete = true
             MoveNumber = 0
+            CurrentMoves.clear()
             if(solver.solvingPhase == SolvingPhaseEnum.Finish){
                 IsCubeSolved = true
                 IsCubeSolving = false
@@ -334,6 +335,7 @@ class CurrentState {
                         adoptFaceCount++
                         var response = cube.rotateCube(-90f, Axis.xAxis)
                         mainActivity.glRenderer.drawArrow(false, "D", false)
+                        createSolver()
                     }
                 }
             }

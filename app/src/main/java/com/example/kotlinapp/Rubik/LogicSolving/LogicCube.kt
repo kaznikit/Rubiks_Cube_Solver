@@ -56,7 +56,38 @@ class LogicCube : ICube {
             }
         }
 
-        if(numWhiteEdgesOriented() == 4) {
+        //if cube should be rotated
+        if(cubies.filter { x -> x.isEdge && x.tiles.
+                any{ t -> t.isActive && t.color == Color.WHITE && t.direction == 'U' } }.count() == 4){
+            var greenCubie = cubies.single { x->x.isEdge && x.tiles.
+                any { t -> t.color == Color.GREEN } && x.tiles.any{t -> t.color == Color.WHITE && t.direction == 'U'} }
+            if(greenCubie.tiles.
+                    single { x -> x.isActive && x.color == Color.GREEN }.direction != 'F') {
+                if (greenCubie.getNormalVectorAfterRotation(greenCubie.tiles.single { x -> x.isActive && x.color == Color.GREEN },
+                        90f,
+                        'U'
+                    ) == 'F'
+                ) {
+                    moves.add(performMoves("U"))
+                } else if (greenCubie.getNormalVectorAfterRotation(greenCubie.tiles.single { x -> x.isActive && x.color == Color.GREEN },
+                        -90f,
+                        'U'
+                    ) == 'F'
+                ) {
+                    moves.add(performMoves("U'"))
+                } else {
+                    moves.add(performMoves("U"))
+                    moves.add(performMoves("U"))
+                }
+                Thread.sleep(10)
+            }
+        }
+
+        var temp = cubies.filter { x -> x.isEdge && x.tiles.
+            any{ t -> t.isActive && t.color == Color.WHITE && t.direction == 'U' } }
+
+        if(numWhiteEdgesOriented() == 4 && temp.any { x -> x.tiles.
+                any { t -> t.isActive && t.color != directionsControl.getColorByDirection(t.color.charNotation) } }) {
             //check if they are on the right places
             var tempCubies =
                 cubies.filter { x -> x.isEdge && x.tiles.any { t -> t.color == Color.WHITE } }
@@ -126,6 +157,9 @@ class LogicCube : ICube {
                                 }
                                 moves.add(performMoves("M"))
                             }
+                            else{
+                                moves.add(performMoves("U"))
+                            }
                         }
                     }
                 }
@@ -154,9 +188,8 @@ class LogicCube : ICube {
                                     var whiteDir: Char
                                     var downMove = "D'"
                                     if (whiteTile.direction == directionsControl.getDirectionByColor(
-                                            anotherTile.color
-                                        )
-                                    ) {
+                                            anotherTile.color))
+                                    {
                                         whiteDir = whiteTile.direction
                                         moves.add(performMoves("D"))
                                     } else {
@@ -165,9 +198,8 @@ class LogicCube : ICube {
                                         downMove = "D"
                                     }
                                     if (whiteDir == directionsControl.getDirectionByColor(
-                                            anotherTile.color
-                                        )
-                                    ) {
+                                            anotherTile.color))
+                                    {
                                         if (whiteDir == 'R') {
                                             moves.add(performMoves("S"))
                                             moves.add(performMoves(downMove))
@@ -211,17 +243,14 @@ class LogicCube : ICube {
                                 //tile is on the equator layer
                                 else if (directionsControl.getDirectionByColor(anotherTile.color) == anotherTile.direction) {
                                     if (qb.getNormalVectorAfterRotation(
-                                            whiteTile,
-                                            90f,
-                                            anotherTile.direction
-                                        ) == 'U'
-                                    ) {
+                                            whiteTile, 90f, anotherTile.direction) == 'U')
+                                    {
                                         moves.add(performMoves(anotherTile.direction.toString()))
                                     } else {
                                         moves.add(performMoves(anotherTile.direction + "'"))
                                     }
                                 } else {
-                                    moves.add(performMoves(whiteTile.direction + "'"))
+                                    moves.add(performMoves(whiteTile.direction.toString())) //+ "'"))
                                 }
                             }
                             Thread.sleep(10)
@@ -260,13 +289,7 @@ class LogicCube : ICube {
                             //WHITE is UP
                             if (whiteTile.direction == 'U') {
                                 var c = firstTile.direction
-                                if (qb.getNormalVectorAfterRotation(
-                                        secondTile,
-                                        90f,
-                                        firstTile.direction
-                                    ) == 'D'
-                                //|| qb.getNormalVectorAfterRotation(firstTile, 90f, secondTile.direction) == 'D'
-                                ) {
+                                if (qb.getNormalVectorAfterRotation(secondTile, 90f, firstTile.direction) == 'D') {
                                     moves.add(performMoves(c.toString()))
                                     moves.add(performMoves("D"))
                                     moves.add(performMoves(c + "'"))
@@ -281,27 +304,18 @@ class LogicCube : ICube {
                             else if (whiteTile.direction == 'D') {
                                 //if one of tiles is on the right side of another
                                 if (firstTile.color == directionsControl.getColorByDirection(
-                                        secondTile.direction
-                                    )
+                                        secondTile.direction)
                                     || secondTile.color == directionsControl.getColorByDirection(
-                                        firstTile.direction
-                                    )
-                                ) {
+                                        firstTile.direction))
+                                {
                                     var c = secondTile.direction
-                                    if (qb.getNormalVectorAfterRotation(
-                                            firstTile,
-                                            -90f,
-                                            secondTile.direction
-                                        ) == 'D'
-                                    ) {
+                                    if (qb.getNormalVectorAfterRotation(firstTile, -90f,
+                                            secondTile.direction) == 'D') {
                                         moves.add(performMoves(c + "'"))
                                         var whiteC = whiteTile.direction
                                         if (qb.getNormalVectorAfterRotation(
-                                                secondTile,
-                                                -90f,
-                                                whiteC
-                                            ) == 'D'
-                                        ) {
+                                                secondTile, -90f, whiteC) == 'D')
+                                        {
                                             moves.add(performMoves(whiteC + "'"))
                                             moves.add(performMoves("D"))
                                             moves.add(performMoves("D"))
@@ -318,11 +332,8 @@ class LogicCube : ICube {
                                         moves.add(performMoves(c.toString()))
                                         var whiteC1 = whiteTile.direction
                                         if (qb.getNormalVectorAfterRotation(
-                                                secondTile,
-                                                90f,
-                                                whiteC1
-                                            ) == 'D'
-                                        ) {
+                                                secondTile, 90f, whiteC1) == 'D')
+                                        {
                                             moves.add(performMoves(whiteC1.toString()))
                                             moves.add(performMoves("D"))
                                             moves.add(performMoves("D"))
@@ -337,9 +348,8 @@ class LogicCube : ICube {
                                         }
                                     }
                                 } else if (secondTile.color == directionsControl.getColorByDirection(
-                                        firstTile.direction
-                                    )
-                                ) {
+                                        firstTile.direction))
+                                {
                                     var c = firstTile.direction
                                     if (qb.getNormalVectorAfterRotation(
                                             secondTile,
@@ -433,16 +443,32 @@ class LogicCube : ICube {
                                         moves.add(performMoves("D"))
                                         moves.add(performMoves(c.toString()))
                                     }
+                                }
+                                else if (directionsControl.getColorByDirection(secondTile.direction) == secondTile.color
+                                    && directionsControl.getColorByDirection(whiteTile.direction) == firstTile.color)
+                                {
+                                    var c = directionsControl.getDirectionByColor(secondTile.color)
+                                    var downMove = "D"
+                                    if (qb.getNormalVectorAfterRotation(secondTile, -90f, 'D')
+                                        == directionsControl.getDirectionByColor(firstTile.color)
+                                    ) {
+                                        downMove = "D'"
+                                    }
 
-                                } else if (directionsControl.getColorByDirection(secondTile.direction) == secondTile.color
-                                    && directionsControl.getColorByDirection(whiteTile.direction) == firstTile.color
-                                ) {
+                                    moves.add(performMoves(downMove))
+                                    if (downMove == "D") {
+                                        moves.add(performMoves(c.toString()))
+                                        moves.add(performMoves("D'"))
+                                        moves.add(performMoves(c + "'"))
+                                    } else {
+                                        moves.add(performMoves(c + "'"))
+                                        moves.add(performMoves("D"))
+                                        moves.add(performMoves(c.toString()))
+                                    }
+
+
                                     //change 04.09.2019
-                                    if (qb.getNormalVectorAfterRotation(
-                                            secondTile,
-                                            -90f,
-                                            'D'
-                                        )//whiteTile.direction)
+                                    /*if (qb.getNormalVectorAfterRotation(secondTile, -90f, 'D')//whiteTile.direction)
                                         == directionsControl.getDirectionByColor(firstTile.color)
                                     ) {
                                         moves.add(performMoves("D'"))
@@ -451,22 +477,12 @@ class LogicCube : ICube {
                                         moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color).toString()))
                                     } else {
                                         moves.add(performMoves("D"))
-                                        moves.add(
-                                            performMoves(
-                                                directionsControl.getDirectionByColor(
-                                                    secondTile.color
-                                                ).toString()
-                                            )
-                                        )
+                                        moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color)
+                                            .toString()))
                                         moves.add(performMoves("D'"))
-                                        moves.add(
-                                            performMoves(
-                                                directionsControl.getDirectionByColor(
-                                                    secondTile.color
-                                                ) + "'"
-                                            )
-                                        )
-                                    }
+                                        moves.add(performMoves(directionsControl.getDirectionByColor(secondTile.color)
+                                                + "'"))
+                                    }*/
                                 }
                                 //04.09.2019
                                 //if one of tiles is down
@@ -516,10 +532,10 @@ class LogicCube : ICube {
         if(greenCenterCubie.tiles.single { x -> x.isActive }.direction != 'F'){
             var tile = greenCenterCubie.tiles.single { x -> x.isActive }
             if(tile.direction == 'L'){
-                moves.add(performMoves("E'"))
+                moves.add(performMoves("E"))
             }
             else if(tile.direction == 'R'){
-                moves.add(performMoves("E"))
+                moves.add(performMoves("E'"))
             }
             else{
                 moves.add(performMoves("E"))
@@ -532,13 +548,6 @@ class LogicCube : ICube {
 
     fun finishTwoLayers() : ArrayList<String>{
         var moves = ArrayList<String>()
-
-        // rotate the whole cube
-        /*rotationAxis = Axis.zAxis
-        rotationAngle = 90f
-        //rotateCube(180f, rotationAxis)
-        moves.add(performMoves("Z"))
-        moves.add(performMoves("Z"))*/
 
         //calculate white corners layout
         while(numEdgesOriented() < 4) {
@@ -704,31 +713,61 @@ class LogicCube : ICube {
             Thread.sleep(10)
         }
 
+        //if yellow cross is solved check all tiles are right oriented
+        var temp = cubies.filter { x -> x.isEdge && x.tiles.any { t -> t.color == Color.YELLOW } }
+        if(temp.any { x -> x.tiles.any { t -> t.isActive &&
+                    t.direction != directionsControl.getDirectionByColor(t.color) } }){
+            var greenTile = temp.single { x -> x.tiles.any { t -> t.color == Color.GREEN } }.tiles.single{ t->t.color == Color.GREEN}
+            if(directionsControl.getDirectionByColor(greenTile.color) != greenTile.direction){
+                if(temp[0].getNormalVectorAfterRotation(greenTile, 90f, 'D') == 'F'){
+                    moves.add(performMoves("D"))
+                }
+                else if(temp[0].getNormalVectorAfterRotation(greenTile, -90f, 'D') == 'F'){
+                    moves.add(performMoves("D'"))
+                }
+                else{
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("D"))
+                }
+            }
+        }
+
+
         if (directionsControl.getDirectionByColor(Color.GREEN) == 'B') {
             rotationAxis = Axis.yAxis
             rotationAngle = 90f//180f
             moves.add(performMoves("Y"))
             moves.add(performMoves("Y"))
         }
+        else if(directionsControl.getDirectionByColor(Color.GREEN) == 'R'){
+            rotationAxis = Axis.yAxis
+            rotationAngle = 90f//180f
+            moves.add(performMoves("Y"))
+        }
+        else if(directionsControl.getDirectionByColor(Color.GREEN) == 'L'){
+            rotationAxis = Axis.yAxis
+            rotationAngle = -90f//180f
+            moves.add(performMoves("Y'"))
+        }
         return moves
     }
+
+
+    ////wrong working
+    //need to check
 
     fun swapYellowEdgesTopLayer() : ArrayList<String> {
         var moves = ArrayList<String>()
 
+        //make back layer active
+        rotationAxis = Axis.xAxis
+        rotationAngle = 90f
+        moves.add(performMoves("X"))
+
+/*
         if(numYellowEdgeCubieOriented() < 4) {
             if(getPermutationAllowance()) {
                 var tempCubies = cubies.filter { x -> x.isEdge && x.tiles.any { y -> y.color == Color.YELLOW } }
-                //find the right cubie
-                /*var qb =
-                    tempCubies.filter { qb -> qb.tiles.any { t -> t.isActive && directionsControl.getColorByDirection('R') == t.color } }
-                        .single()
-                var rightTile = qb.tiles.filter { x -> x.isActive && x.color == directionsControl.getColorByDirection('R') }.single()
-                while (directionsControl.getDirectionByColor(rightTile.color) != rightTile.direction) {
-                    if (getPermutationAllowance()) {
-                        moves.add(performMoves("D"))
-                    }
-                }*/
                 while (numYellowEdgeCubieOriented() < 4) {
                     if(getPermutationAllowance()) {
                         var frontCubie =
@@ -809,19 +848,6 @@ class LogicCube : ICube {
                                     moves.add(performMoves("D'"))
                                     moves.add(performMoves("B"))
                                     moves.add(performMoves("D'"))
-
-                                    //07.09.19
-                                    /*moves.add(performMoves("F"))
-                                    moves.add(performMoves("D'"))
-
-                                    moves.add(performMoves("F'"))
-                                    moves.add(performMoves("D'"))
-                                    moves.add(performMoves("F"))
-                                    moves.add(performMoves("D'"))
-
-                                    moves.add(performMoves("D'"))
-                                    moves.add(performMoves("F'"))
-                                    moves.add(performMoves("D'"))*/
                                 }
                                 else{
                                     rotationAxis = Axis.yAxis
@@ -860,6 +886,71 @@ class LogicCube : ICube {
                 }
             }
         }
+*/
+
+        var k = 0
+        while (numYellowEdgeCubieOriented() < 4) {
+            if (getPermutationAllowance()) {
+                var tempCubies = cubies.filter { x -> x.isEdge && x.tiles.any { y -> y.color == Color.YELLOW } }
+                var leftCubie = tempCubies.single { x -> x.tiles.any { t -> t.isActive && t.direction == 'L' } }
+                var upCubie = tempCubies.single { x -> x.tiles.any { t -> t.isActive && t.direction == 'U' } }
+                var downCubie = tempCubies.single{x -> x.tiles.any { t -> t.isActive && t.direction == 'D' } }
+
+                //check if it's necessary to swap left and up
+                if(directionsControl.getDirectionByColor(leftCubie.tiles.
+                        single { t -> t.isActive && t.color != Color.YELLOW }.color) == 'U' &&
+                    directionsControl.getDirectionByColor(upCubie.tiles.
+                        single { t -> t.isActive && t.color != Color.YELLOW }.color) == 'L'){
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D'"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D'"))
+                    moves.add(performMoves("F"))
+                }
+                //check if it's necessary to swap up and down cubies
+                else if(directionsControl.getDirectionByColor(upCubie.tiles.
+                        single { t -> t.isActive && t.color != Color.YELLOW }.color) == 'D' &&
+                    directionsControl.getDirectionByColor(downCubie.tiles.
+                        single { t -> t.isActive && t.color != Color.YELLOW }.color) == 'U'){
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D'"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D'"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("Z"))
+                    moves.add(performMoves("Z"))
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D'"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("F"))
+                    moves.add(performMoves("D'"))
+                    moves.add(performMoves("F"))
+                }
+                else{ //if(k >= 3){
+                    k = 0
+                    rotationAngle = 90f
+                    rotationAxis = Axis.zAxis
+                    moves.add(performMoves("Z"))
+                }
+                /*else{
+                    k++
+                    moves.add(performMoves("F"))
+                }*/
+            }
+        }
+
 
         return moves
     }
@@ -882,128 +973,50 @@ class LogicCube : ICube {
                         var firstTile = tempTiles.filter { x -> x.color != Color.YELLOW }[0]
                         var secondTile = tempTiles.filter { x -> x.color != Color.YELLOW }[1]
 
-                        if ((yellowTile.direction == 'F' || firstTile.direction == 'F' || secondTile.direction == 'F')
+                        if ((yellowTile.direction == 'U' || firstTile.direction == 'U' || secondTile.direction == 'U')
                             && (yellowTile.direction == 'L' || firstTile.direction == 'L' || secondTile.direction == 'L')
                         ) {
                         } else {
-                            if ((qb.getNormalVectorAfterRotation(firstTile, 180f, 'D') == 'F'
-                                        || qb.getNormalVectorAfterRotation(
-                                    secondTile,
-                                    180f,
-                                    'D'
-                                ) == 'F'
-                                        || qb.getNormalVectorAfterRotation(
-                                    yellowTile,
-                                    180f,
-                                    'D'
-                                ) == 'F') &&
-                                (qb.getNormalVectorAfterRotation(firstTile, 180f, 'D') == 'L'
-                                        || qb.getNormalVectorAfterRotation(
-                                    secondTile,
-                                    180f,
-                                    'D'
-                                ) == 'L'
-                                        || qb.getNormalVectorAfterRotation(
-                                    yellowTile,
-                                    180f,
-                                    'D'
-                                ) == 'L')
-                            ) {
-                                rotationAxis = Axis.yAxis
+                            if ((qb.getNormalVectorAfterRotation(firstTile, 180f, 'F') == 'U' ||
+                                        qb.getNormalVectorAfterRotation(secondTile, 180f, 'F') == 'U' ||
+                                        qb.getNormalVectorAfterRotation(yellowTile, 180f, 'F') == 'U') &&
+                                (qb.getNormalVectorAfterRotation(firstTile, 180f, 'F') == 'L'
+                                        || qb.getNormalVectorAfterRotation(secondTile, 180f, 'F') == 'L'
+                                        || qb.getNormalVectorAfterRotation(yellowTile, 180f, 'F') == 'L'))
+                            {
+                                rotationAxis = Axis.zAxis
                                 rotationAngle = 90f
-                                moves.add(performMoves("Y"))
-                                moves.add(performMoves("Y"))
-                            } else if ((qb.getNormalVectorAfterRotation(firstTile, 90f, 'D') == 'F'
-                                        || qb.getNormalVectorAfterRotation(
-                                    secondTile,
-                                    90f,
-                                    'D'
-                                ) == 'F'
-                                        || qb.getNormalVectorAfterRotation(
-                                    yellowTile,
-                                    90f,
-                                    'D'
-                                ) == 'F') &&
-                                (qb.getNormalVectorAfterRotation(firstTile, 90f, 'D') == 'L'
-                                        || qb.getNormalVectorAfterRotation(
-                                    secondTile,
-                                    90f,
-                                    'D'
-                                ) == 'L'
-                                        || qb.getNormalVectorAfterRotation(
-                                    yellowTile,
-                                    90f,
-                                    'D'
-                                ) == 'L')
+                                moves.add(performMoves("Z"))
+                                moves.add(performMoves("Z"))
+                            } else if ((qb.getNormalVectorAfterRotation(firstTile, 90f, 'F') == 'U'
+                                        || qb.getNormalVectorAfterRotation(secondTile, 90f, 'F') == 'U'
+                                        || qb.getNormalVectorAfterRotation(yellowTile, 90f, 'F') == 'U')
+                                && (qb.getNormalVectorAfterRotation(firstTile, 90f, 'F') == 'L'
+                                        || qb.getNormalVectorAfterRotation(secondTile, 90f, 'F') == 'L'
+                                        || qb.getNormalVectorAfterRotation(yellowTile, 90f, 'F') == 'L')
                             ) {
-                                rotationAxis = Axis.yAxis
+                                rotationAxis = Axis.zAxis
                                 rotationAngle = 90f
-                                moves.add(performMoves("Y"))
+                                moves.add(performMoves("Z"))
                             } else {
-                                rotationAxis = Axis.yAxis
+                                rotationAxis = Axis.zAxis
                                 rotationAngle = -90f
-                                moves.add(performMoves("Y'"))
+                                moves.add(performMoves("Z'"))
                             }
                         }
                         break
                     }
                 }
             }
-
-
-            /*for (qb in tempCubies) {
-                while (!getPermutationAllowance()) {
-                    Thread.sleep(10)
-                }
-                var tempTiles = qb.tiles.filter { x -> x.isActive }
-                var yellowTile = tempTiles.single { x -> x.color == Color.YELLOW }
-                var firstTile = tempTiles.filter { x -> x.color != Color.YELLOW }[0]
-                var secondTile = tempTiles.filter { x -> x.color != Color.YELLOW }[1]
-
-
-                if (yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color) ||
-                    yellowTile.direction == directionsControl.getDirectionByColor(secondTile.color) ||
-                    yellowTile.direction == 'D' &&
-                    (directionsControl.getDirectionByColor(firstTile.color) == secondTile.direction
-                            || directionsControl.getDirectionByColor(firstTile.color) == firstTile.direction
-                            || directionsControl.getDirectionByColor(firstTile.color) ==
-                            directionsControl.getDirectionByColor(secondTile.color))
-                ) {
-                    if (firstTile.direction != 'F' || secondTile.direction != 'F' || yellowTile.direction != 'F') {
-                        if (qb.getNormalVectorAfterRotation(firstTile, 180f, 'D') == 'F'
-                            || qb.getNormalVectorAfterRotation(secondTile, 180f, 'D') == 'F'
-                            || qb.getNormalVectorAfterRotation(yellowTile, 180f, 'D') == 'F'
-                        ) {
-                            rotationAxis = Axis.yAxis
-                            rotationAngle = 90f
-                            moves.add(performMoves("Y"))
-                            moves.add(performMoves("Y"))
-                        } else if (qb.getNormalVectorAfterRotation(firstTile, 90f, 'D') == 'F'
-                            || qb.getNormalVectorAfterRotation(secondTile, 90f, 'D') == 'F'
-                            || qb.getNormalVectorAfterRotation(yellowTile, 90f, 'D') == 'F'
-                        ) {
-                            rotationAxis = Axis.yAxis
-                            rotationAngle = 90f
-                            moves.add(performMoves("Y"))
-                        } else {
-                            rotationAxis = Axis.yAxis
-                            rotationAngle = -90f
-                            moves.add(performMoves("Y'"))
-                        }
-                    }
-                    //break
-                }
-            }*/
-
-            // moves += performMoves("U F U' B' U F' U' B")
-            moves.add(performMoves("D'"))
-            moves.add(performMoves("F'"))
-            moves.add(performMoves("D"))
-            moves.add(performMoves("B"))
-            moves.add(performMoves("D'"))
             moves.add(performMoves("F"))
-            moves.add(performMoves("D"))
-            moves.add(performMoves("B'"))
+            moves.add(performMoves("L"))
+            moves.add(performMoves("F'"))
+            moves.add(performMoves("R'"))
+
+            moves.add(performMoves("F"))
+            moves.add(performMoves("L'"))
+            moves.add(performMoves("F'"))
+            moves.add(performMoves("R"))
         }
         return moves
     }
@@ -1020,38 +1033,29 @@ class LogicCube : ICube {
                     for (cubie in tempCubies) {
                         var cubieTiles = cubie.tiles.filter { x -> x.isActive }
                         while (!isYellowCornerOriented(cubie)) {
-                            if (cubieTiles.any { t -> t.direction == 'F' } && cubieTiles.any { t -> t.direction == 'L' }) {
+                            if (cubieTiles.any { t -> t.direction == 'U' } && cubieTiles.any { t -> t.direction == 'L' }) {
                                 moves = performCornerCubieRotation(moves, 2)
                             } else if ((cubie.getNormalVectorAfterRotation(
-                                    cubieTiles[0],
-                                    90f,
-                                    'D'
-                                ) == 'F'
-                                        || cubie.getNormalVectorAfterRotation(
-                                    cubieTiles[0],
-                                    90f,
-                                    'D'
-                                ) == 'L')
-                                && (cubie.getNormalVectorAfterRotation(
-                                    cubieTiles[1],
-                                    90f,
-                                    'D'
-                                ) == 'L' ||
+                                    cubieTiles[0], 90f, 'F') == 'U' ||
                                         cubie.getNormalVectorAfterRotation(
-                                            cubieTiles[1],
-                                            90f,
-                                            'D'
-                                        ) == 'F')
-                            ) {
-                                moves.add(performMoves("D"))
+                                            cubieTiles[0], 90f, 'F') == 'L' ||
+                                        cubie.getNormalVectorAfterRotation(
+                                            cubieTiles[0], 90f, 'F') == 'F')
+                                && (cubie.getNormalVectorAfterRotation(cubieTiles[1], 90f, 'F') == 'L'
+                                        || cubie.getNormalVectorAfterRotation(
+                                            cubieTiles[1], 90f, 'F') == 'U' ||
+                                        cubie.getNormalVectorAfterRotation(
+                                            cubieTiles[1], 90f, 'F') == 'F'))
+                            {
+                                moves.add(performMoves("F"))
                             } else {
-                                moves.add(performMoves("D'"))
+                                moves.add(performMoves("F'"))
                             }
                         }
                     }
                 }
                 else{
-                    moves.add(performMoves("D"))
+                    moves.add(performMoves("F"))
                 }
             }
             Thread.sleep(10)
@@ -1062,10 +1066,15 @@ class LogicCube : ICube {
 
     fun performCornerCubieRotation(moves : ArrayList<String>, count : Int) : ArrayList<String>{
         for(k in 0 until count){
-            moves.add(performMoves("F"))
+            moves.add(performMoves("U"))
+            moves.add(performMoves("B'"))
+            moves.add(performMoves("U'"))
+            moves.add(performMoves("B"))
+
+            /*moves.add(performMoves("F"))
             moves.add(performMoves("U"))
             moves.add(performMoves("F'"))
-            moves.add(performMoves("U'"))
+            moves.add(performMoves("U'"))*/
         }
         return moves
     }
@@ -1114,7 +1123,7 @@ class LogicCube : ICube {
 
         if(qb.tiles.any { x -> x.color == Color.YELLOW }) {
             var yellowTile = qb.tiles.single { x -> x.color == Color.YELLOW }
-            if (yellowTile.direction == 'D') {
+            if (yellowTile.direction == 'F') {
                 return true
             }
         }
@@ -1129,11 +1138,11 @@ class LogicCube : ICube {
 
         if (yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color) ||
             yellowTile.direction == directionsControl.getDirectionByColor(secondTile.color) ||
-            yellowTile.direction == 'D' &&
-            (directionsControl.getDirectionByColor(firstTile.color) == secondTile.direction
-                    || directionsControl.getDirectionByColor(firstTile.color) == firstTile.direction
-                    || directionsControl.getDirectionByColor(secondTile.color) == firstTile.direction ||
-                    directionsControl.getDirectionByColor(secondTile.color) == secondTile.direction))
+            yellowTile.direction == 'F' &&
+            ((directionsControl.getDirectionByColor(firstTile.color) == secondTile.direction
+                    || directionsControl.getDirectionByColor(firstTile.color) == firstTile.direction)
+                    && (directionsControl.getDirectionByColor(secondTile.color) == firstTile.direction ||
+                    directionsControl.getDirectionByColor(secondTile.color) == secondTile.direction)))
         {
             return true
         }
@@ -1204,7 +1213,7 @@ class LogicCube : ICube {
                 var firstTile = tempTiles.filter{t -> t.color != Color.YELLOW}[0]
                 var secondTile = tempTiles.single {t -> t.color != Color.YELLOW && t.color != firstTile.color}
 
-                if(yellowTile.direction == 'D') {
+                if(yellowTile.direction == 'F') {
                     if (directionsControl.getDirectionByColor(firstTile.color) == firstTile.direction &&
                         directionsControl.getDirectionByColor(secondTile.color) == secondTile.direction
                     ) {
@@ -1334,6 +1343,7 @@ class LogicCube : ICube {
                 angle = 90f
             }
             else{
+                curr = currentTurn
                 angle = -90f
             }
             var layer = LayerEnum.values().single{x -> x.charName == curr[0] }
@@ -1366,10 +1376,10 @@ class LogicCube : ICube {
                 layers.filter { x -> x.layerName == LayerEnum.DOWN }.single().rotate(-90f)
             }
             "E" -> {
-                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(90f)
+                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(-90f)
             }
             "E'" -> {
-                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(-90f)
+                layers.filter { x -> x.layerName == LayerEnum.EQUATOR }.single().rotate(90f)
             }
             "F" -> {
                 layers.filter { x -> x.layerName == LayerEnum.FRONT }.single().rotate(90f)

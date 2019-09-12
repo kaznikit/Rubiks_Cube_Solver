@@ -274,12 +274,12 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 }
                 return mat
             }
-            else if(currentState.IsCubeSolved){
-                return InfoDisplayer.writeInfoFromPlace(
-                    mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
-                    "Congratulations, you are awesome!",
-                    Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
-            }
+        }
+        else if(currentState.IsCubeSolved){
+            return InfoDisplayer.writeInfoFromPlace(
+                mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                "Congratulations, you are awesome!",
+                Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
         }
         return InfoDisplayer.writeInfo(mat1, com.example.kotlinapp.Enums.Color.WHITE.cvColor)
     }

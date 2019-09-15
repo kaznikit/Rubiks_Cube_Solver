@@ -1,5 +1,6 @@
 package com.example.kotlinapp.Rubik
 
+import android.widget.TabWidget
 import com.example.kotlinapp.Enums.SolvingPhaseEnum
 import com.example.kotlinapp.Recognition.RubikTile
 import com.example.kotlinapp.Rubik.LogicSolving.LogicCube
@@ -12,7 +13,7 @@ class Solver {
     var logicCube : LogicCube = LogicCube()
 
     var solvingPhase = SolvingPhaseEnum.WhiteCross
-
+    var currentPhase = SolvingPhaseEnum.WhiteCross
     private var stateChangedTime : Long = 0
 
     fun copyCube(cube: Cube){
@@ -38,26 +39,32 @@ class Solver {
             SolvingPhaseEnum.WhiteLayer -> {
                 solution = logicCube.finishWhiteLayer()
                 solvingPhase = SolvingPhaseEnum.TwoLayers
+                currentPhase = SolvingPhaseEnum.WhiteLayer
             }
             SolvingPhaseEnum.TwoLayers -> {
                 solution = logicCube.finishTwoLayers()
                 solvingPhase = SolvingPhaseEnum.YellowCross
+                currentPhase = SolvingPhaseEnum.TwoLayers
             }
             SolvingPhaseEnum.YellowCross -> {
                 solution = logicCube.makeYellowCross()
                 solvingPhase = SolvingPhaseEnum.YellowEdges
+                currentPhase = SolvingPhaseEnum.YellowCross
             }
             SolvingPhaseEnum.YellowEdges -> {
                 solution = logicCube.swapYellowEdgesTopLayer()
                 solvingPhase = SolvingPhaseEnum.YellowCornersOrient
+                currentPhase = SolvingPhaseEnum.YellowEdges
             }
             SolvingPhaseEnum.YellowCornersOrient -> {
                 solution = logicCube.findRightOrientedYellowCubie()
                 solvingPhase = SolvingPhaseEnum.YellowCorners
+                currentPhase = SolvingPhaseEnum.YellowCornersOrient
             }
             SolvingPhaseEnum.YellowCorners -> {
                 solution = logicCube.finishSolvingYellowCorners()
                 solvingPhase = SolvingPhaseEnum.Finish
+                currentPhase = SolvingPhaseEnum.YellowCorners
             }
         }
         return solution

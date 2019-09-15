@@ -12,6 +12,7 @@ class Tile {
     var color : Color
     var direction : Char
     var normalAxis : Axis
+    var errorColorDetection : Double = 0.0
 
     constructor(coordinates : Array<Vertex>, color : Color, direction: Char, normalAxis : Axis){
         this.coordinates = coordinates
@@ -34,6 +35,10 @@ class Tile {
 
     fun setTileColor(color: Color){
         this.color = color
+    }
+
+    fun setColorError(error : Double){
+        this.errorColorDetection = error
     }
 
 }

@@ -69,6 +69,7 @@ class Renderer : GLSurfaceView.Renderer {
     var density: Float = 0.toFloat()
 
     var isDrawingCubies = false
+    var glowingLayer : Layer? = null
 
     constructor(view: View, context: Context, state: CurrentState) {
         this.view = view
@@ -143,6 +144,18 @@ class Renderer : GLSurfaceView.Renderer {
         isArrowDrawing = isDrawing
         arrowDirection = direction
         isLayerArrow = isLayer
+
+        //glow layer
+        if(isLayer){
+            if(isDrawing) {
+                var layername = direction[0]
+                glowingLayer = state.cube.layers.singleOrNull { x -> x.layerName.charName == layername }
+            }
+            if(glowingLayer != null) {
+                glowingLayer!!.turnCubiesGlowing(isDrawing)
+            }
+        }
+
 
         if (arrowDirection.contains("'")) {
             arrowDirectionValue = ArrowDirection.NEGATIVE
@@ -388,9 +401,9 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     fun CreateViewMatrix() {
-        val eyeX = -6.0f
-        val eyeY = 4.5f
-        val eyeZ = 5f
+        val eyeX = -5.5f
+        val eyeY = 4f//4.5f
+        val eyeZ = 5.5f//5f
 
         // точка направления камеры
         val centerX = 0f

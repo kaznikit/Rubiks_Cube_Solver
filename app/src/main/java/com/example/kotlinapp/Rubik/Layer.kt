@@ -69,7 +69,11 @@ class Layer : ILayer{
     /**
      * Highlight rotating cubies
      */
-    fun turnOnCubieLight(){
-
+    fun turnCubiesGlowing(mode : Boolean){
+        for (cubie in mCube.cubies) {
+            if (cubiesIds.contains(cubie.id)) {
+                cubie.isGlowing = mode
+            }
+        }
     }
 }

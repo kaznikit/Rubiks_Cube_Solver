@@ -12,6 +12,11 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import kotlin.math.abs
+import android.R.attr.y
+import android.R.attr.x
+import kotlin.math.cos
+import kotlin.math.sin
+
 
 class Cubie : ICubie{
     private var mVertexBuffer: FloatBuffer
@@ -23,6 +28,7 @@ class Cubie : ICubie{
 
     //matrix of tiles
     override val tiles = arrayListOf<Tile>()
+    val activeTiles = arrayListOf<Tile>()
 
     override var centerPoint : Vertex
     //main gl matrix
@@ -46,6 +52,8 @@ class Cubie : ICubie{
 
     override var isCorner = false
     override var isEdge = false
+
+    var isGlowing = false
 
     var isHighlighted = false
 
@@ -199,6 +207,27 @@ class Cubie : ICubie{
         return false
     }
 
+    /**
+     * cubie can't have the same colors
+     */
+    fun checkIfCubieHasTheSameColors() : Boolean{
+        var k = 0
+        if(activeTiles.any { x -> x.color != Color.GRAY }) {
+            var color = activeTiles.filter { t -> t.color != Color.GRAY }[0].color
+            var color1 = Color.BLACK
+            for (tile in activeTiles) {
+                if (color == tile.color || tile.color == color1) {
+                    k++
+                    color1 = tile.color
+                }
+            }
+            if (k > 1) {
+                return true
+            }
+        }
+        return false
+    }
+
     override fun rotate(angle: Float, rotationAxis: Axis) {
         currentRotation = 0.0f
         rotationAngle = angle
@@ -269,6 +298,7 @@ class Cubie : ICubie{
         for(tile in tiles){
             if(!tile.isActive && tile.direction == direction.charName){
                 tile.isActive = true
+                activeTiles.add(tile)
             }
         }
     }
@@ -300,8 +330,15 @@ class Cubie : ICubie{
         GLES20.glUniformMatrix4fv(this.uMatrixLocation, 1, false, mMVPMatrix, 0)
         var k = 0
 
+        if(isGlowing) {
+            glow()
+        }
+        else{
+            f = 1.0f
+        }
         for (tile in tiles) {
-            GLES20.glUniform4f(uColorLocation, tile.color.redComponent, tile.color.greenComponent, tile.color.blueComponent, 1.0f)
+            GLES20.glUniform4f(uColorLocation, tile.color.redComponent,
+                tile.color.greenComponent, tile.color.blueComponent, f)
             // Draw Triangles
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, k * 4, 4)
             k++
@@ -312,16 +349,34 @@ class Cubie : ICubie{
         GLES20.glDisable(GLES20.GL_CULL_FACE)
     }
 
+    var f = 0.1f
+    var increasing = true
+
+    fun glow(){
+        if(increasing){
+            if(f >= 2.0f){
+                increasing = false
+            }
+            f += 0.02f
+        }
+        else{
+            if(f <= 0.1f){
+                increasing = true
+            }
+            f -= 0.02f
+        }
+    }
+
     val pulseTimePeriod: Long = 3000
     private var pulseTime: Long = 0
 
-    fun update(delta: Long) {
+    fun update(delta: Long) : Float {
         pulseTime += delta
         while (pulseTime > pulseTimePeriod)
             pulseTime -= pulseTimePeriod
 
         val ratio = pulseTime / java.lang.Float.valueOf(pulseTimePeriod.toFloat())
         val `val` = (Math.cos(ratio.toDouble() * 3.14 * 2.0) * 0.5 + 0.5).toFloat()
-        val coefficient = Math.pow(`val`.toDouble(), 2.0).toFloat() //power makes it more pulsey
+        return Math.pow(`val`.toDouble(), 2.0).toFloat() //power makes it more pulsey
     }
 }

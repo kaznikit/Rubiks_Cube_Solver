@@ -81,6 +81,7 @@ class CurrentState {
                         //if user move was not wrong
                         if(!IsWrongMove) {
                             mainActivity.glRenderer.drawArrow(true, CurrentMoves[MoveNumber], true)
+
                         }
                         else{
                             mainActivity.glRenderer.drawArrow(true, WrongMove, true)
@@ -131,8 +132,10 @@ class CurrentState {
                 }
                 if (colorTime > color2Time) {
                     activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp!!
+                    activeRubikFace.observedTileArray[j / 3][j % 3]?.errorColorDetection = temp!!.medianError
                 } else {
                     activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp2!!
+                    activeRubikFace.observedTileArray[j / 3][j % 3]?.errorColorDetection = temp2!!.medianError
                 }
             }
             activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
@@ -204,17 +207,16 @@ class CurrentState {
                         InfoDisplayer.text = ""
                         //MoveNumberChanged = false
                         TilesProcessed = true
+                        mainActivity.glRenderer.drawArrow(false, "D", true)
                         return
                     }
                 }
 
                 //check on wrong move
-                if (MoveNumber != 0 && solver.checkIfUserRotatedSideBackward(
-                        MoveNumber - 1, faceColors))
+                if (MoveNumber != 0 && solver.checkIfUserRotatedSideBackward(MoveNumber - 1, faceColors))
                 {
                     WrongMove = CurrentMoves[MoveNumber - 1]
                     IsWrongMove = true
-                    MoveNumberChanged = true
                 }
                 MoveNumberChanged = true
             }
@@ -227,6 +229,8 @@ class CurrentState {
             if(solver.solvingPhase == SolvingPhaseEnum.Finish){
                 IsCubeSolved = true
                 IsCubeSolving = false
+                mainActivity.glRenderer.drawArrow(false, "D", true)
+                solver.currentPhase = SolvingPhaseEnum.Finish
             }
         }
 

@@ -14,9 +14,13 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
     internal lateinit var testImage: Mat
     private val activityReference: WeakReference<MainActivity> = WeakReference(mainActivity)
     val cl = Imgproc.createCLAHE(10.0)
+    var lightened = Mat()
+    val heirarchy = Mat()
+    val contours = LinkedList<MatOfPoint>()
+    val polygonList = LinkedList<Rectangle>()
+    val rectangleList = LinkedList<Rectangle>()
 
     override fun doInBackground(vararg image: Mat): Mat {
-        var lightened = Mat()
         image[0].copyTo(lightened)
         Imgproc.cvtColor(lightened, lightened, Imgproc.COLOR_BGR2GRAY)
         lightened = correctGamma(lightened, 2.0)
@@ -28,11 +32,8 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
             lightened,
             Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(11.0, 11.0)))
 
-        val contours = LinkedList<MatOfPoint>()
-        val heirarchy = Mat()
         Imgproc.findContours(lightened, contours, heirarchy, Imgproc.CHAIN_APPROX_NONE, Imgproc.CHAIN_APPROX_SIMPLE)
 
-        val polygonList = LinkedList<Rectangle>()
         var i = 0
         for (contour in contours) {
             val contour2f = MatOfPoint2f()
@@ -61,7 +62,6 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
             }
             i++
         }
-        val rectangleList = LinkedList<Rectangle>()
         for (rectangle in polygonList) {
             rectangle.qualify()
             if (rectangle.status === Rectangle.StatusEnum.VALID) {
@@ -73,7 +73,6 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         for (rect in rectangleList)
             rect.draw(image[0], Color.YELLOW.cvColor)
 
-
         val activityReference = activityReference.get()
         //in calibration mode it's necessary to scan colors and write them
         if (!MainActivity.IsCalibrationMode) {
@@ -83,12 +82,21 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
             activityReference!!.currentState.cameraCalibration!!.getColor(image[0])
         }
 
+        contours.clear()
+        polygonList.clear()
+        rectangleList.clear()
+
         return image[0]
     }
 
     override fun onPostExecute(result: Mat?) {
         val activity = activityReference.get() ?: return
         activity.onMatProcessed(result)
+    }
+
+    override fun onCancelled() {
+        val activity = activityReference.get() ?: return
+        activity.onMatProcessed(null)
     }
 
     fun threesholdTestImage(image: Mat): Mat {

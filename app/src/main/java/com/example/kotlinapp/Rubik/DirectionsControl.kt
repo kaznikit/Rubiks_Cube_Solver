@@ -210,7 +210,8 @@ class DirectionsControl {
                         }
                     }
                 }
-            } else if (axis == Axis.zAxis) {
+            }
+            else if (axis == Axis.zAxis) {
                 //when green is front
                 if (directions.filter { x -> x.color == Color.GREEN }.single().charName == 'F') {
                     for (direction in directions) {
@@ -303,8 +304,8 @@ class DirectionsControl {
                         }
                     }
                 }
-                //green is up
-                else if (directions.filter { x -> x.color == Color.GREEN }.single().charName == 'U') {
+                //yellow is front
+                else if (directions.filter { x -> x.color == Color.YELLOW }.single().charName == 'F') {
                     for (direction in directions) {
                         if (direction.charName == 'L') {
                             if (direction.color == Color.ORANGE) {

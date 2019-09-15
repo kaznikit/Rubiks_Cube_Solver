@@ -9,6 +9,7 @@ import com.example.kotlinapp.Rubik.Abstract.ICube
 import com.example.kotlinapp.Rubik.Abstract.ICubie
 import com.example.kotlinapp.Rubik.Abstract.ILayer
 import java.lang.Exception
+import kotlin.math.abs
 
 class Cube : ICube {
     override val permutationLock = Any()
@@ -246,6 +247,9 @@ class Cube : ICube {
                     //set color if cubie is not filled with all colors
                     cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }
                         .setTileColor(rubikTile!!.tileColor)
+
+                    cubie.tiles.single { x -> x.isActive && x.direction == layer.direction.charName }.
+                        setColorError(rubikTile!!.errorColorDetection)
                     //increment the number of scanned tiles
                     cubie.checkIfCubieFilled()
 
@@ -254,6 +258,18 @@ class Cube : ICube {
                 k++
             }
         }
+
+        //check if cubies don't have the same colors
+        for(cubie in cubies){
+            if(cubie.checkIfCubieHasTheSameColors()){
+                //than change the down tile (as active)
+                var downTile = cubie.tiles.singleOrNull { t -> t.isActive && t.direction == 'D' }
+                if(downTile != null){
+                    cubie.tiles.single { t -> t.isActive && t.direction == 'D' }.setTileColor(getPossibleWrongColor(downTile.color))
+                }
+            }
+        }
+
 
         findOppositeCubie()
 
@@ -268,151 +284,168 @@ class Cube : ICube {
     }
 
     fun findOppositeCubie(){
-        //not solved cubies
-        var cubiesToCheck = getCubiesToCheck()
+        try {
+            //not solved cubies
+            var cubiesToCheck = getCubiesToCheck()
 
-        var i = 0
-        while(i < cubiesToCheck.size){
-            var cubieScannedTiles = cubiesToCheck[i].tiles.filter { x -> x.isActive && x.color != Color.GRAY }
-            var scannedColors = ArrayList<Color>()
+            var i = 0
+            while (i < cubiesToCheck.size) {
+                var cubieScannedTiles =
+                    cubiesToCheck[i].tiles.filter { x -> x.isActive && x.color != Color.GRAY }
+                var scannedColors = ArrayList<Color>()
 
-            //cubie not gray colors
-            for (tile in cubieScannedTiles) {
-                scannedColors.add(tile.color)
-            }
-            //not scanned cubies
-            var possibleCubies = cubies.filter { x -> x.areTileColorsFilled }
+                //cubie not gray colors
+                for (tile in cubieScannedTiles) {
+                    scannedColors.add(tile.color)
+                }
+                //not scanned cubies
+                var possibleCubies = cubies.filter { x -> x.areTileColorsFilled }
 
-            when {
-                cubiesToCheck[i].isCorner -> {
-                    //if cubie has one gray side
-                    if (cubiesToCheck[i].tiles.filter { x -> x.color == Color.GRAY }.size < 2) {
-                        var cornerPossibleCubies = possibleCubies.filter { x -> x.isCorner }
+                when {
+                    cubiesToCheck[i].isCorner -> {
+                        //if cubie has one gray side
+                        if (cubiesToCheck[i].tiles.filter { x -> x.color == Color.GRAY }.size < 2) {
+                            var cornerPossibleCubies = possibleCubies.filter { x -> x.isCorner }
 
-                        //find three cubies with cubie colors
-                        var colorCubies =
-                            cornerPossibleCubies.filter { x -> x.tiles.any { t -> t.isActive && t.color == scannedColors[0] } }
-                        var twoColors: List<Tile>
-                        var scannedColor: Color
-                        if (colorCubies.size == 3) {
-                            scannedColor = scannedColors[0]
-                        } else {
-                            scannedColor = scannedColors[1]
-                            colorCubies =
-                                cornerPossibleCubies.filter { x -> x.tiles.any { t -> t.isActive && t.color == scannedColors[1] } }
-                        }
-                        if (colorCubies.size == 3) {
-                            //find missing color
-                            for (qb in colorCubies) {
-                                twoColors =
-                                    qb.tiles.filter { x -> x.isActive && x.color != scannedColor }
-                                //find opposite cubie
-                                var oppositeCubie = colorCubies.singleOrNull { x ->
-                                    x.tiles.any { t -> t.color == getOppositeCenterColor(twoColors[0].color) }
-                                            && x.tiles.any { t ->
-                                        t.color == getOppositeCenterColor(
-                                            twoColors[1].color) }
-                                }
-                                if (oppositeCubie == null) {
-                                    if (cubiesToCheck[i].tiles.any { x ->
-                                            x.color == getOppositeCenterColor(
+                            //find three cubies with cubie colors
+                            var colorCubies =
+                                cornerPossibleCubies.filter { x -> x.tiles.any { t -> t.isActive && t.color == scannedColors[0] } }
+                            var twoColors: List<Tile>
+                            var scannedColor: Color
+                            if (colorCubies.size == 3) {
+                                scannedColor = scannedColors[0]
+                            } else {
+                                scannedColor = scannedColors[1]
+                                colorCubies =
+                                    cornerPossibleCubies.filter { x -> x.tiles.any { t -> t.isActive && t.color == scannedColors[1] } }
+                            }
+                            if (colorCubies.size == 3) {
+                                //find missing color
+                                for (qb in colorCubies) {
+                                    twoColors =
+                                        qb.tiles.filter { x -> x.isActive && x.color != scannedColor }
+                                    //find opposite cubie
+                                    var oppositeCubie = colorCubies.singleOrNull { x ->
+                                        x.tiles.any { t ->
+                                            t.color == getOppositeCenterColor(
                                                 twoColors[0].color
                                             )
-                                        }) {
-                                        cubiesToCheck[i].tiles.single { x -> x.color == Color.GRAY }
-                                            .setTileColor(getOppositeCenterColor(twoColors[1].color)!!)
-                                    } else {
-                                        cubiesToCheck[i].tiles.single { x -> x.color == Color.GRAY }
-                                            .setTileColor(getOppositeCenterColor(twoColors[0].color)!!)
+                                        }
+                                                && x.tiles.any { t ->
+                                            t.color == getOppositeCenterColor(
+                                                twoColors[1].color
+                                            )
+                                        }
                                     }
-                                    cubiesToCheck[i].checkIfCubieFilled()
-                                    cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
+                                    if (oppositeCubie == null) {
+                                        if (cubiesToCheck[i].tiles.any { x ->
+                                                x.color == getOppositeCenterColor(
+                                                    twoColors[0].color
+                                                )
+                                            }) {
+                                            cubiesToCheck[i].tiles.single { x -> x.color == Color.GRAY }
+                                                .setTileColor(getOppositeCenterColor(twoColors[1].color)!!)
+                                        } else {
+                                            cubiesToCheck[i].tiles.single { x -> x.color == Color.GRAY }
+                                                .setTileColor(getOppositeCenterColor(twoColors[0].color)!!)
+                                        }
+                                        cubiesToCheck[i].checkIfCubieFilled()
+                                        cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
 
-                                    cubiesToCheck = getCubiesToCheck()
-                                    i = -1
-                                    break
+                                        cubiesToCheck = getCubiesToCheck()
+                                        i = -1
+                                        break
+                                    }
                                 }
-                            }
-                        }
-                        else if(colorCubies.size == 2){
-                            //case when two cubies are missed
-                            //necessary to find opposite cubie
-                            var necessaryCubie = colorCubies.singleOrNull { x -> x.checkIfColorExist(scannedColors[0])
-                                    && x.checkIfColorExist(scannedColors[1]) }
-                            if(necessaryCubie != null) {
-                                var necessaryColor = necessaryCubie.tiles.singleOrNull { t -> t.isActive &&
-                                t.color != scannedColors[0] && t.color != scannedColors[1]}?.color
+                            } else if (colorCubies.size == 2) {
+                                //case when two cubies are missed
+                                //necessary to find opposite cubie
+                                var necessaryCubie = colorCubies.singleOrNull { x ->
+                                    x.checkIfColorExist(scannedColors[0])
+                                            && x.checkIfColorExist(scannedColors[1])
+                                }
+                                if (necessaryCubie != null) {
+                                    var necessaryColor = necessaryCubie.tiles.singleOrNull { t ->
+                                        t.isActive &&
+                                                t.color != scannedColors[0] && t.color != scannedColors[1]
+                                    }?.color
 
-                                if(necessaryColor != null) {
-                                    cubiesToCheck[i].tiles.single { x -> x.color == Color.GRAY }
-                                        .setTileColor(getOppositeCenterColor(necessaryColor)!!)
-                                    cubiesToCheck[i].checkIfCubieFilled()
-                                    cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
+                                    if (necessaryColor != null) {
+                                        cubiesToCheck[i].tiles.single { x -> x.color == Color.GRAY }
+                                            .setTileColor(getOppositeCenterColor(necessaryColor)!!)
+                                        cubiesToCheck[i].checkIfCubieFilled()
+                                        cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
 
-                                    cubiesToCheck = getCubiesToCheck()
-                                    i = -1
+                                        cubiesToCheck = getCubiesToCheck()
+                                        i = -1
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                cubiesToCheck[i].isEdge -> {
-                    if(scannedColors.size != 0) {
-                        var commonColor: Color = scannedColors[0]
-                        var tempCubies = cubies.clone() as ArrayList<Cubie>
-                        //check if we have 3 solved edge cubies
-                        var solvedCubies = tempCubies.filter { x ->
-                            x.isEdge && x.areTileColorsFilled && x.checkIfColorExist(scannedColors[0])
-                        }
+                    cubiesToCheck[i].isEdge -> {
+                        if (scannedColors.size != 0) {
+                            var commonColor: Color = scannedColors[0]
+                            var tempCubies = cubies.clone() as ArrayList<Cubie>
+                            //check if we have 3 solved edge cubies
+                            var solvedCubies = tempCubies.filter { x ->
+                                x.isEdge && x.areTileColorsFilled && x.checkIfColorExist(
+                                    scannedColors[0]
+                                )
+                            }
 
-                        if (solvedCubies != null) {
-                            if (solvedCubies.size >= 3) {
-                                for (solvCubie in solvedCubies) {
-                                    var desiredColor =
-                                        getOppositeCenterColor(solvCubie.tiles.singleOrNull { x -> x.isActive && x.color != commonColor }?.color)
+                            if (solvedCubies != null) {
+                                if (solvedCubies.size >= 3) {
+                                    for (solvCubie in solvedCubies) {
+                                        var desiredColor =
+                                            getOppositeCenterColor(solvCubie.tiles.singleOrNull { x -> x.isActive && x.color != commonColor }?.color)
                                         if (desiredColor != null) {
-                                        if (solvedCubies.all { x ->
-                                                !x.checkIfColorExist(desiredColor)
-                                            }) {
-                                            //found desired color for cubie
-                                            cubiesToCheck[i].tiles.single { x -> x.isActive && x.color == Color.GRAY }
-                                                .setTileColor(desiredColor)
-                                            cubiesToCheck[i].checkIfCubieFilled()
-                                            cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
-                                            cubiesToCheck = getCubiesToCheck()
-                                            i = -1
-                                            break
+                                            if (solvedCubies.all { x ->
+                                                    !x.checkIfColorExist(desiredColor)
+                                                }) {
+                                                //found desired color for cubie
+                                                cubiesToCheck[i].tiles.single { x -> x.isActive && x.color == Color.GRAY }
+                                                    .setTileColor(desiredColor)
+                                                cubiesToCheck[i].checkIfCubieFilled()
+                                                cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
+                                                cubiesToCheck = getCubiesToCheck()
+                                                i = -1
+                                                break
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                else -> {
-                    if (cubiesToCheck[i].tiles.any { x -> x.isActive && x.color == Color.GRAY }) {
-                        //find opposite center tile
-                        var cCubies = cubies.filter { x ->
-                            !x.isEdge && !x.isCorner && x.areTileColorsFilled && x.tiles.any { t -> t.isActive }
-                        }
+                    else -> {
+                        if (cubiesToCheck[i].tiles.any { x -> x.isActive && x.color == Color.GRAY }) {
+                            //find opposite center tile
+                            var cCubies = cubies.filter { x ->
+                                !x.isEdge && !x.isCorner && x.areTileColorsFilled && x.tiles.any { t -> t.isActive }
+                            }
 
-                        for (qb in cCubies) {
-                            if (qb.tiles.single { x -> x.isActive }.direction ==
-                                Direction.GetOppositeDirection(cubiesToCheck[i].tiles.single { x -> x.isActive && x.color == Color.GRAY }.direction)
-                            ) {
-                                cubiesToCheck[i].tiles.single { x -> x.isActive }
-                                    .setTileColor(getOppositeCenterColor(qb.tiles.single { x -> x.isActive }.color)!!)
+                            for (qb in cCubies) {
+                                if (qb.tiles.single { x -> x.isActive }.direction ==
+                                    Direction.GetOppositeDirection(cubiesToCheck[i].tiles.single { x -> x.isActive && x.color == Color.GRAY }.direction)
+                                ) {
+                                    cubiesToCheck[i].tiles.single { x -> x.isActive }
+                                        .setTileColor(getOppositeCenterColor(qb.tiles.single { x -> x.isActive }.color)!!)
 
-                                cubiesToCheck[i].checkIfCubieFilled()
-                                cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
-                                cubiesToCheck = getCubiesToCheck()
-                                break
+                                    cubiesToCheck[i].checkIfCubieFilled()
+                                    cubies[cubiesToCheck[i].id] = cubiesToCheck[i]
+                                    cubiesToCheck = getCubiesToCheck()
+                                    break
+                                }
                             }
                         }
                     }
                 }
+                i++
             }
-            i++
+        }
+        catch(ex : Exception){
+
         }
     }
 
@@ -491,10 +524,45 @@ class Cube : ICube {
                 count += cubie.tiles.filter { x -> x.color == color && x.isActive}.size
             }
             if(count > 9){
+                //add computations to find the wrong cubie and try to change it on another
+                //firstly check if any cubie contains two tiles with the same colors
+                var sameTilesCubies = cubies.filter { x -> x.tiles.any { t -> t.color == color && t.isActive } }
+                if(sameTilesCubies.size != 0){
+
+                }
+
                 return false
             }
         }
         return true
+    }
+
+    /**
+     * Which color could be misunderstood to another
+     */
+    fun getPossibleWrongColor(color : Color) : Color{
+        when(color){
+            Color.GREEN -> {
+                return Color.YELLOW
+            }
+            Color.YELLOW -> {
+                return Color.GREEN
+            }
+            Color.BLUE -> {
+                return Color.WHITE
+            }
+            Color.WHITE -> {
+                return Color.BLUE
+            }
+            Color.RED -> {
+                return Color.ORANGE
+            }
+            Color.ORANGE -> {
+                return Color.RED
+            }
+        }
+        //ofter case if calibration was wrong
+        return Color.RED
     }
 
     //get layers on the sides of cube

@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.icu.text.IDNA
 import android.opengl.GLSurfaceView
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -19,6 +20,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.example.kotlinapp.Enums.SolvingPhaseEnum
 import com.example.kotlinapp.Recognition.ImageRecognizer
 import com.example.kotlinapp.Rubik.Cube
 import com.example.kotlinapp.Rubik.Renderer
@@ -31,6 +33,7 @@ import org.opencv.core.Mat
 import org.opencv.core.Point
 import org.opencv.core.Scalar
 import java.io.File.separator
+import java.lang.Exception
 
 class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     private lateinit var mOpenCvCameraView: CameraBridgeViewBase
@@ -40,6 +43,10 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     var processedMat : Mat? = null
     var isMatProcessed = false
+
+    var isDispose = false
+    var isStarting = true
+    var currentImageTask : AsyncTask<Mat, Int, Mat>? = null
 
     internal lateinit var menu: SettingsMenu
 
@@ -59,7 +66,6 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i("camera", "OpenCV loaded successfully")
                     mOpenCvCameraView.enableView()
-                    //imageRecognizer = ImageRecognizer(currentState)
                 }
                 else -> {
                     super.onManagerConnected(status)
@@ -122,7 +128,6 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
         ReadSharedPreferences()
         start = System.currentTimeMillis()
-
     }
 
     fun TurnOnCalibration() {
@@ -198,7 +203,21 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     }
 
     override fun onCameraViewStopped() {
+        isDispose = true
+        if(currentImageTask != null){
+            currentImageTask!!.cancel(true)
+        }
+        mOpenCvCameraView.disableView()
+        isDispose = false
+    }
 
+    override fun onPause() {
+        super.onPause()
+        if(mOpenCvCameraView != null){
+            mOpenCvCameraView.disableView()
+            isMatProcessed = false
+            processedMat = null
+        }
     }
 
     public override fun onResume() {
@@ -213,53 +232,89 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     }
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
-        var mat = displayCurrentMoves(inputFrame.rgba())
+        try {
+            var mat = displayCurrentMoves(inputFrame.rgba())
 
-        //make processing 1 time per second
-        if (System.currentTimeMillis() - start >= 50) {
-            ImageRecognizer(this).execute(mat)
-            start = System.currentTimeMillis()
+            //make processing 1 time per second
+            if (System.currentTimeMillis() - start >= 50 && !isDispose && currentImageTask == null) {
+                currentImageTask = ImageRecognizer(this).execute(mat)
+                start = System.currentTimeMillis()
+            }
+            if (isMatProcessed) {
+                isMatProcessed = false
+                return processedMat!!
+            } else {
+                return mat//displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
+            }
         }
-        if (isMatProcessed) {
-            isMatProcessed = false
-            return processedMat!!
-        } else {
-            return mat//displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
+        catch(ex : Exception){
+            return inputFrame.rgba()
         }
     }
 
     fun displayCurrentMoves(mat1 : Mat) : Mat {
         if (currentState.IsCubeSolving) {
+            var mat: Mat
+            //write active solving phase
+            mat = InfoDisplayer.writeInfoFromPlace(mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                "Solving phases:", Constants.StartingPhasesTextPoint)
+
+            var yMargin = 100.0
+            for(solvPhase in SolvingPhaseEnum.values()){
+                var color = com.example.kotlinapp.Enums.Color.WHITE
+                if(solvPhase == currentState.solver.currentPhase){
+                    color = com.example.kotlinapp.Enums.Color.RED
+                }
+
+                if(solvPhase.phaseName.contains("N")){
+                    mat = InfoDisplayer.writeInfoFromPlace(mat, color.cvColor,
+                        solvPhase.phaseName.substring(0, solvPhase.phaseName.indexOf("N")),
+                        Point(Constants.StartingPhasesTextPoint.x, Constants.StartingPhasesTextPoint.y + yMargin))
+                    yMargin += 80.0
+
+                    mat = InfoDisplayer.writeInfoFromPlace(mat, color.cvColor,
+                        solvPhase.phaseName.substring(solvPhase.phaseName.indexOf("N") + 2, solvPhase.phaseName.length),
+                        Point(Constants.StartingPhasesTextPoint.x, Constants.StartingPhasesTextPoint.y + yMargin))
+                }
+                else {
+                    mat = InfoDisplayer.writeInfoFromPlace(
+                        mat, color.cvColor, solvPhase.phaseName,
+                        Point(Constants.StartingPhasesTextPoint.x,
+                            Constants.StartingPhasesTextPoint.y + yMargin))
+                }
+                yMargin += 80.0
+            }
+
             if (currentState.CurrentMoves.size != 0) {
-                var mat: Mat
+                //if wrong move
                 if(currentState.IsWrongMove){
                     mat = InfoDisplayer.writeInfoFromPlace(
-                        mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                        mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
                         "Wrong move, return back!",
                         Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
                 }
                 else if (currentState.MoveNumber != 0) {
                     InfoDisplayer.text = currentState.CurrentMoves[currentState.MoveNumber - 1]
                     mat = InfoDisplayer.writeInfo(
-                        mat1,
-                        com.example.kotlinapp.Enums.Color.WHITE.cvColor)
+                        mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor)
 
+                    //if the active element not first or last
                     if (currentState.MoveNumber != currentState.CurrentMoves.size) {
                         mat = InfoDisplayer.writeInfoFromPlace(
                             mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
                             currentState.CurrentMoves[currentState.MoveNumber],
-                            Point(Constants.StartingTextPoint.x + 60.0, Constants.StartingTextPoint.y))
+                            Point(Constants.StartingTextPoint.x + 80.0, Constants.StartingTextPoint.y))
 
                         mat = InfoDisplayer.writeInfoFromPlace(
                             mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
                             currentState.CurrentMoves.drop(currentState.MoveNumber + 1).joinToString(
                                 separator = " "),
-                            Point(Constants.StartingTextPoint.x + 120.0, Constants.StartingTextPoint.y))
+                            Point(Constants.StartingTextPoint.x + 140.0, Constants.StartingTextPoint.y))
                     }
                     return mat
                 } else {
                     mat = InfoDisplayer.writeInfoFromPlace(
-                        mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
+                        mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
                         currentState.CurrentMoves[currentState.MoveNumber],
                         Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y)
                     )
@@ -269,7 +324,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                         currentState.CurrentMoves.drop(1).joinToString(
                             separator = " "
                         ),
-                        Point(Constants.StartingTextPoint.x + 70.0, Constants.StartingTextPoint.y)
+                        Point(Constants.StartingTextPoint.x + 90.0, Constants.StartingTextPoint.y)
                     )
                 }
                 return mat
@@ -285,8 +340,11 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     }
 
     fun onMatProcessed(mat : Mat?){
-        processedMat = mat
+        if(mat != null){
+            processedMat = mat
+        }
         isMatProcessed = true
+        currentImageTask = null
     }
 
     //ask permission for camera using

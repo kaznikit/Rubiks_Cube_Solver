@@ -79,7 +79,7 @@ class RubikFace {
     }
 
     fun calculateTiles(rectanglesList: List<Rectangle>, image: Mat) : Array<Array<RubikTile?>>? {
-        if (rectanglesList.size < 7) {
+        if (rectanglesList.size < 5){//7) {
             return null
         }
         if (calculateMetrics(rectanglesList) === false) {

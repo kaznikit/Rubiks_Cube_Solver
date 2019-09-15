@@ -68,8 +68,8 @@ class ColorDetector {
                                     (2 + (255 - r) / 256.0) *
                                     Math.pow(measuredColor[2] - candidateColorTile.hsvCalibrateValue!!.`val`[2], 2.0))
                             error = Math.sqrt(error)
-                        } else {
-
+                        }
+                        else {
                             // Only examine U and V axis, and not luminous.
                             var downError =
                                 (measuredColor[0] - candidateColorTile.hsvMinValue.`val`[0]) * (measuredColor[0] - candidateColorTile.hsvMinValue.`val`[0]) +
@@ -90,9 +90,12 @@ class ColorDetector {
                         }
 
                         if (error < smallestError) {
-                            tempTiles[n][m]!!.tileColor = candidateColorTile
-                            rubikFace.averageColorArray[rubikFace.ColorDetectionCount][k] = candidateColorTile
-                            smallestError = error
+                                tempTiles[n][m]!!.tileColor = candidateColorTile
+                                rubikFace.averageColorArray[rubikFace.ColorDetectionCount][k] =
+                                    candidateColorTile
+                                smallestError = error
+
+                                candidateColorTile.medianError = (candidateColorTile.medianError + error)/2
                         }
                     }
                 }

@@ -7,6 +7,7 @@ class RubikTile {
     var rectangle: Rectangle?
     var tileColor : Color
     var tileState = Constants.TileState.UNSTABLE
+    var errorColorDetection = 0.0
 
     constructor(rectangle: Rectangle?, tileColor: Color){
         this.rectangle = rectangle

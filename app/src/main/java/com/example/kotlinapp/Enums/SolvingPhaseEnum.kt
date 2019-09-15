@@ -1,12 +1,12 @@
 package com.example.kotlinapp.Enums
 
-enum class SolvingPhaseEnum {
-    WhiteCross,
-    WhiteLayer,
-    TwoLayers,
-    YellowCross,
-    YellowEdges,
-    YellowCornersOrient,
-    YellowCorners,
-    Finish
+enum class SolvingPhaseEnum(val phaseName : String) {
+    WhiteCross("White cross"),
+    WhiteLayer("White layer"),
+    TwoLayers("Two layers"),
+    YellowCross("Yellow cross"),
+    YellowEdges("Yellow edges"),
+    YellowCornersOrient("Position N yellow corners"),
+    YellowCorners("Solving N yellow corners"),
+    Finish("Finish")
 }

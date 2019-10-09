@@ -3,8 +3,14 @@
       xmlns:tools="http://schemas.android.com/tools"
       xmlns:app="http://schemas.android.com/apk/res-auto"
       tools:ignore="AlwaysShowAction">
+    <group>
     <item android:id="@+id/calibration"
           android:icon="@drawable/setting_icon"
           android:title="@string/calibration_item"
           app:showAsAction="always" />
+    <item android:id="@+id/schema"
+            android:icon="@drawable/setting_icon"
+        android:title="Show schema"
+        app:showAsAction="always"/>
+    </group>
 </menu>

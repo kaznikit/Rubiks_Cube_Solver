@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.PopupMenu
 import com.example.kotlinapp.MainActivity
 import com.example.kotlinapp.R
+import com.example.kotlinapp.SchemaFragment
 
 class SettingsMenu(context: Context?, anchor: View?) : PopupMenu(context, anchor) {
     internal lateinit var mainContext: Context
@@ -26,6 +27,10 @@ class SettingsMenu(context: Context?, anchor: View?) : PopupMenu(context, anchor
             when (item.itemId) {
                 R.id.calibration -> {
                     mainActivity.TurnOnCalibration()
+                    true
+                }
+                R.id.schema -> {
+                    mainActivity.showSchema()
                     true
                 }
                 else -> false

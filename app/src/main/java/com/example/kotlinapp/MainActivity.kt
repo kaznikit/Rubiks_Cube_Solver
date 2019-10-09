@@ -13,6 +13,7 @@ import android.opengl.GLSurfaceView
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.FragmentActivity
 import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.*
@@ -29,15 +30,13 @@ import com.example.kotlinapp.Util.Constants
 import com.example.kotlinapp.Util.InfoDisplayer
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
-import org.opencv.core.Mat
-import org.opencv.core.Point
-import org.opencv.core.Scalar
+import org.opencv.core.*
+import org.opencv.imgproc.Imgproc
 import java.io.File.separator
 import java.lang.Exception
 
-class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
+class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListener2 {
     private lateinit var mOpenCvCameraView: CameraBridgeViewBase
-    private val REQUEST_CODE = 1
     lateinit var calibrateColorButton: ImageButton
     lateinit var glRenderer: Renderer
 
@@ -48,8 +47,14 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     var isStarting = true
     var currentImageTask : AsyncTask<Mat, Int, Mat>? = null
 
+    lateinit var clockWiseArrow : Mat
+    lateinit var counterclockwiseArrow : Mat
+
     internal lateinit var menu: SettingsMenu
 
+    private var schemaFragment : SchemaFragment? = null
+
+    //var imageRecognizer : ImageRecognizer? = null
     companion object {
         var IsCalibrationMode = false
     }
@@ -66,6 +71,9 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i("camera", "OpenCV loaded successfully")
                     mOpenCvCameraView.enableView()
+
+                    /*clockWiseArrow = Utils.loadResource(mAppContext, R.drawable.clockwise_png, CvType.CV_8UC4)
+                    counterclockwiseArrow = Utils.loadResource(mAppContext, R.drawable.counterclockwise_png, CvType.CV_8UC4)*/
                 }
                 else -> {
                     super.onManagerConnected(status)
@@ -85,12 +93,15 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         )
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-        //ask permissions for camera
-        verifyPermissions()
 
         glSurfaceView = GLSurfaceView(this)
 
         currentState = CurrentState(this)
+
+        if(intent.getBooleanExtra("isCalibration", false)){
+            //IsCalibrationMode = true
+            TurnOnCalibration()
+        }
 
         glRenderer = Renderer(glSurfaceView, this, currentState)
 
@@ -240,16 +251,26 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 currentImageTask = ImageRecognizer(this).execute(mat)
                 start = System.currentTimeMillis()
             }
+
+            /*Imgproc.resize(clockWiseArrow, clockWiseArrow, Size (200.0, 100.0))
+            //var submat = inputFrame.rgba().submat(0, 100, 0, 200)
+            Imgproc.cvtColor(clockWiseArrow, clockWiseArrow, Imgproc.COLOR_RGB2BGR)
+            clockWiseArrow.copyTo(inputFrame.rgba())*/
+
             if (isMatProcessed) {
                 isMatProcessed = false
                 return processedMat!!
             } else {
-                return mat//displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
+                return displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
             }
         }
         catch(ex : Exception){
             return inputFrame.rgba()
         }
+        /*if(imageRecognizer == null){
+            imageRecognizer = ImageRecognizer(this)
+        }
+        return imageRecognizer!!.threesholdTestImage(inputFrame.rgba())*/
     }
 
     fun displayCurrentMoves(mat1 : Mat) : Mat {
@@ -347,23 +368,19 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         currentImageTask = null
     }
 
-    //ask permission for camera using
-    private fun verifyPermissions() {
-        val permissions = arrayOf(Manifest.permission.CAMERA)
-        if (ContextCompat.checkSelfPermission(
-                this.applicationContext,
-                permissions[0]
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this@MainActivity, permissions, REQUEST_CODE)
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        verifyPermissions()
-    }
-
     fun showPopup(view: View) {
         menu.showPopup(view)
+    }
+
+    fun showSchema(){
+//        schemaFragment.show(supportFragmentManager, "dialog")
+        if(schemaFragment == null) {
+            schemaFragment =
+                SchemaFragment.newInstance()
+        }
+        if(schemaFragment!!.isAdded){
+            supportFragmentManager.fragments.clear()
+        }
+        schemaFragment?.show(supportFragmentManager, "schema")
     }
 }

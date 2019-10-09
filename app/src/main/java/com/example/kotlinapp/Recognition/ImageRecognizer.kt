@@ -4,6 +4,7 @@ import android.os.AsyncTask
 import com.example.kotlinapp.MainActivity
 import com.example.kotlinapp.Enums.Color
 import org.opencv.core.*
+import org.opencv.core.Core.split
 import org.opencv.core.CvType.CV_8UC1
 import org.opencv.imgproc.Imgproc
 import java.lang.ref.WeakReference
@@ -27,9 +28,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         cl.apply(lightened, lightened)
         Imgproc.GaussianBlur(lightened, lightened, Size(9.0, 9.0), 0.0, 0.0)
         Imgproc.Canny(lightened, lightened, 30.0, 100.0)
-        Imgproc.dilate(
-            lightened,
-            lightened,
+        Imgproc.dilate(lightened, lightened,
             Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(11.0, 11.0)))
 
         Imgproc.findContours(lightened, contours, heirarchy, Imgproc.CHAIN_APPROX_NONE, Imgproc.CHAIN_APPROX_SIMPLE)
@@ -100,35 +99,17 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
     }
 
     fun threesholdTestImage(image: Mat): Mat {
-        val lightened = Mat()
         image.copyTo(lightened)
-        //lightened = correctGamma(lightened, 1.0);
-
         Imgproc.cvtColor(lightened, lightened, Imgproc.COLOR_BGR2GRAY)
+        lightened = correctGamma(lightened, 2.0)
+        cl.apply(lightened, lightened)
         Imgproc.GaussianBlur(lightened, lightened, Size(9.0, 9.0), 0.0, 0.0)
-        Imgproc.adaptiveThreshold(
-            lightened,
-            lightened,
-            180.0,
-            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-            Imgproc.THRESH_BINARY_INV,
-            5,
-            2.0)
-        //Imgproc.GaussianBlur(lightened, lightened, new Size(9, 9), 0, 0);
-        //Imgproc.dilate(lightened, lightened, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(9, 9)));
+        Imgproc.Canny(lightened, lightened, 30.0, 100.0)
+        Imgproc.dilate(lightened, lightened,
+            Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(11.0, 11.0)))
 
-        //added
-        Imgproc.Laplacian(lightened, lightened, lightened.depth(), 7)//, 0, Core.BORDER_DEFAULT);
-
-        Imgproc.threshold(lightened, lightened, 1.0, 180.0, Imgproc.THRESH_BINARY)
-
-        Imgproc.dilate(lightened, lightened, Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(15.0, 15.0)))
-
-        val contours = LinkedList<MatOfPoint>()
-        val heirarchy = Mat()
         Imgproc.findContours(lightened, contours, heirarchy, Imgproc.CHAIN_APPROX_NONE, Imgproc.CHAIN_APPROX_SIMPLE)
 
-        val polygonList = LinkedList<Rectangle>()
         var i = 0
         for (contour in contours) {
             val contour2f = MatOfPoint2f()
@@ -147,8 +128,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
                             angle(
                                 polygon.toArray()[j % 4],
                                 polygon.toArray()[j - 2],
-                                polygon.toArray()[j - 1]
-                            )
+                                polygon.toArray()[j - 1])
                         )
                         maxCosine = Math.max(maxCosine, cosine)
                     }
@@ -158,7 +138,6 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
             }
             i++
         }
-        val rectangleList = LinkedList<Rectangle>()
         for (rectangle in polygonList) {
             rectangle.qualify()
             if (rectangle.status === Rectangle.StatusEnum.VALID) {
@@ -170,18 +149,20 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         for (rect in rectangleList)
             rect.draw(image, Color.YELLOW.cvColor)
 
-
+        /*val activityReference = activityReference.get()
         //in calibration mode it's necessary to scan colors and write them
-        /*if (!MainActivity.IsCalibrationMode) {
-            if (currentState.activeRubikFace.processFinished) {
-                currentState.activeRubikFace.calculateTiles(rectangleList, image)
-            }
+        if (!MainActivity.IsCalibrationMode) {
+            activityReference!!.currentState.calculateTilesForFace(rectangleList, image[0])
         } else {
             //scan colors
-            currentState.cameraCalibration.getColor(image, rectangleList)
+            activityReference!!.currentState.cameraCalibration!!.getColor(image[0])
         }*/
 
-        return image
+        contours.clear()
+        polygonList.clear()
+        rectangleList.clear()
+
+        return lightened
     }
 
     internal fun correctGamma(img: Mat, gamma: Double): Mat {
@@ -204,4 +185,27 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         val dy2 = pt2.y - pt0.y
         return (dx1 * dx2 + dy1 * dy2) / Math.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10)
     }
+
+    /*fun getBrightness(frame : Mat)
+    {
+        var brightness : Double
+        var temp : Mat
+        var color = ArrayList<Mat>()
+        var lum : Double
+        temp = frame
+
+        split(temp, color)
+
+        color[0] = color[0] * 0.299
+        color[1] = color[1] * 0.587
+        color[2] = color[2] * 0.114
+
+
+        lum = color[0] + color [1] + color[2]
+
+        Scalar summ = sum(lum)
+
+
+        brightness = summ[0]/((pow(2,8)-1)*frame.rows * frame.cols) * 2; //-- percentage conversion factor
+    }*/
 }

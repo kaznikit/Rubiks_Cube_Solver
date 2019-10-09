@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView
+            android:id="@+id/rubik_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/cube"
+            android:scaleType="center"
+            android:paddingBottom="130dp"/>
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="130dp">
+        <Button
+                android:id="@+id/start_button"
+                android:textSize="25dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/oval_shape"
+                android:layout_alignBottom="@id/rubik_view"
+                android:text="Start" />
+    </LinearLayout>
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:paddingBottom="75dp">
+        <Button
+            android:id="@+id/schema_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                android:textSize="25dp"
+                android:background="@drawable/oval_shape"
+                android:layout_alignBottom="@id/start_button"
+                android:text="Schema"/>
+    </LinearLayout>
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:paddingBottom="20dp">
+        <Button
+                android:id="@+id/calibration_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="25dp"
+                android:background="@drawable/oval_shape"
+                android:layout_alignBottom="@id/start_button"
+                android:text="Calibration"/>
+    </LinearLayout>
+</RelativeLayout>

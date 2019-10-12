@@ -92,6 +92,7 @@ class CurrentState {
                 }
                 if (TilesProcessed) {
                     guideSolvingCube(faceColors)
+                    //solver.solveCube()
                 }
             }
         }

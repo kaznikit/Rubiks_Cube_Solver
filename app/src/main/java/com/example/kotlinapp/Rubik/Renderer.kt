@@ -116,7 +116,7 @@ class Renderer : GLSurfaceView.Renderer {
                 state.cube.resetLayerCubies()
 
                 for (cubie in state.cube.cubies) {
-                    //cubie.draw(mProjectionMatrix, mViewMatrix, programId)
+                    cubie.draw(mProjectionMatrix, mViewMatrix, programId)
                 }
 
                 isDrawingCubies = false

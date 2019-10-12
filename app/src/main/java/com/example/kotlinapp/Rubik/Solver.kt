@@ -16,6 +16,8 @@ class Solver {
     var currentPhase = SolvingPhaseEnum.WhiteCross
     private var stateChangedTime : Long = 0
 
+    var movesCount = 0
+
     fun copyCube(cube: Cube){
         for(qb in cube.cubies){
             logicCube.cubies.add(Cubie.CloneCubie(qb))
@@ -27,6 +29,13 @@ class Solver {
 
         logicCube.directionsControl = DirectionsControl.CloneDirectionsControl(cube.directionsControl)
     }
+
+    /*fun solveCube(){
+        while(solvingPhase != SolvingPhaseEnum.Finish){
+            movesCount += solveNextPhase().size
+        }
+        var s = ""
+    }*/
 
     fun solveNextPhase() : ArrayList<String>{
         phaseDownLayerArray.clear()

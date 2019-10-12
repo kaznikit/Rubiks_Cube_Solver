@@ -349,7 +349,7 @@ class Cubie : ICubie{
         GLES20.glDisable(GLES20.GL_CULL_FACE)
     }
 
-    var f = 0.1f
+    var f = 0.2f
     var increasing = true
 
     fun glow(){
@@ -367,7 +367,7 @@ class Cubie : ICubie{
         }
     }
 
-    val pulseTimePeriod: Long = 3000
+    val pulseTimePeriod: Long = 1000
     private var pulseTime: Long = 0
 
     fun update(delta: Long) : Float {

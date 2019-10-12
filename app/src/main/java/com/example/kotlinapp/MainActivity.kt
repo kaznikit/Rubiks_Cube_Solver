@@ -32,6 +32,7 @@ import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
+import org.w3c.dom.Text
 import java.io.File.separator
 import java.lang.Exception
 
@@ -61,7 +62,8 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
 
     lateinit var currentState: CurrentState
 
-    internal lateinit var glSurfaceView: GLSurfaceView
+    private lateinit var glSurfaceView: GLSurfaceView
+    private lateinit var countsTextview : TextView
 
     //Get user movements
     private var mGesture: GestureDetector? = null
@@ -98,8 +100,8 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
 
         currentState = CurrentState(this)
 
+        //if calibration was selected
         if(intent.getBooleanExtra("isCalibration", false)){
-            //IsCalibrationMode = true
             TurnOnCalibration()
         }
 
@@ -115,12 +117,27 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         setContentView(glSurfaceView)
 
+        countsTextview = TextView(this)
+        var textParams = RelativeLayout.LayoutParams(500, 500)
+        textParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+        textParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+        countsTextview.textSize = 50f
+        countsTextview.setTextColor(50)
+        countsTextview.background = null
+        textParams.leftMargin = 1600
+        textParams.topMargin = 0
+       /* textParams.rightMargin = 50
+        textParams.bottomMargin = 50*/
+
         mOpenCvCameraView = JavaCameraView(this, 1)
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE)
         mOpenCvCameraView.setCameraIndex(1)
         mOpenCvCameraView.setCvCameraViewListener(this)
 
         addContentView(mOpenCvCameraView, WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT))
+
+        addContentView(countsTextview, textParams)
+
 
         val b = ImageButton(this)
         val buttonParams = RelativeLayout.LayoutParams(400, 400)
@@ -307,6 +324,10 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
             }
 
             if (currentState.CurrentMoves.size != 0) {
+
+                //add info to moves count textview
+                countsTextview.text = "Moves: " + (currentState.CurrentMoves.size - currentState.MoveNumber)
+
                 //if wrong move
                 if(currentState.IsWrongMove){
                     mat = InfoDisplayer.writeInfoFromPlace(
@@ -330,7 +351,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
                             mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
                             currentState.CurrentMoves.drop(currentState.MoveNumber + 1).joinToString(
                                 separator = " "),
-                            Point(Constants.StartingTextPoint.x + 140.0, Constants.StartingTextPoint.y))
+                            Point(Constants.StartingTextPoint.x + 150.0, Constants.StartingTextPoint.y))
                     }
                     return mat
                 } else {

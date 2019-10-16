@@ -113,7 +113,7 @@ class Renderer : GLSurfaceView.Renderer {
         if(!MainActivity.IsCalibrationMode && !state.cube.isReseting) {
             if (state.cube.cubies.size != 0) {
                 isDrawingCubies = true
-                state.cube.resetLayerCubies()
+                    //   state.cube.resetLayerCubies()
 
                 for (cubie in state.cube.cubies) {
                     cubie.draw(mProjectionMatrix, mViewMatrix, programId)

@@ -1,20 +1,14 @@
 package com.example.kotlinapp
 
-import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PixelFormat
-import android.icu.text.IDNA
 import android.opengl.GLSurfaceView
 import android.os.AsyncTask
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentActivity
-import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.*
 import android.widget.ImageButton
@@ -23,17 +17,12 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import com.example.kotlinapp.Enums.SolvingPhaseEnum
 import com.example.kotlinapp.Recognition.ImageRecognizer
-import com.example.kotlinapp.Rubik.Cube
 import com.example.kotlinapp.Rubik.Renderer
-import com.example.kotlinapp.Rubik.Solver
 import com.example.kotlinapp.Util.Constants
 import com.example.kotlinapp.Util.InfoDisplayer
 import com.example.kotlinapp.Util.SettingsMenu
 import org.opencv.android.*
 import org.opencv.core.*
-import org.opencv.imgproc.Imgproc
-import org.w3c.dom.Text
-import java.io.File.separator
 import java.lang.Exception
 
 class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListener2 {
@@ -64,6 +53,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
 
     private lateinit var glSurfaceView: GLSurfaceView
     private lateinit var countsTextview : TextView
+    private lateinit var currentMoveTextView : TextView
 
     //Get user movements
     private var mGesture: GestureDetector? = null
@@ -117,26 +107,36 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         setContentView(glSurfaceView)
 
-        countsTextview = TextView(this)
-        var textParams = RelativeLayout.LayoutParams(500, 500)
-        textParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-        textParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
-        countsTextview.textSize = 50f
-        countsTextview.setTextColor(50)
-        countsTextview.background = null
-        textParams.leftMargin = 1600
-        textParams.topMargin = 0
-       /* textParams.rightMargin = 50
-        textParams.bottomMargin = 50*/
 
         mOpenCvCameraView = JavaCameraView(this, 1)
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE)
         mOpenCvCameraView.setCameraIndex(1)
         mOpenCvCameraView.setCvCameraViewListener(this)
-
         addContentView(mOpenCvCameraView, WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT))
 
+        //отображение счетчика действий
+        countsTextview = TextView(this)
+        var textParams = RelativeLayout.LayoutParams(500, 500)
+        //textParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+        //textParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+        countsTextview.textSize = 23f
+        countsTextview.setTextColor(Color.WHITE)
+        countsTextview.background = null
+        textParams.leftMargin = 1550
+        textParams.topMargin = 1000
+        textParams.bottomMargin = 10
+            //countsTextview.text = "Moves count: "
         addContentView(countsTextview, textParams)
+
+        //отображение текущего действия
+        currentMoveTextView = TextView(this)
+        var currentMoveParams = RelativeLayout.LayoutParams(1000, 500)
+        currentMoveTextView.textSize = 23f
+        currentMoveTextView.setTextColor(Color.WHITE)
+        currentMoveTextView.background = null
+        currentMoveParams.leftMargin = 650
+        currentMoveParams.topMargin = 150
+        addContentView(currentMoveTextView, currentMoveParams)
 
 
         val b = ImageButton(this)
@@ -144,13 +144,26 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         buttonParams.addRule(RelativeLayout.ALIGN_PARENT_TOP)
         buttonParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
         buttonParams.leftMargin = 1600
-        buttonParams.topMargin = 0
+        buttonParams.topMargin = -20
         b.scaleType = ImageView.ScaleType.FIT_CENTER
         b.setImageResource(R.drawable.menu_icon)
         b.background = null
         val onClickListener = View.OnClickListener { v -> showPopup(v) }
         b.setOnClickListener(onClickListener)
         addContentView(b, buttonParams)
+
+        val playButton = ImageButton(this)
+        val playButtonParams = RelativeLayout.LayoutParams(270, 270)
+        playButtonParams.addRule(RelativeLayout.ALIGN_PARENT_TOP)
+        playButtonParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+        playButtonParams.leftMargin = 1660
+        playButtonParams.topMargin = 300
+        playButton.scaleType = ImageView.ScaleType.FIT_CENTER
+        playButton.setImageResource(R.drawable.play_icon)
+        playButton.background = null
+        val onPlayClickListener = View.OnClickListener { v -> onPlayButton() }
+        playButton.setOnClickListener(onPlayClickListener)
+        addContentView(playButton, playButtonParams)
 
         menu = SettingsMenu(this, glSurfaceView, this)
 
@@ -278,7 +291,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
                 isMatProcessed = false
                 return processedMat!!
             } else {
-                return displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
+                return mat//displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
             }
         }
         catch(ex : Exception){
@@ -290,6 +303,9 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         return imageRecognizer!!.threesholdTestImage(inputFrame.rgba())*/
     }
 
+    /**
+     * Drawing current moves
+     */
     fun displayCurrentMoves(mat1 : Mat) : Mat {
         if (currentState.IsCubeSolving) {
             var mat: Mat
@@ -327,6 +343,9 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
 
                 //add info to moves count textview
                 countsTextview.text = "Moves: " + (currentState.CurrentMoves.size - currentState.MoveNumber)
+
+                //show current move
+                currentMoveTextView.text = currentState.getCurrentMove()
 
                 //if wrong move
                 if(currentState.IsWrongMove){
@@ -389,8 +408,20 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         currentImageTask = null
     }
 
-    fun showPopup(view: View) {
+    /**
+     * Show menu
+     */
+    private fun showPopup(view: View) {
         menu.showPopup(view)
+    }
+
+    /**
+     * Pressing the play button
+     */
+    private fun onPlayButton(){
+        if(currentState.CurrentMoves.size != 0){
+            currentState.startPlayMode()
+        }
     }
 
     fun showSchema(){

@@ -93,5 +93,40 @@ enum class LayerEnum(val charName : Char, var rotationAxis: Axis, val centerPoin
                 }
             }
         }
+
+        fun getLayerNameByCharName(charName : String) : LayerEnum? {
+            when (charName) {
+                "B" -> {
+                    return BACK
+                }
+                "D" -> {
+                    return DOWN
+                }
+                "E" -> {
+                    return EQUATOR
+                }
+                "F" -> {
+                    return FRONT
+                }
+                "L" -> {
+                    return LEFT
+                }
+                "M" -> {
+                    return MIDDLE
+                }
+                "R" -> {
+                    return RIGHT
+                }
+                "S" -> {
+                    return STANDING
+                }
+                "U" -> {
+                    return UP
+                }
+                else -> {
+                    return null
+                }
+            }
+        }
     }
 }

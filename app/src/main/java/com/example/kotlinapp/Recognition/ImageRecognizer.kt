@@ -108,7 +108,7 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         Imgproc.dilate(lightened, lightened,
             Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, Size(11.0, 11.0)))
 
-        Imgproc.findContours(lightened, contours, heirarchy, Imgproc.CHAIN_APPROX_NONE, Imgproc.CHAIN_APPROX_SIMPLE)
+        /*Imgproc.findContours(lightened, contours, heirarchy, Imgproc.CHAIN_APPROX_NONE, Imgproc.CHAIN_APPROX_SIMPLE)
 
         var i = 0
         for (contour in contours) {
@@ -149,18 +149,18 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         for (rect in rectangleList)
             rect.draw(image, Color.YELLOW.cvColor)
 
-        /*val activityReference = activityReference.get()
+        *//*val activityReference = activityReference.get()
         //in calibration mode it's necessary to scan colors and write them
         if (!MainActivity.IsCalibrationMode) {
             activityReference!!.currentState.calculateTilesForFace(rectangleList, image[0])
         } else {
             //scan colors
             activityReference!!.currentState.cameraCalibration!!.getColor(image[0])
-        }*/
+        }*//*
 
         contours.clear()
         polygonList.clear()
-        rectangleList.clear()
+        rectangleList.clear()*/
 
         return lightened
     }

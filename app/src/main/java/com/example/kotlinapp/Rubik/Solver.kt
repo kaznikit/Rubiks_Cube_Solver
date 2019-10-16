@@ -86,6 +86,10 @@ class Solver {
         fun addPhaseLayer(cubies : List<LogicCubie>?) {
             phaseDownLayerArray.add(cubies)
         }
+
+        fun removeStep(i : Int){
+            phaseDownLayerArray.removeAt(i)
+        }
     }
 
     /**

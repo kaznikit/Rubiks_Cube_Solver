@@ -5,6 +5,7 @@ import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
 import com.example.kotlinapp.Rubik.Abstract.ICubie
+import com.example.kotlinapp.Rubik.Abstract.ICubieRotatedCallback
 import com.example.kotlinapp.Rubik.Tile
 import com.example.kotlinapp.Rubik.Vertex
 
@@ -22,6 +23,8 @@ class LogicCubie : ICubie {
     override var centerPoint : Vertex
     override var tiles = arrayListOf<Tile>()
     override var id = 0
+
+    var onLogicCubieRotatedCallback : ICubieRotatedCallback? = null
 
     constructor(centerPoint : Vertex, id : Int){
         this.centerPoint = centerPoint
@@ -100,6 +103,12 @@ class LogicCubie : ICubie {
             }
         }
         isRotated = true
+
+        onLogicCubieRotatedCallback?.onCubieRotated(id)
+    }
+
+    fun setLayerCallback(logicLayer : LogicLayer){
+        onLogicCubieRotatedCallback = logicLayer
     }
 
     override fun deactivateTiles(direction: Direction) {}

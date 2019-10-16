@@ -7,7 +7,7 @@ import com.example.kotlinapp.Rubik.Cubie
 import com.example.kotlinapp.Rubik.DirectionsControl
 import com.example.kotlinapp.Rubik.Layer
 
-interface ICube {
+interface ICube : ILayerRotatedCallback {
     var permutationAllowed : Boolean
 
     var directionsControl : DirectionsControl

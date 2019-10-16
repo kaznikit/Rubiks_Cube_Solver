@@ -14,11 +14,13 @@ import java.nio.FloatBuffer
 import kotlin.math.abs
 import android.R.attr.y
 import android.R.attr.x
+import com.example.kotlinapp.Rubik.Abstract.ICubieRotatedCallback
 import kotlin.math.cos
 import kotlin.math.sin
 
 
-class Cubie : ICubie{
+class Cubie : ICubie {
+
     private var mVertexBuffer: FloatBuffer
 
     private var aPositionLocation = 0
@@ -30,7 +32,7 @@ class Cubie : ICubie{
     override val tiles = arrayListOf<Tile>()
     val activeTiles = arrayListOf<Tile>()
 
-    override var centerPoint : Vertex
+    override var centerPoint: Vertex
     //main gl matrix
     var mTransformMatrix = FloatArray(16)
 
@@ -64,7 +66,17 @@ class Cubie : ICubie{
     var areTileColorsFilled = false
     private var numberOfFilledTiles = 0
 
-    constructor(minX : Float, minY : Float, minZ : Float, sideLength : Float, id :Int, isCorner:Boolean, isEdge:Boolean) {
+    var onCubieRotatedCallback : ICubieRotatedCallback? = null
+
+    constructor(
+        minX: Float,
+        minY: Float,
+        minZ: Float,
+        sideLength: Float,
+        id: Int,
+        isCorner: Boolean,
+        isEdge: Boolean
+    ) {
         this.id = id
 
         this.isCorner = isCorner
@@ -162,16 +174,22 @@ class Cubie : ICubie{
         mVertexBuffer = byteBuf.asFloatBuffer()
     }
 
-    companion object{
-        fun CloneCubie(qb : Cubie) : LogicCubie{
+    companion object {
+
+        /**
+         * Create a copy of the cubie
+         */
+        fun CloneCubie(qb: Cubie): LogicCubie {
             var cloneCubie = LogicCubie(Vertex.CloneVertex(qb.centerPoint), qb.id)
             var cloneTiles = ArrayList<Tile>()
-            for(tile in qb.tiles){
+            for (tile in qb.tiles) {
                 cloneTiles.add(Tile.CloneTile(tile))
             }
             cloneCubie.tiles = cloneTiles
             cloneCubie.isEdge = qb.isEdge
             cloneCubie.isCorner = qb.isCorner
+            cloneCubie.isRotated = false
+            //cloneCubie.onLogicCubieRotatedCallback = qb.onCubieRotatedCallback
             return cloneCubie
         }
     }
@@ -180,27 +198,27 @@ class Cubie : ICubie{
      * called when one of tiles is scanned
      * check while cubie is not filled
      */
-    fun checkIfCubieFilled(){
+    fun checkIfCubieFilled() {
         numberOfFilledTiles++
-        if(isCorner){
-            if(numberOfFilledTiles == 3){
+        if (isCorner) {
+            if (numberOfFilledTiles == 3) {
                 areTileColorsFilled = true
             }
-        }else if(isEdge){
-            if(numberOfFilledTiles == 2){
+        } else if (isEdge) {
+            if (numberOfFilledTiles == 2) {
                 areTileColorsFilled = true
             }
-        }else{
+        } else {
             areTileColorsFilled = true
         }
     }
 
     /**
-     * check if any tile has such color
+     * Check if any tile has such color
      */
-    fun checkIfColorExist(color : Color) : Boolean{
-        for(tile in tiles){
-            if(tile.color == color){
+    fun checkIfColorExist(color: Color): Boolean {
+        for (tile in tiles) {
+            if (tile.color == color) {
                 return true
             }
         }
@@ -208,11 +226,11 @@ class Cubie : ICubie{
     }
 
     /**
-     * cubie can't have the same colors
+     * Cubie can't have the same colors
      */
-    fun checkIfCubieHasTheSameColors() : Boolean{
+    fun checkIfCubieHasTheSameColors(): Boolean {
         var k = 0
-        if(activeTiles.any { x -> x.color != Color.GRAY }) {
+        if (activeTiles.any { x -> x.color != Color.GRAY }) {
             var color = activeTiles.filter { t -> t.color != Color.GRAY }[0].color
             var color1 = Color.BLACK
             for (tile in activeTiles) {
@@ -228,6 +246,9 @@ class Cubie : ICubie{
         return false
     }
 
+    /**
+     * Calculate values for cubie rotation
+     */
     override fun rotate(angle: Float, rotationAxis: Axis) {
         currentRotation = 0.0f
         rotationAngle = angle
@@ -241,6 +262,9 @@ class Cubie : ICubie{
         isRotating = true
     }
 
+    /**
+     * Calculate cubie values after rotation
+     */
     override fun endAnimation() {
         //stop the rotation
         isRotating = false
@@ -260,8 +284,8 @@ class Cubie : ICubie{
         centerPoint.y = Vertex.RoundFloat(arr[1])
         centerPoint.z = Vertex.RoundFloat(arr[2])
 
-        for(tile in tiles){
-            if(tile.isActive){
+        for (tile in tiles) {
+            if (tile.isActive) {
                 var normalVec = Axis.getRotationVector(tile.normalAxis)
                 Matrix.multiplyMV(normalVec, 0, mat, 0, normalVec, 0)
                 normalVec[0] = Vertex.RoundFloat(normalVec[0])
@@ -269,23 +293,36 @@ class Cubie : ICubie{
                 normalVec[2] = Vertex.RoundFloat(normalVec[2])
 
                 tile.normalAxis = Axis.getAxis(normalVec[0], normalVec[1], normalVec[2])
-                tile.direction = LayerEnum.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
+                tile.direction =
+                    LayerEnum.getDirectionByVector(normalVec[0], normalVec[1], normalVec[2])
             }
         }
+
         isRotated = true
+
+        onCubieRotatedCallback?.onCubieRotated(id)
     }
 
-    fun animateTransform() {
+    /**
+     * Update callback for layer notifying
+     */
+    fun setLayerCallback(layer : Layer){
+        onCubieRotatedCallback = layer
+    }
+
+    /**
+     * Make the cubie rotation
+     */
+    private fun animateTransform() {
         if (isRotating) {
             if (abs(currentRotation) >= abs(rotationAngle)) {
                 endAnimation()
                 currentRotation = 0.0f
             } else {
-                if(rotationAngle < 0){
+                if (rotationAngle < 0) {
                     currentRotation -= 10.0f
                     Matrix.rotateM(mAnimationMatrix, 0, -10.0f, rotationX, rotationY, rotationZ)
-                }
-                else{
+                } else {
                     currentRotation += 10.0f
                     Matrix.rotateM(mAnimationMatrix, 0, 10.0f, rotationX, rotationY, rotationZ)
                 }
@@ -294,9 +331,9 @@ class Cubie : ICubie{
         }
     }
 
-    override fun deactivateTiles(direction: Direction){
-        for(tile in tiles){
-            if(!tile.isActive && tile.direction == direction.charName){
+    override fun deactivateTiles(direction: Direction) {
+        for (tile in tiles) {
+            if (!tile.isActive && tile.direction == direction.charName) {
                 tile.isActive = true
                 activeTiles.add(tile)
             }
@@ -313,6 +350,9 @@ class Cubie : ICubie{
         }
     }
 
+    /**
+     * Drawing the cubie
+     */
     fun draw(projectionMatrix: FloatArray, viewMatrix: FloatArray, programId: Int) {
         animateTransform()
         Matrix.multiplyMM(mMatrix, 0, viewMatrix, 0, mTransformMatrix, 0)
@@ -330,15 +370,16 @@ class Cubie : ICubie{
         GLES20.glUniformMatrix4fv(this.uMatrixLocation, 1, false, mMVPMatrix, 0)
         var k = 0
 
-        if(isGlowing) {
+        if (isGlowing) {
             glow()
-        }
-        else{
+        } else {
             f = 1.0f
         }
         for (tile in tiles) {
-            GLES20.glUniform4f(uColorLocation, tile.color.redComponent,
-                tile.color.greenComponent, tile.color.blueComponent, f)
+            GLES20.glUniform4f(
+                uColorLocation, tile.color.redComponent,
+                tile.color.greenComponent, tile.color.blueComponent, f
+            )
             // Draw Triangles
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, k * 4, 4)
             k++
@@ -352,31 +393,20 @@ class Cubie : ICubie{
     var f = 0.2f
     var increasing = true
 
-    fun glow(){
-        if(increasing){
-            if(f >= 2.0f){
+    /**
+     * Adding glow effect
+     */
+    private fun glow() {
+        if (increasing) {
+            if (f >= 2.0f) {
                 increasing = false
             }
             f += 0.02f
-        }
-        else{
-            if(f <= 0.1f){
+        } else {
+            if (f <= 0.1f) {
                 increasing = true
             }
             f -= 0.02f
         }
-    }
-
-    val pulseTimePeriod: Long = 1000
-    private var pulseTime: Long = 0
-
-    fun update(delta: Long) : Float {
-        pulseTime += delta
-        while (pulseTime > pulseTimePeriod)
-            pulseTime -= pulseTimePeriod
-
-        val ratio = pulseTime / java.lang.Float.valueOf(pulseTimePeriod.toFloat())
-        val `val` = (Math.cos(ratio.toDouble() * 3.14 * 2.0) * 0.5 + 0.5).toFloat()
-        return Math.pow(`val`.toDouble(), 2.0).toFloat() //power makes it more pulsey
     }
 }

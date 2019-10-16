@@ -3,7 +3,7 @@ package com.example.kotlinapp.Rubik.Abstract
 import com.example.kotlinapp.Enums.Direction
 import com.example.kotlinapp.Enums.LayerEnum
 
-interface ILayer {
+interface ILayer : ICubieRotatedCallback {
     var cubiesIds : ArrayList<Int>
 
     var layerName: LayerEnum

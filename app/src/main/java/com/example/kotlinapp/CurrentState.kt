@@ -1,7 +1,5 @@
 package com.example.kotlinapp
 
-import android.icu.lang.UCharacter
-import android.icu.text.IDNA
 import com.example.kotlinapp.Enums.Axis
 import com.example.kotlinapp.Enums.Color
 import com.example.kotlinapp.Enums.LayerEnum
@@ -12,10 +10,8 @@ import org.opencv.core.Mat
 import java.util.*
 import com.example.kotlinapp.Recognition.RubikTile
 import com.example.kotlinapp.Rubik.Solver
-import com.example.kotlinapp.Rubik.Tile
 import com.example.kotlinapp.Util.Constants
 import com.example.kotlinapp.Util.InfoDisplayer
-import org.opencv.imgproc.Moments
 import java.lang.Exception
 import kotlin.collections.ArrayList
 
@@ -23,7 +19,7 @@ class CurrentState {
     lateinit var activeRubikFace: RubikFace
     lateinit var frontFace: RubikFace
 
-    var rubikFaces  = arrayListOf<RubikFace>()
+    var rubikFaces = arrayListOf<RubikFace>()
 
     var isCubeScanned = false
 
@@ -53,10 +49,12 @@ class CurrentState {
     var IsCubeSolved = false
 
     var colorDetector: ColorDetector? = null
-    var mainActivity : MainActivity
+    var mainActivity: MainActivity
 
-    var cube : Cube
-    var solver : Solver
+    var cube: Cube
+    var solver: Solver
+
+    private var IsPlayMode = false
 
     constructor(mainActivity: MainActivity) {
         this.mainActivity = mainActivity
@@ -67,46 +65,53 @@ class CurrentState {
         addNewFace(LayerEnum.DOWN, LayerEnum.FRONT)
     }
 
-    fun calculateTilesForFace(rectangleList : LinkedList<Rectangle>, image : Mat){
+    fun calculateTilesForFace(rectangleList: LinkedList<Rectangle>, image: Mat) {
         //cube colors obtaining each frame
         var faceColors = activeRubikFace.calculateTiles(rectangleList, image)
 
-        if(faceColors != null) {
-            if (!IsCubeScannedAndReset && !isReset) {
-                createCubeFromScannedTiles(faceColors)
-            } else if (IsCubeSolving) {
-                if (MoveNumberChanged) {
-                    if(CurrentMoves.size != 0) {
-                        //draw arrow
-                        //if user move was not wrong
-                        if(!IsWrongMove) {
-                            mainActivity.glRenderer.drawArrow(true, CurrentMoves[MoveNumber], true)
+        if (IsPlayMode) {
+            startPlayMode()
+        } else {
+            if (faceColors != null) {
+                if (!IsCubeScannedAndReset && !isReset) {
+                    createCubeFromScannedTiles(faceColors)
+                } else if (IsCubeSolving) {
+                    if (MoveNumberChanged) {
+                        if (CurrentMoves.size != 0) {
+                            //draw arrow
+                            //if user move was not wrong
+                            if (!IsWrongMove) {
+                                mainActivity.glRenderer.drawArrow(
+                                    true,
+                                    CurrentMoves[MoveNumber],
+                                    true
+                                )
 
+                            } else {
+                                mainActivity.glRenderer.drawArrow(true, WrongMove, true)
+                            }
                         }
-                        else{
-                            mainActivity.glRenderer.drawArrow(true, WrongMove, true)
-                        }
+                    } else {
+                        mainActivity.glRenderer.drawArrow(false, "D", true)
                     }
-                } else {
-                    mainActivity.glRenderer.drawArrow(false, "D", true)
-                }
-                if (TilesProcessed) {
-                    guideSolvingCube(faceColors)
-                    //solver.solveCube()
+                    if (TilesProcessed) {
+                        guideSolvingCube(faceColors)
+                        //solver.solveCube()
+                    }
                 }
             }
         }
     }
 
     /**
-       Main method for scanning the cube and fill it's sides
+    Main method for scanning the cube and fill it's sides
      **/
-    fun createCubeFromScannedTiles(faceColors : Array<Array<RubikTile?>>) {
+    fun createCubeFromScannedTiles(faceColors: Array<Array<RubikTile?>>) {
         if (isCubeScanned && adoptFaceCount > 6) {
             //if cube solved we should just check
             // which side of cube user holds the cube and rotate drawing cube
             if (!IsCubeScannedAndReset) {
-                mainActivity.glRenderer.drawArrow(true, "R", false)
+                //mainActivity.glRenderer.drawArrow(true, "R", false)
                 checkCubeDownside(faceColors)
             }
             if (checkActiveTileColors(faceColors) && adoptFaceCount > 7) {
@@ -133,10 +138,12 @@ class CurrentState {
                 }
                 if (colorTime > color2Time) {
                     activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp!!
-                    activeRubikFace.observedTileArray[j / 3][j % 3]?.errorColorDetection = temp!!.medianError
+                    activeRubikFace.observedTileArray[j / 3][j % 3]?.errorColorDetection =
+                        temp!!.medianError
                 } else {
                     activeRubikFace.observedTileArray[j / 3][j % 3]?.tileColor = temp2!!
-                    activeRubikFace.observedTileArray[j / 3][j % 3]?.errorColorDetection = temp2!!.medianError
+                    activeRubikFace.observedTileArray[j / 3][j % 3]?.errorColorDetection =
+                        temp2!!.medianError
                 }
             }
             activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
@@ -144,33 +151,61 @@ class CurrentState {
             activeRubikFace.ColorDetectionCount++
             activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
             adoptFaceCount++
-        }
-        else if (activeRubikFace.ColorDetectionCount > 4) {
-            if(!activeRubikFace.isLayerFilled){
-                if(fillCubeLayer(activeRubikFace)) {
+        } else if (activeRubikFace.ColorDetectionCount > 4) {
+
+            if (!activeRubikFace.isLayerFilled) {
+                if (fillCubeLayer(activeRubikFace)) {
                     activeRubikFace.isLayerFilled = true
 
                     //remain one center cubie ==> cube scanned
-                    if(cube.getUnscannedCubiesCount() == 26){
+                    if (cube.getUnscannedCubiesCount() == 26) {
                         isCubeScanned = true
+                        adopt(activeRubikFace)
+                        fillCubeLayer(activeRubikFace)
                         adoptFaceCount = 7
-                            //createSolver()
+
+
+                        IsCubeScannedAndReset = true
+                        IsCubeSolving = true
+                        adoptFaceCount++
+                        // var response = cube.rotateCube(-90f, Axis.xAxis)
+                        mainActivity.glRenderer.drawArrow(false, "D", false)
+                        createSolver()
+
+                        //createSolver()
                     }
                 }
             }
+
             //проверяем повернули ли сторону кубика
-            if (!checkIfFaceExist(faceColors) || adoptFaceCount > 5) {
-                //кубик повернут другой стороной
-                mainActivity.glRenderer.drawArrow(false, "D", false)
-                adopt(activeRubikFace)
-            } else {
-                mainActivity.glRenderer.drawArrow(true, getNextArrowRotation(), false)
+            if (!isCubeScanned) {
+                if (!checkIfFaceExist(faceColors)) {//|| adoptFaceCount > 5) {
+                    //кубик повернут другой стороной
+                    mainActivity.glRenderer.drawArrow(false, "D", false)
+                    adopt(activeRubikFace)
+                } else {
+                    mainActivity.glRenderer.drawArrow(true, getNextArrowRotation(), false)
+                    return
+                }
             }
+
+            /* if(!activeRubikFace.isLayerFilled){
+                 if(fillCubeLayer(activeRubikFace)) {
+                     activeRubikFace.isLayerFilled = true*/
+
+            //remain one center cubie ==> cube scanned
+            /*if(cube.getUnscannedCubiesCount() == 26){
+                isCubeScanned = true
+                adoptFaceCount = 7
+                //createSolver()
+            }*/
+            /*      }
+              }*/
         }
     }
 
-    fun fillCubeLayer(rubikFace: RubikFace) : Boolean{
-        if(!cube.fillFaceColors(rubikFace)){
+    fun fillCubeLayer(rubikFace: RubikFace): Boolean {
+        if (!cube.fillFaceColors(rubikFace)) {
             InfoDisplayer.text = "Problem occurred during scanning process. Reset."
             resetFaces()
             return false
@@ -181,7 +216,7 @@ class CurrentState {
     /**
      * Main method for solving the cube
      */
-    fun guideSolvingCube(faceColors : Array<Array<RubikTile?>>?) {
+    private fun guideSolvingCube(faceColors: Array<Array<RubikTile?>>?) {
         TilesProcessed = false
         if (IsPhaseComplete) {
             CurrentMoves = solver.solveNextPhase()
@@ -200,9 +235,9 @@ class CurrentState {
                 Thread.sleep(50)
             } else {
                 //check if user returned to the right path
-                if(IsWrongMove){
+                if (IsWrongMove) {
                     //we know user is wrong
-                    if(solver.checkIfUserRotatedSideBackward(MoveNumber, faceColors)){
+                    if (solver.checkIfUserRotatedSideBackward(MoveNumber, faceColors)) {
                         WrongMove = ""
                         IsWrongMove = false
                         InfoDisplayer.text = ""
@@ -214,8 +249,11 @@ class CurrentState {
                 }
 
                 //check on wrong move
-                if (MoveNumber != 0 && solver.checkIfUserRotatedSideBackward(MoveNumber - 1, faceColors))
-                {
+                if (MoveNumber != 0 && solver.checkIfUserRotatedSideBackward(
+                        MoveNumber - 1,
+                        faceColors
+                    )
+                ) {
                     WrongMove = CurrentMoves[MoveNumber - 1]
                     IsWrongMove = true
                 }
@@ -227,7 +265,7 @@ class CurrentState {
             IsPhaseComplete = true
             MoveNumber = 0
             CurrentMoves.clear()
-            if(solver.solvingPhase == SolvingPhaseEnum.Finish){
+            if (solver.solvingPhase == SolvingPhaseEnum.Finish) {
                 IsCubeSolved = true
                 IsCubeSolving = false
                 mainActivity.glRenderer.drawArrow(false, "D", true)
@@ -238,7 +276,31 @@ class CurrentState {
         TilesProcessed = true
     }
 
-    fun getNextArrowRotation() : String{
+    fun startPlayMode() {
+        IsPlayMode = true
+        mainActivity.glRenderer.drawArrow(false, "D", true)
+
+        if (MoveNumber != CurrentMoves.size) {
+            if (cube.getPermutationAllowance()) {
+                cube.performMoves(CurrentMoves[MoveNumber])
+                MoveNumber++
+            }
+            Thread.sleep(20)
+        } else {
+            if (solver.solvingPhase == SolvingPhaseEnum.Finish) {
+                IsCubeSolved = true
+                IsCubeSolving = false
+                mainActivity.glRenderer.drawArrow(false, "D", true)
+                solver.currentPhase = SolvingPhaseEnum.Finish
+            }
+            MoveNumber = 0
+            CurrentMoves.clear()
+            CurrentMoves = solver.solveNextPhase()
+            IsPlayMode = false
+        }
+    }
+
+    private fun getNextArrowRotation(): String {
         when (adoptFaceCount) {
             1 -> return "F"
             2 -> return "R"
@@ -250,7 +312,7 @@ class CurrentState {
         return "F"
     }
 
-    fun addNewFace(activeFaceName: LayerEnum, frontFaceName: LayerEnum) {
+    private fun addNewFace(activeFaceName: LayerEnum, frontFaceName: LayerEnum) {
         while (!cube.getPermutationAllowance()) {
             Thread.sleep(50)
         }
@@ -264,8 +326,8 @@ class CurrentState {
             activeFrontFace.createObservedTilesArray()
             activeFrontFace
         } else {
-            if(rubikFaces.filter { x -> x.layerName == frontFaceName }.size > 1){
-                rubikFaces.remove(rubikFaces.filter { x ->x.layerName == frontFaceName }[0])
+            if (rubikFaces.filter { x -> x.layerName == frontFaceName }.size > 1) {
+                rubikFaces.remove(rubikFaces.filter { x -> x.layerName == frontFaceName }[0])
             }
             rubikFaces.single { x -> x.layerName == frontFaceName }
         }
@@ -273,8 +335,8 @@ class CurrentState {
         rubikFaces.add(activeFace)
     }
 
-    fun adopt(rubikFace: RubikFace) {
-        while(!cube.getPermutationAllowance()){
+    private fun adopt(rubikFace: RubikFace) {
+        while (!cube.getPermutationAllowance()) {
             Thread.sleep(50)
         }
         InfoDisplayer.text = ""
@@ -300,11 +362,11 @@ class CurrentState {
                 addNewFace(LayerEnum.BACK, LayerEnum.DOWN)
             }
             6 -> {
-                var s = fillCubeLayer(activeRubikFace)
+                //var s = fillCubeLayer(activeRubikFace)
                 /*while(cube.cubies.any { x -> !x.areTileColorsFilled }){
                     cube.findOppositeCubie()
                 }*/
-                var response = cube.rotateCube(-90f, Axis.xAxis)
+                //var response = cube.rotateCube(-90f, Axis.xAxis)
                 //isCubeScanned = true
                 //adoptFaceCount++
                 //createSolver()
@@ -312,16 +374,16 @@ class CurrentState {
         }
     }
 
-    fun createSolver(){
+    private fun createSolver() {
         solver.copyCube(cube)
     }
 
     //check if user turned cube to the start position
-    fun checkCubeDownside(tiles: Array<Array<RubikTile?>>) {
+    private fun checkCubeDownside(tiles: Array<Array<RubikTile?>>) {
         if (tiles != null) {
             //how many tiles have the same colors
             for (face in rubikFaces) {
-                if (face!!.layerName == LayerEnum.DOWN) {
+                if (face!!.layerName == LayerEnum.BACK) {//LayerEnum.DOWN) {
                     var coincide = 0
                     for (i in 0..2) {
                         for (j in 0..2) {
@@ -329,16 +391,16 @@ class CurrentState {
                                 continue
                             }
                             //if (face!!.transformedTileArray[i][j]?.tileColor == tiles!![i][j]?.tileColor) {
-                            if(tiles.any { x -> x.any { y -> y!!.tileColor == face!!.transformedTileArray[i][j]!!.tileColor}}){
+                            if (tiles.any { x -> x.any { y -> y!!.tileColor == face!!.transformedTileArray[i][j]!!.tileColor } }) {
                                 coincide++
                             }
                         }
                     }
-                    if (coincide > 5) {
+                    if (coincide > 7) {
                         IsCubeScannedAndReset = true
                         IsCubeSolving = true
                         adoptFaceCount++
-                        var response = cube.rotateCube(-90f, Axis.xAxis)
+                        // var response = cube.rotateCube(-90f, Axis.xAxis)
                         mainActivity.glRenderer.drawArrow(false, "D", false)
                         createSolver()
                     }
@@ -347,7 +409,7 @@ class CurrentState {
         }
     }
 
-    fun checkActiveTileColors(tiles: Array<Array<RubikTile?>>): Boolean {
+    private fun checkActiveTileColors(tiles: Array<Array<RubikTile?>>): Boolean {
         if (tiles != null && tiles.size == 0) {
             return false
         }
@@ -358,7 +420,8 @@ class CurrentState {
                 for (i in 0..2) {
                     for (j in 0..2) {
                         if (activeRubikFace.transformedTileArray[i][j]?.tileColor == tiles!![k][l]?.tileColor
-                            && tiles!![k][l]?.tileState != Constants.TileState.PROCESSED) {
+                            && tiles!![k][l]?.tileState != Constants.TileState.PROCESSED
+                        ) {
                             tiles!![k][l]?.tileState = Constants.TileState.PROCESSED
                             coincide++
                         }
@@ -377,7 +440,7 @@ class CurrentState {
      * @param tiles
      * @return true if face exist, false if not
      */
-    fun checkIfFaceExist(tiles: Array<Array<RubikTile?>>): Boolean {
+    private fun checkIfFaceExist(tiles: Array<Array<RubikTile?>>): Boolean {
         if (tiles != null && tiles.isEmpty()) {
             return false
         }
@@ -409,7 +472,7 @@ class CurrentState {
         adoptFaceCount = 0
         rubikFaces.clear()
 
-        while(mainActivity.glRenderer.isDrawingCubies){
+        while (mainActivity.glRenderer.isDrawingCubies) {
             Thread.sleep(10)
         }
         cube.resetCube()
@@ -421,10 +484,54 @@ class CurrentState {
         isReset = false
     }
 
+    fun getCurrentMove(): String {
+        if(MoveNumber < CurrentMoves.size) {
+            var step = CurrentMoves[MoveNumber]
+            var counterClock = false
+            if (step.contains("'")) {
+                step = step.take(1)
+                counterClock = true
+            }
+            var name = LayerEnum.getLayerNameByCharName(step)
+            if (name == null) {
+                when (step) {
+                    "Y" -> {
+                        if (counterClock) {
+                            return "Rotate cube on DOWN"
+                        }
+                        return "Rotate cube on UP"
+                    }
+                    "Z" -> {
+                        if (counterClock) {
+                            return "Rotate cube on BACK"
+                        }
+                        return "Rotate cube on FRONT"
+                    }
+                    "X" -> {
+                        if (counterClock) {
+                            return "Rotate cube on RIGHT"
+                        }
+                        return "Rotate cube on LEFT"
+                    }
+                }
+            }
+            if (counterClock) {
+                return "Rotate $name counterclockwise"
+            }
+            return "Rotate $name clockwise"
+        }
+        return ""
+    }
+
     //find which side of scanned cube is active
     fun findActiveSideOfCube(tiles: Array<Array<RubikTile?>>) {
         //take down layer
-        val activeLayer = cube.layers.single{x -> x.direction == cube.directionsControl.getDirectionByCharName ('D')}
+        val activeLayer =
+            cube.layers.single { x ->
+                x.direction == cube.directionsControl.getDirectionByCharName(
+                    'D'
+                )
+            }
 
         if (activeLayer != null) {
             //center tile is not active ==> find active layer
@@ -452,14 +559,13 @@ class CurrentState {
                                 }
                             }
                         }
-                    }
-                    catch(ex : Exception){
+                    } catch (ex: Exception) {
                         return
                     }
                 }
             }
 
-            while (!cube.getPermutationAllowance()){
+            while (!cube.getPermutationAllowance()) {
                 Thread.sleep(50)
             }
 
@@ -476,8 +582,7 @@ class CurrentState {
                     && !backLeftCubie.tiles.any { x -> x.isActive && x.direction == 'D' && x.color == tiles[2][0]?.tileColor }) {
                     cube.rotateCube(-90f, Axis.yAxis)
                 }
-            }
-            catch(ex : Exception){
+            } catch (ex: Exception) {
 
             }
         }

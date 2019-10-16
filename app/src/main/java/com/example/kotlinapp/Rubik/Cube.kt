@@ -34,6 +34,9 @@ class Cube : ICube {
     override var rotationAxis = Axis.xAxis
     override var rotationAngle = 0f
 
+    private var rotatingLayers = arrayListOf<Int>()
+    val lockObj = Any()
+
     //region Init
 
     init {
@@ -130,6 +133,17 @@ class Cube : ICube {
     }
 
     //endregion
+
+    override fun onLayerRotated(layerId: Int) {
+        synchronized(lockObj) {
+            if (rotatingLayers.contains(layerId)) {
+                rotatingLayers.remove(layerId)
+            }
+            if (rotatingLayers.size == 0) {
+                resetLayerCubies()
+            }
+        }
+    }
 
     override fun resetLayerCubies() {
         var count = cubies.count { x -> x.isRotated }
@@ -273,9 +287,9 @@ class Cube : ICube {
 
         findOppositeCubie()
 
-        /*while (!getPermutationAllowance()) {
+        while (!getPermutationAllowance()) {
             Thread.sleep(20)
-        }*/
+        }
         return checkEachColorNumber()
     }
 
@@ -283,7 +297,7 @@ class Cube : ICube {
         return cubies.filter { x -> x.areTileColorsFilled }.count()
     }
 
-    fun findOppositeCubie(){
+    private fun findOppositeCubie(){
         try {
             //not solved cubies
             var cubiesToCheck = getCubiesToCheck()
@@ -449,7 +463,7 @@ class Cube : ICube {
         }
     }
 
-    fun getCubiesToCheck() : MutableList<Cubie>{
+    private fun getCubiesToCheck() : MutableList<Cubie>{
         return cubies.filter { x -> !x.areTileColorsFilled } as MutableList
     }
 
@@ -572,6 +586,73 @@ class Cube : ICube {
 
     override fun turn(turn: String) {
         while (!getPermutationAllowance()) {
+            Thread.sleep(20)
+        }
+
+        setPermutationAllowance(false)
+        var tempTurn = turn
+        if(tempTurn.contains("'")){
+            tempTurn = tempTurn.take(1)
+        }
+        var layer = LayerEnum.getLayerNameByCharName(tempTurn)
+        if(layer == null){
+            when(turn){
+                "X" -> {
+                    setPermutationAllowance(true)
+                    rotationAngle = 90f
+                    rotationAxis = Axis.xAxis
+                    rotateCube(rotationAngle, rotationAxis)
+                }
+                "X'" -> {
+                    setPermutationAllowance(true)
+                    rotationAngle = -90f
+                    rotationAxis = Axis.xAxis
+                    rotateCube(rotationAngle, rotationAxis)
+                }
+                "Y" -> {
+                    setPermutationAllowance(true)
+                    rotationAngle = 90f
+                    rotationAxis = Axis.yAxis
+                    rotateCube(rotationAngle, rotationAxis)
+                }
+                "Y'" -> {
+                    setPermutationAllowance(true)
+                    rotationAngle = -90f
+                    rotationAxis = Axis.yAxis
+                    rotateCube(rotationAngle, rotationAxis)
+                }
+                "Z" -> {
+                    setPermutationAllowance(true)
+                    rotationAngle = 90f
+                    rotationAxis = Axis.zAxis
+                    rotateCube(rotationAngle, rotationAxis)
+                }
+                "Z'" -> {
+                    setPermutationAllowance(true)
+                    rotationAngle = -90f
+                    rotationAxis = Axis.zAxis
+                    rotateCube(rotationAngle, rotationAxis)
+                }
+            }
+        }
+        else {
+            var currentLayer = layers.filter { x -> x.layerName == layer }.single()
+            rotatingLayers.add(currentLayer.id)
+            if((turn.contains("'") || turn == "E" || turn == "M") && turn != "M'" && turn != "E'"){
+                currentLayer.rotate(-90f)
+            }
+            else{
+                currentLayer.rotate(90f)
+            }
+        }
+
+
+
+
+
+
+
+        /*while (!getPermutationAllowance()) {
             Thread.sleep(50)
         }
         setPermutationAllowance(false)
@@ -669,14 +750,25 @@ class Cube : ICube {
             else -> {
                 setPermutationAllowance(true)
             }
-        }
+        }*/
     }
 
     override fun rotateCube(angle: Float, axis: Axis): Boolean {
-        while(!getPermutationAllowance()){
+        /*while(!getPermutationAllowance()){
             Thread.sleep(50)
-        }
+        }*/
         setPermutationAllowance(false)
+        synchronized(lockObj) {
+            for (layer in layers) {
+                if (abs(layer.layerName.rotationAxis.x) == abs(axis.x)
+                    && abs(layer.layerName.rotationAxis.y) == abs(axis.y)
+                    && abs(layer.layerName.rotationAxis.z) == abs(axis.z)
+                ) {
+                    rotatingLayers.add(layer.id)
+                }
+            }
+        }
+
         for (layer in layers) {
             if (layer.layerName.rotationAxis.x == axis.x
                 && layer.layerName.rotationAxis.y == axis.y
@@ -692,9 +784,9 @@ class Cube : ICube {
             }
         }
 
-        while(!getPermutationAllowance()){
+        /*while(!getPermutationAllowance()){
             Thread.sleep(50)
-        }
+        }*/
         return true
     }
 

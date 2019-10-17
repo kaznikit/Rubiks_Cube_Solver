@@ -1,11 +1,205 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/activity_frame_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-  <!--  <org.opencv.android.JavaCameraView
-            android:id="@+id/camera_surface_view"
+    <android.opengl.GLSurfaceView
+            android:id="@+id/glSurface"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />-->
-</FrameLayout>
+            android:layout_height="match_parent"></android.opengl.GLSurfaceView>
+
+    <org.opencv.android.JavaCameraView
+            android:id="@+id/camera_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:id="@+id/first_move_textview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="casual"
+                android:paddingLeft="5dp"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+
+        <TextView
+                android:id="@+id/moves_textview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/first_move_textview"
+                android:fontFamily="casual"
+                android:paddingLeft="10dp"
+                android:textColor="@android:color/white"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        <LinearLayout
+                android:id="@+id/phases_linear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+            <!-- region Phases -->
+
+            <TextView
+                    android:id="@+id/phases_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="40dp"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Solving phases:"
+                    android:textColor="@android:color/holo_red_dark"
+                    android:textSize="23dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/WhiteCross_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/phases_textview"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="White cross"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/WhiteLayer_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/WhiteCross_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="White layer"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/TwoLayers_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/WhiteLayer_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Two layers"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/YellowCross_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/TwoLayers_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Yellow cross"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/YellowEdges_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/YellowCross_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Yellow edges"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/YellowCornersOrient_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/YellowEdges_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Position \n yellow corners"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/YellowCorners_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/YellowCornersOrient_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Solving \n yellow corners"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            <TextView
+                    android:id="@+id/Finish_phase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/YellowCorners_phase"
+                    android:fontFamily="casual"
+                    android:paddingLeft="5dp"
+                    android:text="Finish"
+                    android:textColor="@android:color/white"
+                    android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            <!-- endregion -->
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/phases_linear"
+                android:orientation="vertical"
+                android:paddingLeft="20dp">
+
+            <TextView
+                    android:id="@+id/current_move_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="casual"
+                    android:paddingTop="40dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="23dp"
+                    android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+            android:id="@+id/moves_count_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:fontFamily="casual"
+            android:paddingRight="10dp"
+            android:paddingBottom="10dp"
+            android:textColor="@android:color/white"
+            android:textSize="23dp"
+            android:textStyle="bold" />
+</RelativeLayout>

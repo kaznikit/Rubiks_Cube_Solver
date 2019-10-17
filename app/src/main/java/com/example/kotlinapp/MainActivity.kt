@@ -6,11 +6,14 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
+import android.opengl.Visibility
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.app.FragmentActivity
 import android.util.Log
 import android.view.*
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -21,6 +24,7 @@ import com.example.kotlinapp.Rubik.Renderer
 import com.example.kotlinapp.Util.Constants
 import com.example.kotlinapp.Util.InfoDisplayer
 import com.example.kotlinapp.Util.SettingsMenu
+import kotlinx.android.synthetic.main.activity_main.*
 import org.opencv.android.*
 import org.opencv.core.*
 import java.lang.Exception
@@ -30,19 +34,19 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
     lateinit var calibrateColorButton: ImageButton
     lateinit var glRenderer: Renderer
 
-    var processedMat : Mat? = null
+    var processedMat: Mat? = null
     var isMatProcessed = false
 
     var isDispose = false
     var isStarting = true
-    var currentImageTask : AsyncTask<Mat, Int, Mat>? = null
+    var currentImageTask: AsyncTask<Mat, Int, Mat>? = null
 
-    lateinit var clockWiseArrow : Mat
-    lateinit var counterclockwiseArrow : Mat
+    lateinit var clockWiseArrow: Mat
+    lateinit var counterclockwiseArrow: Mat
 
     internal lateinit var menu: SettingsMenu
 
-    private var schemaFragment : SchemaFragment? = null
+    private var schemaFragment: SchemaFragment? = null
 
     //var imageRecognizer : ImageRecognizer? = null
     companion object {
@@ -52,8 +56,12 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
     lateinit var currentState: CurrentState
 
     private lateinit var glSurfaceView: GLSurfaceView
-    private lateinit var countsTextview : TextView
-    private lateinit var currentMoveTextView : TextView
+
+    private lateinit var firstMoveTextView: TextView
+    private lateinit var movesTextView: TextView
+    private lateinit var movesCountsTextView: TextView
+    private lateinit var currentMoveTextView: TextView
+    private lateinit var phasesTextView: TextView
 
     //Get user movements
     private var mGesture: GestureDetector? = null
@@ -86,12 +94,14 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
 
-        glSurfaceView = GLSurfaceView(this)
+        setContentView(R.layout.activity_main)
+        //glSurfaceView = GLSurfaceView(this)
+        glSurfaceView = findViewById(R.id.glSurface)
 
         currentState = CurrentState(this)
 
         //if calibration was selected
-        if(intent.getBooleanExtra("isCalibration", false)){
+        if (intent.getBooleanExtra("isCalibration", false)) {
             TurnOnCalibration()
         }
 
@@ -105,38 +115,44 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         glSurfaceView.setZOrderOnTop(true)
         glSurfaceView.setRenderer(glRenderer)
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
-        setContentView(glSurfaceView)
+        //setContentView(glSurfaceView)
 
 
-        mOpenCvCameraView = JavaCameraView(this, 1)
+        //mOpenCvCameraView = JavaCameraView(this, 1)
+        mOpenCvCameraView = findViewById(R.id.camera_view)
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE)
         mOpenCvCameraView.setCameraIndex(1)
         mOpenCvCameraView.setCvCameraViewListener(this)
-        addContentView(mOpenCvCameraView, WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT))
+        //addContentView(mOpenCvCameraView, WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT))
 
+        firstMoveTextView = findViewById(R.id.first_move_textview)
+        movesTextView = findViewById(R.id.moves_textview)
+        currentMoveTextView = findViewById(R.id.current_move_textview)
+        phasesTextView = findViewById(R.id.phases_textview)
+        movesCountsTextView = findViewById(R.id.moves_count_textview)
         //отображение счетчика действий
-        countsTextview = TextView(this)
-        var textParams = RelativeLayout.LayoutParams(500, 500)
-        //textParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-        //textParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+        /*countsTextview = TextView(this)
+        var textParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.MATCH_PARENT)
+        textParams.addRule(RelativeLayout.ALIGN_PARENT_TOP)
+        textParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT)
         countsTextview.textSize = 23f
         countsTextview.setTextColor(Color.WHITE)
         countsTextview.background = null
-        textParams.leftMargin = 1550
+        *//*textParams.leftMargin = 1550
         textParams.topMargin = 1000
-        textParams.bottomMargin = 10
-            //countsTextview.text = "Moves count: "
-        addContentView(countsTextview, textParams)
+        textParams.bottomMargin = 10*//*
+            countsTextview.text = "Moves count: "
+        addContentView(countsTextview, textParams)*/
 
         //отображение текущего действия
-        currentMoveTextView = TextView(this)
-        var currentMoveParams = RelativeLayout.LayoutParams(1000, 500)
-        currentMoveTextView.textSize = 23f
-        currentMoveTextView.setTextColor(Color.WHITE)
-        currentMoveTextView.background = null
-        currentMoveParams.leftMargin = 650
-        currentMoveParams.topMargin = 150
-        addContentView(currentMoveTextView, currentMoveParams)
+        /* currentMoveTextView = TextView(this)
+         var currentMoveParams = RelativeLayout.LayoutParams(1000, 500)
+         currentMoveTextView.textSize = 23f
+         currentMoveTextView.setTextColor(Color.WHITE)
+         currentMoveTextView.background = null
+         currentMoveParams.leftMargin = 650
+         currentMoveParams.topMargin = 150
+         addContentView(currentMoveTextView, currentMoveParams)*/
 
 
         val b = ImageButton(this)
@@ -213,12 +229,18 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         val sharedPref = getPreferences(Context.MODE_PRIVATE)
         for (j in 0..5) {
             when (j) {
-                0 -> com.example.kotlinapp.Enums.Color.RED.hsvCalibrateValue = GetScalarSharedValue("Red", sharedPref)
-                1 -> com.example.kotlinapp.Enums.Color.GREEN.hsvCalibrateValue = GetScalarSharedValue("Green", sharedPref)
-                2 -> com.example.kotlinapp.Enums.Color.ORANGE.hsvCalibrateValue = GetScalarSharedValue("Orange", sharedPref)
-                3 -> com.example.kotlinapp.Enums.Color.YELLOW.hsvCalibrateValue = GetScalarSharedValue("Yellow", sharedPref)
-                4 -> com.example.kotlinapp.Enums.Color.WHITE.hsvCalibrateValue = GetScalarSharedValue("White", sharedPref)
-                5 -> com.example.kotlinapp.Enums.Color.BLUE.hsvCalibrateValue = GetScalarSharedValue("Blue", sharedPref)
+                0 -> com.example.kotlinapp.Enums.Color.RED.hsvCalibrateValue =
+                    GetScalarSharedValue("Red", sharedPref)
+                1 -> com.example.kotlinapp.Enums.Color.GREEN.hsvCalibrateValue =
+                    GetScalarSharedValue("Green", sharedPref)
+                2 -> com.example.kotlinapp.Enums.Color.ORANGE.hsvCalibrateValue =
+                    GetScalarSharedValue("Orange", sharedPref)
+                3 -> com.example.kotlinapp.Enums.Color.YELLOW.hsvCalibrateValue =
+                    GetScalarSharedValue("Yellow", sharedPref)
+                4 -> com.example.kotlinapp.Enums.Color.WHITE.hsvCalibrateValue =
+                    GetScalarSharedValue("White", sharedPref)
+                5 -> com.example.kotlinapp.Enums.Color.BLUE.hsvCalibrateValue =
+                    GetScalarSharedValue("Blue", sharedPref)
             }
         }
     }
@@ -245,7 +267,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
 
     override fun onCameraViewStopped() {
         isDispose = true
-        if(currentImageTask != null){
+        if (currentImageTask != null) {
             currentImageTask!!.cancel(true)
         }
         mOpenCvCameraView.disableView()
@@ -254,7 +276,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
 
     override fun onPause() {
         super.onPause()
-        if(mOpenCvCameraView != null){
+        if (mOpenCvCameraView != null) {
             mOpenCvCameraView.disableView()
             isMatProcessed = false
             processedMat = null
@@ -264,7 +286,10 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
     public override fun onResume() {
         super.onResume()
         if (!OpenCVLoader.initDebug()) {
-            Log.d("opencv", "Internal OpenCV library not found. Using OpenCV Manager for initialization")
+            Log.d(
+                "opencv",
+                "Internal OpenCV library not found. Using OpenCV Manager for initialization"
+            )
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback)
         } else {
             Log.d("opencv", "OpenCV library found inside package. Using it!")
@@ -272,9 +297,104 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         }
     }
 
+
+    /**
+     * show info about calibration process
+     */
+    fun updateCalibrationText(mat: Mat?) {
+        runOnUiThread {
+            if (mat == null) {
+                movesTextView.text = ""
+            } else {
+                movesTextView.text = currentState.cameraCalibration!!.getColor(mat)
+            }
+        }
+    }
+
+    /**
+     * calls from current state to show necessary moves
+     */
+    fun showCurrentMoves() {
+        runOnUiThread {
+            if (currentState.CurrentMoves.size == 0 || currentState.CurrentMoves.size == currentState.MoveNumber) {
+                movesTextView.text = ""
+                firstMoveTextView.text = ""
+            } else {
+                if (currentState.IsWrongMove) {
+                    movesTextView.setTextColor(Color.RED)
+                    movesTextView.text = "Wrong move, return back!"
+                } else {
+                    currentMoveTextView.text = currentState.getCurrentMove()
+                    movesCountsTextView.text = "Moves: " + (currentState.CurrentMoves.size - currentState.MoveNumber)
+                    firstMoveTextView.text = currentState.CurrentMoves[currentState.MoveNumber]
+                    movesTextView.text = currentState.CurrentMoves.drop(currentState.MoveNumber + 1)
+                        .joinToString(separator = " ")
+                }
+            }
+        }
+    }
+
+    /**
+     * calls from current state to show phases
+     */
+    fun showCurrentPhase() {
+        runOnUiThread {
+            if (phasesTextView.visibility == GONE) {
+                phasesTextView.visibility = VISIBLE
+                WhiteLayer_phase.visibility = VISIBLE
+                WhiteCross_phase.visibility = VISIBLE
+                TwoLayers_phase.visibility = VISIBLE
+                YellowCross_phase.visibility = VISIBLE
+                YellowEdges_phase.visibility = VISIBLE
+                YellowCornersOrient_phase.visibility = VISIBLE
+                YellowCorners_phase.visibility = VISIBLE
+                Finish_phase.visibility = VISIBLE
+            }
+            for (solvPhase in SolvingPhaseEnum.values()) {
+                var color = Color.WHITE
+                if (solvPhase == currentState.solver.currentPhase) {
+                    color = Color.parseColor("#ff669900") //Color.RED
+                }
+
+                when (solvPhase) {
+                    SolvingPhaseEnum.WhiteCross -> {
+                        WhiteCross_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.WhiteLayer -> {
+                        WhiteLayer_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.TwoLayers -> {
+                        TwoLayers_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.YellowCross -> {
+                        YellowCross_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.YellowEdges -> {
+                        YellowEdges_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.YellowCornersOrient -> {
+                        YellowCornersOrient_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.YellowCorners -> {
+                        YellowCorners_phase.setTextColor(color)
+                    }
+                    SolvingPhaseEnum.Finish -> {
+                        Finish_phase.setTextColor(color)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
         try {
-            var mat = displayCurrentMoves(inputFrame.rgba())
+            //if the calibration process, it's not necessary to process the frame
+            if (IsCalibrationMode) {
+                updateCalibrationText(inputFrame.rgba())
+                return inputFrame.rgba()
+            }
+
+            var mat = inputFrame.rgba()//displayCurrentMoves(inputFrame.rgba())
 
             //make processing 1 time per second
             if (System.currentTimeMillis() - start >= 50 && !isDispose && currentImageTask == null) {
@@ -283,9 +403,9 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
             }
 
             /*Imgproc.resize(clockWiseArrow, clockWiseArrow, Size (200.0, 100.0))
-            //var submat = inputFrame.rgba().submat(0, 100, 0, 200)
-            Imgproc.cvtColor(clockWiseArrow, clockWiseArrow, Imgproc.COLOR_RGB2BGR)
-            clockWiseArrow.copyTo(inputFrame.rgba())*/
+        //var submat = inputFrame.rgba().submat(0, 100, 0, 200)
+        Imgproc.cvtColor(clockWiseArrow, clockWiseArrow, Imgproc.COLOR_RGB2BGR)
+        clockWiseArrow.copyTo(inputFrame.rgba())*/
 
             if (isMatProcessed) {
                 isMatProcessed = false
@@ -293,8 +413,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
             } else {
                 return mat//displayCurrentMoves(inputFrame.rgba())//InfoDisplayer.writeInfo(inputFrame.rgba(), com.example.kotlinapp.Enums.Color.WHITE.cvColor)//inputFrame.rgba()
             }
-        }
-        catch(ex : Exception){
+        } catch (ex: Exception) {
             return inputFrame.rgba()
         }
         /*if(imageRecognizer == null){
@@ -302,106 +421,9 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         }
         return imageRecognizer!!.threesholdTestImage(inputFrame.rgba())*/
     }
-
-    /**
-     * Drawing current moves
-     */
-    fun displayCurrentMoves(mat1 : Mat) : Mat {
-        if (currentState.IsCubeSolving) {
-            var mat: Mat
-            //write active solving phase
-            mat = InfoDisplayer.writeInfoFromPlace(mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
-                "Solving phases:", Constants.StartingPhasesTextPoint)
-
-            var yMargin = 100.0
-            for(solvPhase in SolvingPhaseEnum.values()){
-                var color = com.example.kotlinapp.Enums.Color.WHITE
-                if(solvPhase == currentState.solver.currentPhase){
-                    color = com.example.kotlinapp.Enums.Color.RED
-                }
-
-                if(solvPhase.phaseName.contains("N")){
-                    mat = InfoDisplayer.writeInfoFromPlace(mat, color.cvColor,
-                        solvPhase.phaseName.substring(0, solvPhase.phaseName.indexOf("N")),
-                        Point(Constants.StartingPhasesTextPoint.x, Constants.StartingPhasesTextPoint.y + yMargin))
-                    yMargin += 80.0
-
-                    mat = InfoDisplayer.writeInfoFromPlace(mat, color.cvColor,
-                        solvPhase.phaseName.substring(solvPhase.phaseName.indexOf("N") + 2, solvPhase.phaseName.length),
-                        Point(Constants.StartingPhasesTextPoint.x, Constants.StartingPhasesTextPoint.y + yMargin))
-                }
-                else {
-                    mat = InfoDisplayer.writeInfoFromPlace(
-                        mat, color.cvColor, solvPhase.phaseName,
-                        Point(Constants.StartingPhasesTextPoint.x,
-                            Constants.StartingPhasesTextPoint.y + yMargin))
-                }
-                yMargin += 80.0
-            }
-
-            if (currentState.CurrentMoves.size != 0) {
-
-                //add info to moves count textview
-                countsTextview.text = "Moves: " + (currentState.CurrentMoves.size - currentState.MoveNumber)
-
-                //show current move
-                currentMoveTextView.text = currentState.getCurrentMove()
-
-                //if wrong move
-                if(currentState.IsWrongMove){
-                    mat = InfoDisplayer.writeInfoFromPlace(
-                        mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
-                        "Wrong move, return back!",
-                        Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
-                }
-                else if (currentState.MoveNumber != 0) {
-                    InfoDisplayer.text = currentState.CurrentMoves[currentState.MoveNumber - 1]
-                    mat = InfoDisplayer.writeInfo(
-                        mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor)
-
-                    //if the active element not first or last
-                    if (currentState.MoveNumber != currentState.CurrentMoves.size) {
-                        mat = InfoDisplayer.writeInfoFromPlace(
-                            mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
-                            currentState.CurrentMoves[currentState.MoveNumber],
-                            Point(Constants.StartingTextPoint.x + 80.0, Constants.StartingTextPoint.y))
-
-                        mat = InfoDisplayer.writeInfoFromPlace(
-                            mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
-                            currentState.CurrentMoves.drop(currentState.MoveNumber + 1).joinToString(
-                                separator = " "),
-                            Point(Constants.StartingTextPoint.x + 150.0, Constants.StartingTextPoint.y))
-                    }
-                    return mat
-                } else {
-                    mat = InfoDisplayer.writeInfoFromPlace(
-                        mat, com.example.kotlinapp.Enums.Color.RED.cvColor,
-                        currentState.CurrentMoves[currentState.MoveNumber],
-                        Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y)
-                    )
-
-                    mat = InfoDisplayer.writeInfoFromPlace(
-                        mat, com.example.kotlinapp.Enums.Color.WHITE.cvColor,
-                        currentState.CurrentMoves.drop(1).joinToString(
-                            separator = " "
-                        ),
-                        Point(Constants.StartingTextPoint.x + 90.0, Constants.StartingTextPoint.y)
-                    )
-                }
-                return mat
-            }
-        }
-        else if(currentState.IsCubeSolved){
-            return InfoDisplayer.writeInfoFromPlace(
-                mat1, com.example.kotlinapp.Enums.Color.RED.cvColor,
-                "Congratulations, you are awesome!",
-                Point(Constants.StartingTextPoint.x, Constants.StartingTextPoint.y))
-        }
-        return InfoDisplayer.writeInfo(mat1, com.example.kotlinapp.Enums.Color.WHITE.cvColor)
-    }
-
-    fun onMatProcessed(mat : Mat?){
-        if(mat != null){
+    
+    fun onMatProcessed(mat: Mat?) {
+        if (mat != null) {
             processedMat = mat
         }
         isMatProcessed = true
@@ -418,19 +440,19 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
     /**
      * Pressing the play button
      */
-    private fun onPlayButton(){
-        if(currentState.CurrentMoves.size != 0){
+    private fun onPlayButton() {
+        if (currentState.CurrentMoves.size != 0) {
             currentState.startPlayMode()
         }
     }
 
-    fun showSchema(){
+    fun showSchema() {
 //        schemaFragment.show(supportFragmentManager, "dialog")
-        if(schemaFragment == null) {
+        if (schemaFragment == null) {
             schemaFragment =
                 SchemaFragment.newInstance()
         }
-        if(schemaFragment!!.isAdded){
+        if (schemaFragment!!.isAdded) {
             supportFragmentManager.fragments.clear()
         }
         schemaFragment?.show(supportFragmentManager, "schema")

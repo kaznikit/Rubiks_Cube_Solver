@@ -76,10 +76,11 @@ class ImageRecognizer internal constructor(mainActivity: MainActivity) : AsyncTa
         //in calibration mode it's necessary to scan colors and write them
         if (!MainActivity.IsCalibrationMode) {
                 activityReference!!.currentState.calculateTilesForFace(rectangleList, image[0])
-        } else {
+        }
+        /*else {
             //scan colors
             activityReference!!.currentState.cameraCalibration!!.getColor(image[0])
-        }
+        }*/
 
         contours.clear()
         polygonList.clear()

@@ -148,11 +148,12 @@ class CurrentState {
             }
             activeRubikFace.transformedTileArray = activeRubikFace.observedTileArray.clone()
             //cube.fillFaceColors(activeRubikFace)
-            activeRubikFace.ColorDetectionCount++
+            if(activeRubikFace.ColorDetectionCount != 14) {
+                activeRubikFace.ColorDetectionCount++
+            }
             activeRubikFace.faceRecognitionStatus = RubikFace.FaceRecognitionStatusEnum.SOLVED
             adoptFaceCount++
         } else if (activeRubikFace.ColorDetectionCount > 4) {
-
             if (!activeRubikFace.isLayerFilled) {
                 if (fillCubeLayer(activeRubikFace)) {
                     activeRubikFace.isLayerFilled = true
@@ -220,12 +221,14 @@ class CurrentState {
         TilesProcessed = false
         if (IsPhaseComplete) {
             CurrentMoves = solver.solveNextPhase()
+            mainActivity.showCurrentPhase()
             //InfoDisplayer.text = CurrentMoves.joinToString (separator = " ")
             IsPhaseComplete = false
         }
 
         if (CurrentMoves.size != 0) {
             var res = solver.cubeSideRightRotated(faceColors, MoveNumber)
+            mainActivity.showCurrentMoves()
             if (res) {
                 IsWrongMove = false
                 MoveNumberChanged = false
@@ -272,7 +275,7 @@ class CurrentState {
                 solver.currentPhase = SolvingPhaseEnum.Finish
             }
         }
-
+        mainActivity.showCurrentMoves()
         TilesProcessed = true
     }
 
@@ -297,7 +300,9 @@ class CurrentState {
             CurrentMoves.clear()
             CurrentMoves = solver.solveNextPhase()
             IsPlayMode = false
+            mainActivity.showCurrentPhase()
         }
+        mainActivity.showCurrentMoves()
     }
 
     private fun getNextArrowRotation(): String {

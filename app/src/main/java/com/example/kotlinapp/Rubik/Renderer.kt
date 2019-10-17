@@ -33,6 +33,7 @@ class Renderer : GLSurfaceView.Renderer {
     enum class ArrowRotation {
         CLOCKWISE, COUNTER_CLOCKWISE, ONE_HUNDRED_EIGHTY
     }
+
     enum class ArrowDirection {
         POSITIVE, NEGATIVE
     }
@@ -69,7 +70,7 @@ class Renderer : GLSurfaceView.Renderer {
     var density: Float = 0.toFloat()
 
     var isDrawingCubies = false
-    var glowingLayer : Layer? = null
+    var glowingLayer: Layer? = null
 
     constructor(view: View, context: Context, state: CurrentState) {
         this.view = view
@@ -110,10 +111,10 @@ class Renderer : GLSurfaceView.Renderer {
 
     override fun onDrawFrame(gl: GL10?) {
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-        if(!MainActivity.IsCalibrationMode && !state.cube.isReseting) {
+        if (!MainActivity.IsCalibrationMode && !state.cube.isReseting) {
             if (state.cube.cubies.size != 0) {
                 isDrawingCubies = true
-                    //   state.cube.resetLayerCubies()
+                //   state.cube.resetLayerCubies()
 
                 for (cubie in state.cube.cubies) {
                     cubie.draw(mProjectionMatrix, mViewMatrix, programId)
@@ -140,18 +141,19 @@ class Renderer : GLSurfaceView.Renderer {
         }
     }
 
-    fun drawArrow(isDrawing: Boolean, direction: String, isLayer : Boolean) {
+    fun drawArrow(isDrawing: Boolean, direction: String, isLayer: Boolean) {
         isArrowDrawing = isDrawing
         arrowDirection = direction
         isLayerArrow = isLayer
 
         //glow layer
-        if(isLayer){
-            if(isDrawing) {
+        if (isLayer) {
+            if (isDrawing) {
                 var layername = direction[0]
-                glowingLayer = state.cube.layers.singleOrNull { x -> x.layerName.charName == layername }
+                glowingLayer =
+                    state.cube.layers.singleOrNull { x -> x.layerName.charName == layername }
             }
-            if(glowingLayer != null) {
+            if (glowingLayer != null) {
                 glowingLayer!!.turnCubiesGlowing(isDrawing)
             }
         }
@@ -159,47 +161,40 @@ class Renderer : GLSurfaceView.Renderer {
 
         if (arrowDirection.contains("'")) {
             arrowDirectionValue = ArrowDirection.NEGATIVE
-        }
-        else{
+        } else {
             arrowDirectionValue = ArrowDirection.POSITIVE
         }
 
-        if(arrowDirection == "X'"){
+        if (arrowDirection == "X'") {
             arrowDirection = "R"
             isLayerArrow = false
-        }
-        else if(arrowDirection == "X"){
+        } else if (arrowDirection == "X") {
             arrowDirection = "L"
             isLayerArrow = false
-        }
-        else if(arrowDirection == "Z"){
+        } else if (arrowDirection == "Z") {
             arrowDirection = "B"
             isLayerArrow = false
-        }
-        else if(arrowDirection == "Z'"){
+        } else if (arrowDirection == "Z'") {
             arrowDirection = "F"
             isLayerArrow = false
-        }
-        else if(arrowDirection == "Y'"){
+        } else if (arrowDirection == "Y'") {
             arrowDirection = "U"
             isLayerArrow = false
-        }
-        else if(arrowDirection == "Y"){
+        } else if (arrowDirection == "Y") {
             arrowDirection = "D"
             isLayerArrow = false
         }
     }
 
-    private fun renderCubeEdgeRotationArrow(degrees : Float, direction : String) {
-        if(abs(rotation) >= 90f){
+    private fun renderCubeEdgeRotationArrow(degrees: Float, direction: String) {
+        if (abs(rotation) >= 90f) {
             rotation = 0f
         }
         var vec = LayerEnum.getVectorByDirection(direction.first())
-        if(degrees > 0) {
+        if (degrees > 0) {
             Matrix.rotateM(mArrowMatrix, 0, 2f, vec[0], vec[1], vec[2])
             rotation += 2
-        }
-        else{
+        } else {
             Matrix.rotateM(mArrowMatrix, 0, -2f, vec[0], vec[1], vec[2])
             rotation -= 2
         }
@@ -207,28 +202,25 @@ class Renderer : GLSurfaceView.Renderer {
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMatrixArrow, 0)
 
         //to the user (front), left for the back
-        if(direction == "R") {
+        if (direction == "R") {
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
-        }
-        else if(direction == "L"){
+        } else if (direction == "L") {
             Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 1f, 0f)
         }
         //to the left, back to the right
-        else if(direction == "F"){
+        else if (direction == "F") {
             Matrix.rotateM(mMVPMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
-        }
-        else if(direction == "B"){
+        } else if (direction == "B") {
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0.0f, 1.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 0f, 1f)
         }
         //counterclockwise, down for clockwise
-        else if(direction == "U"){
+        else if (direction == "U") {
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
-        }
-        else if(direction == "D"){
+        } else if (direction == "D") {
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, -90f, 1f, 0f, 0f)
@@ -245,19 +237,17 @@ class Renderer : GLSurfaceView.Renderer {
             rotation = 0f
         }
         var vec = FloatArray(4)
-        if(direction.first() == 'M'){
+        if (direction.first() == 'M') {
             vec[0] = -1f
             vec[1] = 0f
             vec[2] = 0f
             vec[3] = 0f
-        }
-        else if(direction.first() == 'E'){
+        } else if (direction.first() == 'E') {
             vec[0] = 0f
             vec[1] = -1f
             vec[2] = 0f
             vec[3] = 0f
-        }
-        else {
+        } else {
             vec = LayerEnum.getVectorByDirection(direction.first())
         }
         if (degrees > 0) {
@@ -298,8 +288,7 @@ class Renderer : GLSurfaceView.Renderer {
             Matrix.rotateM(mMVPMatrix, 0, +180f, 0.0f, 1.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 0f, 1f)
             color = Color.GREEN.cvColor
-        }
-        else if (direction == "L") {
+        } else if (direction == "L") {
             Matrix.translateM(mMVPMatrix, 0, -4f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
             color = Color.ORANGE.cvColor
@@ -307,8 +296,7 @@ class Renderer : GLSurfaceView.Renderer {
             Matrix.translateM(mMVPMatrix, 0, -4f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 1f, 0f)
             color = Color.ORANGE.cvColor
-        }
-        else if (direction == "B") {
+        } else if (direction == "B") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, -4f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             color = Color.BLUE.cvColor
@@ -329,14 +317,13 @@ class Renderer : GLSurfaceView.Renderer {
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, -90f, 1f, 0f, 0f)
             color = Color.WHITE.cvColor
-        }else if(direction == "U'"){
+        } else if (direction == "U'") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 4f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
             color = Color.WHITE.cvColor
-        }
-        else if(direction == "D"){
+        } else if (direction == "D") {
             Matrix.translateM(mMVPMatrix, 0, 0f, -4f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
@@ -344,7 +331,7 @@ class Renderer : GLSurfaceView.Renderer {
             color = Color.YELLOW.cvColor
             Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
             usualScaling = false
-        } else if(direction == "D'"){
+        } else if (direction == "D'") {
             Matrix.translateM(mMVPMatrix, 0, 0f, -4f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
@@ -352,40 +339,37 @@ class Renderer : GLSurfaceView.Renderer {
             color = Color.YELLOW.cvColor
             Matrix.scaleM(mMVPMatrix, 0, 4.0f, 4.0f, 1.5f)
             usualScaling = false
-        }
-        else if (direction == "S") {
+        } else if (direction == "S") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0.0f, 1.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 0f, 0f, 1f)
             Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
             usualScaling = false
-        }else if(direction == "S'"){
+        } else if (direction == "S'") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
             usualScaling = false
-        }
-        else if (direction == "M") {
+        } else if (direction == "M") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
             Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
             usualScaling = false
-        }else if(direction == "M'"){
+        } else if (direction == "M'") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, -90f, 0f, 1f, 0f)
             Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
             usualScaling = false
-        }
-        else if (direction == "E") {
+        } else if (direction == "E") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
             Matrix.rotateM(mMVPMatrix, 0, 90f, 1f, 0f, 0f)
             Matrix.scaleM(mMVPMatrix, 0, 4.3f, 4.3f, 1.5f)
             usualScaling = false
-        }else if(direction == "E'"){
+        } else if (direction == "E'") {
             Matrix.translateM(mMVPMatrix, 0, 0f, 0f, 0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 1.0f, 0.0f, 0.0f)
             Matrix.rotateM(mMVPMatrix, 0, 180f, 0f, 0f, 1f)
@@ -394,7 +378,7 @@ class Renderer : GLSurfaceView.Renderer {
             usualScaling = false
         }
 
-        if(usualScaling) {
+        if (usualScaling) {
             Matrix.scaleM(mMVPMatrix, 0, 3f, 3f, 1.5f)
         }
         arrowHalfTurn?.draw(mMVPMatrix, color, programId)
@@ -431,7 +415,7 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     fun CreateProjectionMatrix(width: Int, height: Int) {
-        var ratio : Float
+        var ratio: Float
         var left = -1f
         var right = 1f
         var bottom = -1f

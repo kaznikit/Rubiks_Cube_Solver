@@ -21,7 +21,7 @@
         <TextView
                 android:id="@+id/first_move_textview"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="23dp"
                 android:fontFamily="casual"
                 android:paddingLeft="5dp"
                 android:textColor="@android:color/holo_red_dark"
@@ -31,7 +31,7 @@
         <TextView
                 android:id="@+id/moves_textview"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="23dp"
                 android:layout_toLeftOf="@id/first_move_textview"
                 android:fontFamily="casual"
                 android:paddingLeft="10dp"
@@ -202,4 +202,15 @@
             android:textColor="@android:color/white"
             android:textSize="23dp"
             android:textStyle="bold" />
+
+    <ImageView
+            android:id="@+id/keanu_image_view"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="30dp"
+            android:src="@drawable/keanu"
+            android:visibility="gone" />
+
 </RelativeLayout>

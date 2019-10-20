@@ -828,7 +828,7 @@ class LogicCube : ICube {
             rotationAngle = -90f//180f
             moves.add(performMoves("Y'"))
         }
-        return moves
+        return optimizeMoves(moves)
     }
 
     fun optimizeMoves(moves: ArrayList<String>): ArrayList<String> {
@@ -844,7 +844,7 @@ class LogicCube : ICube {
                     Solver.removeStep(i)
                     Solver.removeStep(i)
                     //Solver.removeStep(i + 1)
-                   // i = 0
+                    // i = 0
                 }
             }
             //remove D'D
@@ -852,11 +852,11 @@ class LogicCube : ICube {
                 if (moves[i] == moves[i + 1] + "'") {
                     moves.removeAt(i)
                     moves.removeAt(i)
-                   // moves.removeAt(i + 1)
+                    // moves.removeAt(i + 1)
                     Solver.removeStep(i)
                     Solver.removeStep(i)
                     //Solver.removeStep(i + 1)
-                  //  i = 0
+                    //  i = 0
                 }
             }
             /*if (i + 3 < num) {
@@ -887,7 +887,7 @@ class LogicCube : ICube {
                     Solver.removeStep(i)
                     Solver.removeStep(i)
                     //Solver.removeStep(i + 1)
-                   // i = 0
+                    // i = 0
                 }
             }
             i++
@@ -970,7 +970,7 @@ class LogicCube : ICube {
             }
             Thread.sleep(10)
         }
-        return moves
+        return optimizeMoves(moves)
     }
 
     //rotate cube to get right cubie in front of user
@@ -1074,7 +1074,7 @@ class LogicCube : ICube {
             moves.add(performMoves("F'"))
             moves.add(performMoves("R"))
         }
-        return moves
+        return optimizeMoves(moves)
     }
 
     fun finishSolvingYellowCorners(): ArrayList<String> {
@@ -1126,7 +1126,7 @@ class LogicCube : ICube {
             Thread.sleep(10)
         }
 
-        return moves
+        return optimizeMoves(moves)
     }
 
     fun performCornerCubieRotation(moves: ArrayList<String>, count: Int): ArrayList<String> {
@@ -1203,16 +1203,47 @@ class LogicCube : ICube {
         var firstTile = tempTiles.filter { x -> x.color != Color.YELLOW }[0]
         var secondTile = tempTiles.filter { x -> x.color != Color.YELLOW }[1]
 
-        if ((yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color) ||
+
+        //yellow == first || yellow == second
+        //first == first || first == second
+
+        //1. yellow is on the right place
+        if (yellowTile.direction == directionsControl.getDirectionByColor(yellowTile.color)) {
+            //tiles are on the right places
+            if (firstTile.direction == directionsControl.getDirectionByColor(firstTile.color)
+                && secondTile.direction == directionsControl.getDirectionByColor(secondTile.color)
+            ) {
+                return true
+            }
+            //changed locations of tiles
+            else if (firstTile.direction == directionsControl.getDirectionByColor(secondTile.color)
+                && secondTile.direction == directionsControl.getDirectionByColor(firstTile.color)
+            ) {
+                return true
+            }
+        }
+        //2. yellow is on the one of sides
+        else if ((yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color)
+                    || yellowTile.direction == directionsControl.getDirectionByColor(secondTile.color))
+            && (firstTile.direction == directionsControl.getDirectionByColor(secondTile.color)
+                    || secondTile.direction == directionsControl.getDirectionByColor(firstTile.color))
+        ) {
+            return true
+        }
+
+
+        /*if ((yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color) ||
                     yellowTile.direction == directionsControl.getDirectionByColor(secondTile.color) ||
                     yellowTile.direction == 'F') &&
             ((directionsControl.getDirectionByColor(firstTile.color) == secondTile.direction
                     || directionsControl.getDirectionByColor(firstTile.color) == firstTile.direction)
+                    || yellowTile.direction == directionsControl.getDirectionByColor(firstTile.color)
+                    || firstTile.direction == directionsControl.getDirectionByColor(yellowTile.color)
                     && (directionsControl.getDirectionByColor(secondTile.color) == firstTile.direction ||
                     directionsControl.getDirectionByColor(secondTile.color) == secondTile.direction))
         ) {
             return true
-        }
+        }*/
         return false
     }
 

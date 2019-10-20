@@ -104,6 +104,9 @@ class ColorDetector {
 
                             if (error < smallestError) {
                                 tempTiles[n][m]!!.tileColor = candidateColorTile
+                                if(rubikFace.ColorDetectionCount > 14){
+                                    rubikFace.ColorDetectionCount--
+                                }
                                 rubikFace.averageColorArray[rubikFace.ColorDetectionCount][k] =
                                     candidateColorTile
                                 smallestError = error

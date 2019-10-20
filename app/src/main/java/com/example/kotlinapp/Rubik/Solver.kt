@@ -75,6 +75,9 @@ class Solver {
                 solvingPhase = SolvingPhaseEnum.Finish
                 currentPhase = SolvingPhaseEnum.YellowCorners
             }
+            SolvingPhaseEnum.Finish -> {
+                currentPhase = SolvingPhaseEnum.Finish
+            }
         }
         return solution
     }

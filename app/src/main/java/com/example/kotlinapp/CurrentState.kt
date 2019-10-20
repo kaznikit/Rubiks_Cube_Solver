@@ -110,7 +110,7 @@ class CurrentState {
         if (isCubeScanned && adoptFaceCount > 6) {
             //if cube solved we should just check
             // which side of cube user holds the cube and rotate drawing cube
-            if (!IsCubeScannedAndReset) {
+            if (!IsCubeScannedAndReset && !isCubeScanned) {
                 //mainActivity.glRenderer.drawArrow(true, "R", false)
                 checkCubeDownside(faceColors)
             }
@@ -158,7 +158,7 @@ class CurrentState {
                 if (fillCubeLayer(activeRubikFace)) {
                     activeRubikFace.isLayerFilled = true
 
-                    //remain one center cubie ==> cube scanned
+                    /*//remain one center cubie ==> cube scanned
                     if (cube.getUnscannedCubiesCount() == 26) {
                         isCubeScanned = true
                         adopt(activeRubikFace)
@@ -174,16 +174,37 @@ class CurrentState {
                         createSolver()
 
                         //createSolver()
-                    }
+                    }*/
                 }
             }
 
+            //remain one center cubie ==> cube scanned
+            if (cube.getUnscannedCubiesCount() == 26) {
+                isCubeScanned = true
+                //adopt(activeRubikFace)
+                fillCubeLayer(activeRubikFace)
+                adoptFaceCount = 7
+
+
+                IsCubeScannedAndReset = true
+                IsCubeSolving = true
+                adoptFaceCount++
+                // var response = cube.rotateCube(-90f, Axis.xAxis)
+                mainActivity.glRenderer.drawArrow(false, "D", false)
+                createSolver()
+
+                //createSolver()
+            }
+            else{
+
             //проверяем повернули ли сторону кубика
-            if (!isCubeScanned) {
                 if (!checkIfFaceExist(faceColors)) {//|| adoptFaceCount > 5) {
                     //кубик повернут другой стороной
                     mainActivity.glRenderer.drawArrow(false, "D", false)
                     adopt(activeRubikFace)
+
+
+
                 } else {
                     mainActivity.glRenderer.drawArrow(true, getNextArrowRotation(), false)
                     return
@@ -272,7 +293,7 @@ class CurrentState {
                 IsCubeSolved = true
                 IsCubeSolving = false
                 mainActivity.glRenderer.drawArrow(false, "D", true)
-                solver.currentPhase = SolvingPhaseEnum.Finish
+                //solver.currentPhase = SolvingPhaseEnum.Finish
             }
         }
         mainActivity.showCurrentMoves()
@@ -288,18 +309,18 @@ class CurrentState {
                 cube.performMoves(CurrentMoves[MoveNumber])
                 MoveNumber++
             }
-            Thread.sleep(20)
+           // Thread.sleep(20)
         } else {
-            if (solver.solvingPhase == SolvingPhaseEnum.Finish) {
-                IsCubeSolved = true
-                IsCubeSolving = false
-                mainActivity.glRenderer.drawArrow(false, "D", true)
-                solver.currentPhase = SolvingPhaseEnum.Finish
-            }
             MoveNumber = 0
             CurrentMoves.clear()
             CurrentMoves = solver.solveNextPhase()
             IsPlayMode = false
+            if (solver.currentPhase == SolvingPhaseEnum.Finish) {
+                IsCubeSolved = true
+                IsCubeSolving = false
+                mainActivity.glRenderer.drawArrow(false, "D", true)
+                //solver.currentPhase = SolvingPhaseEnum.Finish
+            }
             mainActivity.showCurrentPhase()
         }
         mainActivity.showCurrentMoves()
@@ -492,6 +513,9 @@ class CurrentState {
     fun getCurrentMove(): String {
         if(MoveNumber < CurrentMoves.size) {
             var step = CurrentMoves[MoveNumber]
+            if(IsWrongMove){
+                step = WrongMove
+            }
             var counterClock = false
             if (step.contains("'")) {
                 step = step.take(1)

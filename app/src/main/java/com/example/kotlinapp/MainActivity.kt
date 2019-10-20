@@ -1,10 +1,12 @@
 package com.example.kotlinapp
 
+import android.app.ActionBar
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.media.Image
 import android.opengl.GLSurfaceView
 import android.opengl.Visibility
 import android.os.AsyncTask
@@ -14,6 +16,7 @@ import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.animation.TranslateAnimation
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -63,6 +66,8 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
     private lateinit var currentMoveTextView: TextView
     private lateinit var phasesTextView: TextView
 
+    private lateinit var keanuImageView : ImageView
+
     //Get user movements
     private var mGesture: GestureDetector? = null
     private val mLoaderCallback = object : BaseLoaderCallback(this) {
@@ -97,6 +102,8 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         setContentView(R.layout.activity_main)
         //glSurfaceView = GLSurfaceView(this)
         glSurfaceView = findViewById(R.id.glSurface)
+
+        keanuImageView = findViewById(R.id.keanu_image_view)
 
         currentState = CurrentState(this)
 
@@ -321,15 +328,27 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
                 firstMoveTextView.text = ""
             } else {
                 if (currentState.IsWrongMove) {
+                    firstMoveTextView.text = ""
                     movesTextView.setTextColor(Color.RED)
                     movesTextView.text = "Wrong move, return back!"
+                    currentMoveTextView.text = currentState.getCurrentMove()
                 } else {
                     currentMoveTextView.text = currentState.getCurrentMove()
-                    movesCountsTextView.text = "Moves: " + (currentState.CurrentMoves.size - currentState.MoveNumber)
+                    movesTextView.setTextColor(Color.WHITE)
+                    movesCountsTextView.text =
+                        "Moves: " + (currentState.CurrentMoves.size - currentState.MoveNumber)
                     firstMoveTextView.text = currentState.CurrentMoves[currentState.MoveNumber]
-                    movesTextView.text = currentState.CurrentMoves.drop(currentState.MoveNumber + 1)
-                        .joinToString(separator = " ")
+                    movesTextView.text =
+                        currentState.CurrentMoves.drop(currentState.MoveNumber + 1)
+                            .joinToString(separator = " ")
                 }
+            }
+            if (currentState.solver.currentPhase == SolvingPhaseEnum.Finish) {
+                movesTextView.setTextColor(Color.RED)
+                movesCountsTextView.text = ""
+                currentMoveTextView.text = ""
+                movesTextView.text = "Rubik's cube is solved, you are breathtaking!"
+                showingKeanu()
             }
         }
     }
@@ -353,7 +372,8 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
             for (solvPhase in SolvingPhaseEnum.values()) {
                 var color = Color.WHITE
                 if (solvPhase == currentState.solver.currentPhase) {
-                    color = Color.parseColor("#ff669900") //Color.RED
+                    //set red color
+                    color = Color.parseColor("#ff669900")
                 }
 
                 when (solvPhase) {
@@ -421,7 +441,7 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
         }
         return imageRecognizer!!.threesholdTestImage(inputFrame.rgba())*/
     }
-    
+
     fun onMatProcessed(mat: Mat?) {
         if (mat != null) {
             processedMat = mat
@@ -456,5 +476,20 @@ class MainActivity : FragmentActivity(), CameraBridgeViewBase.CvCameraViewListen
             supportFragmentManager.fragments.clear()
         }
         schemaFragment?.show(supportFragmentManager, "schema")
+    }
+
+    private fun showingKeanu(){
+        runOnUiThread {
+            if (keanuImageView.visibility == GONE) {
+                movesCountsTextView.visibility = GONE
+                keanuImageView.visibility = VISIBLE
+
+                val animation = TranslateAnimation(0.0f, 0.0f, 200f, 50f)
+                animation.duration = 2000
+                animation.repeatCount = 0
+                animation.fillAfter = true
+                keanuImageView.startAnimation(animation)
+            }
+        }
     }
 }
